@@ -69,5 +69,13 @@ let package = Package(
         "Discovery",
       ]
     ),
+    .testTarget(
+      name: "AppCoreTests",
+      dependencies: ["AppCore"]
+    ),
+    .testTarget(
+      name: "PickerCoreTests",
+      dependencies: ["PickerCore"]
+    ),
   ]
 )
