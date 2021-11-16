@@ -33,7 +33,6 @@ public struct PickerState: Equatable {
   public var testStatus = false
   public var selectedPacket: Packet?
   public var isConnected = false
-
 }
 
 public enum PickerAction: Equatable {
@@ -53,23 +52,24 @@ public enum PickerAction: Equatable {
 public struct PickerEnvironment {
   public init(queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
               listenerEffectStart: @escaping () -> Effect<PickerAction, Never> = { listenerEffect() },
-              packetEffectStart: @escaping (Listener) -> Effect<PickerAction, Never> = packetEffect(_:),
-              guiClientEffectStart: @escaping (Listener) -> Effect<PickerAction, Never> = guiClientEffect(_:),
-              testEffectStart: @escaping (Packet) -> Effect<PickerAction, Never> = testEffect(_:)) {
+              packetEffectStart: @escaping (Listener) -> Effect<PickerAction, Never> = packetEffect(_:)
+//              guiClientEffectStart: @escaping (Listener) -> Effect<PickerAction, Never> = guiClientEffect(_:),
+//              testEffectStart: @escaping (Packet) -> Effect<PickerAction, Never> = testEffect(_:)
+  ) {
 
     self.queue = queue
     self.listenerEffectStart = listenerEffectStart
     self.packetEffectStart = packetEffectStart
-    self.guiClientEffectStart = guiClientEffectStart
-    self.testEffectStart = testEffectStart
+//    self.guiClientEffectStart = guiClientEffectStart
+//    self.testEffectStart = testEffectStart
   }
   
   var queue: () -> AnySchedulerOf<DispatchQueue> = { .main }
   var listenerEffectStart: () -> Effect<PickerAction, Never> = { listenerEffect() }
   var packetEffectStart: (Listener) -> Effect<PickerAction, Never> = packetEffect(_:)
   var guiClientEffectStart: (Listener) -> Effect<PickerAction, Never> = guiClientEffect(_:)
-  var testEffectStart: (Packet) -> Effect<PickerAction, Never> = testEffect(_:)
-  var connectEffectStart: (Packet) -> Effect<PickerAction, Never> = connectEffect(_:)
+//  var testEffectStart: (Packet) -> Effect<PickerAction, Never> = testEffect(_:)
+//  var connectEffectStart: (Packet) -> Effect<PickerAction, Never> = connectEffect(_:)
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
@@ -125,15 +125,11 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       state.forceUpdate.toggle()
     }
     return .none
-
-  case .onDisappear:
-    // stop the Discovery effects.
-    state.listener = nil
-    return .cancel(ids: PacketPublisherId(), ClientPublisherId())
   
   case .testButtonTapped:
     // TODO:
-    return environment.testEffectStart(state.selectedPacket!)
+//    return environment.testEffectStart(state.selectedPacket!)
+    return .none
 
   case .testResultReceived(let result):
     // TODO: Bool versus actual test results???
@@ -146,11 +142,17 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
 
   case .connectButtonTapped:
     // TODO:
-    return environment.connectEffectStart(state.selectedPacket!)
+//    return environment.connectEffectStart(state.selectedPacket!)
+    return .none
 
   case .connectResultReceived(let result):
     state.isConnected = result
     return .none
+
+  case .onDisappear:
+    // stop the Discovery effects.
+    state.listener = nil
+    return .cancel(ids: PacketPublisherId(), ClientPublisherId())
   }
 }
 
@@ -183,20 +185,20 @@ public func guiClientEffect(_ listener: Listener) -> Effect<PickerAction,Never> 
 }
 
 // TODO: Where is this publisher?
-public func testEffect(_ packet: Packet) -> Effect<PickerAction,Never> {
-  return listener.testPublisher
-    .receive(on: DispatchQueue.main)
-    .map { result in PickerAction.testResultReceived(result) }
-    .eraseToEffect()
-    .cancellable(id: TestPublisherId())
-}
+//public func testEffect(_ packet: Packet) -> Effect<PickerAction,Never> {
+//  return listener.testPublisher
+//    .receive(on: DispatchQueue.main)
+//    .map { result in PickerAction.testResultReceived(result) }
+//    .eraseToEffect()
+//    .cancellable(id: TestPublisherId())
+//}
 
 // TODO: Where is this publisher?
-public func connectEffect(_ packet: Packet) -> Effect<PickerAction,Never> {
-  return listener.testPublisher
-    .receive(on: DispatchQueue.main)
-    .map { result in PickerAction.connectResultReceived(result) }
-    .eraseToEffect()
-    .cancellable(id: ConnectPublisherId())
-}
+//public func connectEffect(_ packet: Packet) -> Effect<PickerAction,Never> {
+//  return listener.testPublisher
+//    .receive(on: DispatchQueue.main)
+//    .map { result in PickerAction.connectResultReceived(result) }
+//    .eraseToEffect()
+//    .cancellable(id: ConnectPublisherId())
+//}
 
