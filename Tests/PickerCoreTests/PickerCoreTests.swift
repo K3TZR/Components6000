@@ -14,12 +14,14 @@ import XCTest
 
 class PickerCoreTests: XCTestCase {
   let testListener = Listener()
+  let scheduler = DispatchQueue.test
+//  let scheduler = DispatchQueue.main
   
   func testIntegration() {
     let store = TestStore(
       initialState: .init(),
       reducer: pickerReducer,
-      environment: PickerEnvironment(queue: { .main },
+      environment: PickerEnvironment(queue: { self.scheduler.eraseToAnyScheduler() },
                                      listenerEffectStart: { self.testListenerEffect() },
                                      packetEffectStart: { _ in self.testPacketEffect(self.testListener) },
                                      guiClientEffectStart: { _ in self.testGuiClientEffect(self.testListener) }
@@ -31,12 +33,16 @@ class PickerCoreTests: XCTestCase {
     store.receive( .listenerStarted(testListener) ) {
       $0.listener = self.testListener
     }
-    
+    self.scheduler.advance(by: 1.0)
+//    _ = XCTWaiter.wait(for: [expectation(description: "Wait for 1 seconds")], timeout: 1.0)
+
     store.receive( .pickerUpdate(testPacketUpdate()) ) {
       $0.packets = self.testPackets()
       $0.forceUpdate.toggle()
     }
-    
+    self.scheduler.advance(by: 0.5)
+//    _ = XCTWaiter.wait(for: [expectation(description: "Wait for 0.5 seconds")], timeout: 0.5)
+
     store.receive( .guiClientUpdate(testGuiClientUpdate()) ) {
       $0.forceUpdate.toggle()
     }
@@ -50,11 +56,16 @@ class PickerCoreTests: XCTestCase {
   }
   
   private func testPacketEffect(_ listener: Listener) -> Effect<PickerAction, Never> {
-    Effect(value: .pickerUpdate(testPacketUpdate()))
+    return Effect(value: .pickerUpdate(testPacketUpdate()))
+      .delay(for: .milliseconds(1000), scheduler: self.scheduler.eraseToAnyScheduler())
+      .eraseToEffect()
+
   }
   
   private func testGuiClientEffect(_ listener: Listener) -> Effect<PickerAction, Never> {
-    Effect(value: .guiClientUpdate(testGuiClientUpdate()))
+    return Effect(value: .guiClientUpdate(testGuiClientUpdate()))
+      .delay(for: .milliseconds(500), scheduler: self.scheduler.eraseToAnyScheduler())
+      .eraseToEffect()
   }
   
   private func testPacket() -> Packet {

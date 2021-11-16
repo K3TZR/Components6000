@@ -27,8 +27,9 @@ public struct Packet: Identifiable, Equatable, Hashable {
   public var id: UUID
   public var lastSeen: Date
   public var connectionType: ConnectionType
-//  public var isDefault = false
-  
+  public var isDefault = false
+  public var isWan = false
+
   public var availableClients = 0
   public var availablePanadapters = 0
   public var availableSlices = 0
@@ -43,7 +44,6 @@ public struct Packet: Identifiable, Equatable, Hashable {
   public var guiClientIps = ""
   public var inUseHost = ""
   public var inUseIp = ""
-  public var isWan = false
   public var licensedClients = 0
   public var maxLicensedVersion = ""
   public var maxPanadapters = 0

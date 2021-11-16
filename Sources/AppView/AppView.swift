@@ -20,7 +20,7 @@ public struct AppView: View {
           store: store.scope(
             state: \.pickerState,
             action: AppAction.pickerAction)
-        )
+        ).frame(width: 600, height: 400)
 //          .toolbar {
 //            Button("Favorite") { viewStore.send(.selectedViewChanged(.favorite)) }
 //          }
@@ -39,8 +39,6 @@ public struct AppView: View {
 //      }
 //    }
   }
-//    .frame(width: 600, height: 400)
-
 }
 
 struct Appiew_Previews: PreviewProvider {
