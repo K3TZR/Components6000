@@ -5,14 +5,14 @@
 //  Created by Douglas Adams on 11/14/21.
 //
 
-import AppCore
+import AppFeature
 import Discovery
 import ComposableArchitecture
 import XCTest
 
-@testable import AppCore
+@testable import AppFeaturee
 
-class AppCoreTests: XCTestCase {
+class AppFeatureTests: XCTestCase {
   
   func testIntegration() {
     let store = TestStore(

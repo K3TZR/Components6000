@@ -7,8 +7,7 @@
 
 import SwiftUI
 import ComposableArchitecture
-import AppCore
-import PickerView
+import Picker
 
 public struct AppView: View {
   let store: Store<AppState, AppAction>

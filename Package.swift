@@ -13,10 +13,8 @@ let package = Package(
     // Products define the executables and libraries a package produces, and make them visible to other packages.
     .library(name: "Shared", targets: ["Shared"]),
     .library(name: "Discovery", targets: ["Discovery"]),
-    .library(name: "AppCore", targets: ["AppCore"]),
-    .library(name: "AppView", targets: ["AppView"]),
-    .library(name: "PickerCore", targets: ["PickerCore"]),
-    .library(name: "PickerView", targets: ["PickerView"]),
+    .library(name: "AppFeature", targets: ["AppFeature"]),
+    .library(name: "Picker", targets: ["Picker"]),
   ],
   dependencies: [
     // Dependencies declare other packages that this package depends on.
@@ -40,42 +38,26 @@ let package = Package(
       ]
     ),
     .target(
-      name: "AppCore",
+      name: "AppFeature",
       dependencies: [
-        "PickerCore",
+        "Picker",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
     .target(
-      name: "PickerCore",
+      name: "Picker",
       dependencies: [
-        "Discovery",
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
-    .target(
-      name: "AppView",
-      dependencies: [
-        "AppCore",
-        "PickerCore",
-        "PickerView",
-      ]
-    ),
-    .target(
-      name: "PickerView",
-      dependencies: [
-        "PickerCore",
-        "Discovery",
-      ]
-    ),
-    .testTarget(
-      name: "AppCoreTests",
-      dependencies: ["AppCore"]
-    ),
-    .testTarget(
-      name: "PickerCoreTests",
-      dependencies: ["PickerCore"]
-    ),
+//    .testTarget(
+//      name: "AppFeatureTests",
+//      dependencies: ["AppFeature"]
+//    ),
+//    .testTarget(
+//      name: "PickerFeatureTests",
+//      dependencies: ["PickerFeature"]
+//    ),
   ]
 )

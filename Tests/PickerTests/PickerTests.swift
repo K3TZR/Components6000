@@ -5,12 +5,12 @@
 //  Created by Douglas Adams on 11/14/21.
 //
 
-import PickerCore
+import Picker
 import Discovery
 import ComposableArchitecture
 import XCTest
 
-@testable import PickerCore
+@testable import Picker
 
 class PickerCoreTests: XCTestCase {
   let testListener = Listener()

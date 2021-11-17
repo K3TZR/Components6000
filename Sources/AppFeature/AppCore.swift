@@ -7,7 +7,7 @@
 
 import ComposableArchitecture
 import Dispatch
-import PickerCore
+import Picker
 
 public struct AppState: Equatable {
   public var pickerState = PickerState()
