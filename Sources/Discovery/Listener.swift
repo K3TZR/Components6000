@@ -11,6 +11,39 @@ import Combine
 import CocoaAsyncSocket
 import Shared
 
+public enum PacketAction {
+  case added
+  case updated
+  case deleted
+}
+
+public struct PacketUpdate: Equatable {
+  public var action: PacketAction
+  public var packet: Packet
+  public var packets: [Packet]
+
+  public init(_ action: PacketAction, packet: Packet, packets: [Packet]) {
+    self.action = action
+    self.packet = packet
+    self.packets = packets
+  }
+}
+
+public enum ClientAction {
+  case add
+  case update
+  case delete
+}
+public struct ClientUpdate: Equatable {
+  public var action: ClientAction
+  public var client: GuiClient
+
+  public init(_ action: ClientAction, client: GuiClient) {
+    self.action = action
+    self.client = client
+  }
+}
+
 /// Discovery implementation
 ///
 ///      listens for the udp broadcasts announcing the presence
@@ -23,38 +56,38 @@ public final class Listener: NSObject {
   public var packetPublisher = PassthroughSubject<PacketUpdate, Never>()
   public var clientPublisher = PassthroughSubject<ClientUpdate, Never>()
 
-  public enum PacketAction {
-    case added
-    case updated
-    case deleted
-  }
+//  public enum PacketAction {
+//    case added
+//    case updated
+//    case deleted
+//  }
+//
+//  public struct PacketUpdate: Equatable {
+//    public var action: PacketAction
+//    public var packet: Packet
+//    public var packets: [Packet]
+//
+//    public init(_ action: PacketAction, packet: Packet, packets: [Packet]) {
+//      self.action = action
+//      self.packet = packet
+//      self.packets = packets
+//    }
+//  }
 
-  public struct PacketUpdate: Equatable {
-    public var action: PacketAction
-    public var packet: Packet
-    public var packets: [Packet]
-    
-    public init(_ action: PacketAction, packet: Packet, packets: [Packet]) {
-      self.action = action
-      self.packet = packet
-      self.packets = packets
-    }
-  }
-  
-  public enum ClientAction {
-    case add
-    case update
-    case delete
-  }
-  public struct ClientUpdate: Equatable {
-    public var action: ClientAction
-    public var client: GuiClient
-    
-    public init(_ action: ClientAction, client: GuiClient) {
-      self.action = action
-      self.client = client
-    }
-  }
+//  public enum ClientAction {
+//    case add
+//    case update
+//    case delete
+//  }
+//  public struct ClientUpdate: Equatable {
+//    public var action: ClientAction
+//    public var client: GuiClient
+//
+//    public init(_ action: ClientAction, client: GuiClient) {
+//      self.action = action
+//      self.client = client
+//    }
+//  }
 
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
@@ -89,7 +122,7 @@ public final class Listener: NSObject {
       .sink { now in
         let deletedList = self._packets.remove(condition: {abs($0.lastSeen.timeIntervalSince(now)) > timeout} )
         for packet in deletedList {
-          self.packetPublisher.send(Listener.PacketUpdate(.deleted, packet: packet, packets: self._packets.collection))
+          self.packetPublisher.send(PacketUpdate(.deleted, packet: packet, packets: self._packets.collection))
         }
       }
       .store(in: &_cancellables)
@@ -123,12 +156,12 @@ public final class Listener: NSObject {
 
         // update it and publish
         _packets.update(newPacket)
-        packetPublisher.send(Listener.PacketUpdate(.updated, packet: newPacket, packets: _packets.collection))
+        packetPublisher.send(PacketUpdate(.updated, packet: newPacket, packets: _packets.collection))
         for client in additions {
-          clientPublisher.send(Listener.ClientUpdate(.add, client: client))
+          clientPublisher.send(ClientUpdate(.add, client: client))
         }
         for client in deletions {
-          clientPublisher.send(Listener.ClientUpdate(.delete, client: client))
+          clientPublisher.send(ClientUpdate(.delete, client: client))
         }
         return
 
@@ -142,9 +175,9 @@ public final class Listener: NSObject {
 
     // add it and publish
     _packets.add(newPacket)
-    packetPublisher.send(Listener.PacketUpdate(.added, packet: newPacket, packets: _packets.collection))
+    packetPublisher.send(PacketUpdate(.added, packet: newPacket, packets: _packets.collection))
     for client in newPacket.guiClients {
-      clientPublisher.send(Listener.ClientUpdate(.add, client: client))
+      clientPublisher.send(ClientUpdate(.add, client: client))
     }
   }
 }

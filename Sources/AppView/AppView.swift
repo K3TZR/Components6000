@@ -16,7 +16,7 @@ public struct AppView: View {
   public var body: some View {
 //    WithViewStore(self.store) { viewStore in
 //      if viewStore.selectedView == .picker {
-        PickerListView(
+        PickerView(
           store: store.scope(
             state: \.pickerState,
             action: AppAction.pickerAction)

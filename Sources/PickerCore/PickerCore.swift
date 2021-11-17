@@ -5,19 +5,18 @@
 //  Created by Douglas Adams on 11/13/21.
 //
 
+import Combine
 import ComposableArchitecture
 import Dispatch
 import Discovery
 
 public struct PickerState: Equatable {
-  public init(listener: Listener? = nil,
-              packets: [Packet] = [],
+  public init( packets: [Packet] = [],
               defaultPacket: Packet? = nil,
               forceUpdate: Bool = false,
               testStatus: Bool = false,
               selectedPacket: Packet? = nil,
               isConnected: Bool = false) {
-    self.listener = listener
     self.packets = packets
     self.defaultPacket = defaultPacket
     self.forceUpdate = forceUpdate
@@ -26,7 +25,6 @@ public struct PickerState: Equatable {
     self.isConnected = false
   }
   
-  public var listener: Listener?
   public var packets: [Packet] = []
   public var defaultPacket: Packet?
   public var forceUpdate = false
@@ -37,7 +35,6 @@ public struct PickerState: Equatable {
 
 public enum PickerAction: Equatable {
   case onAppear
-  case listenerStarted(Listener)
   case onDisappear
   case defaultButtonTapped(Packet)
   case testButtonTapped
@@ -45,31 +42,30 @@ public enum PickerAction: Equatable {
   case cancelButtonTapped
   case connectButtonTapped
   case connectResultReceived(Bool)
-  case pickerUpdate(Listener.PacketUpdate)
-  case guiClientUpdate(Listener.ClientUpdate)
+  case packetsUpdate(PacketUpdate)
+  case clientsUpdate(ClientUpdate)
 }
 
 public struct PickerEnvironment {
   public init(queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
-              listenerEffectStart: @escaping () -> Effect<PickerAction, Never> = { listenerEffect() },
-              packetEffectStart: @escaping (Listener) -> Effect<PickerAction, Never> = packetEffect(_:)
-//              guiClientEffectStart: @escaping (Listener) -> Effect<PickerAction, Never> = guiClientEffect(_:),
-//              testEffectStart: @escaping (Packet) -> Effect<PickerAction, Never> = testEffect(_:)
+              getPacketsEffect: Effect<PickerAction, Never> = packetsEffect(),
+              getClientsEffect: Effect<PickerAction, Never> = clientsEffect()
+//              doTestEffect: @escaping (Packet) -> Effect<PickerAction, Never> = testEffect(_:)
+//              doConnectEffect: @escaping (Packet) -> Effect<PickerAction, Never> = connectEffect(_:)
   ) {
 
     self.queue = queue
-    self.listenerEffectStart = listenerEffectStart
-    self.packetEffectStart = packetEffectStart
-//    self.guiClientEffectStart = guiClientEffectStart
-//    self.testEffectStart = testEffectStart
+    self.getPacketsEffect = getPacketsEffect
+    self.getPacketsEffect = getPacketsEffect
+//    self.doTestEffect = doTestEffect
+//    self.doConnectEffect = doConnectEffect
   }
   
   var queue: () -> AnySchedulerOf<DispatchQueue> = { .main }
-  var listenerEffectStart: () -> Effect<PickerAction, Never> = { listenerEffect() }
-  var packetEffectStart: (Listener) -> Effect<PickerAction, Never> = packetEffect(_:)
-  var guiClientEffectStart: (Listener) -> Effect<PickerAction, Never> = guiClientEffect(_:)
-//  var testEffectStart: (Packet) -> Effect<PickerAction, Never> = testEffect(_:)
-//  var connectEffectStart: (Packet) -> Effect<PickerAction, Never> = connectEffect(_:)
+  var getPacketsEffect: Effect<PickerAction, Never> = packetsEffect()
+  var getClientsEffect: Effect<PickerAction, Never> = clientsEffect()
+//  var doTestEffect: (Packet) -> Effect<PickerAction, Never> = testEffect(_:)
+//  var doConnectEffect: (Packet) -> Effect<PickerAction, Never> = connectEffect(_:)
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
@@ -78,13 +74,8 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
 
   case .onAppear:
     // start listening for Discovery broadcasts
-    return environment.listenerEffectStart()
-    
-  case .listenerStarted(let listener):
-    state.listener = listener
-    // initialize the Effects
-    return .concatenate( environment.packetEffectStart(listener),
-                         environment.guiClientEffectStart(listener)
+    return .concatenate( environment.getPacketsEffect,
+                         environment.getClientsEffect
     )
 
   case .defaultButtonTapped(let packet):
@@ -96,7 +87,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     }
     return .none
     
-  case .pickerUpdate(let update):
+  case .packetsUpdate(let update):
     // process a DiscoveryPacket change
     switch update.action {
     case .added:
@@ -113,7 +104,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     }
     return .none
 
-  case .guiClientUpdate(let update):
+  case .clientsUpdate(let update):
     // process a GuiClient change
     switch update.action {
     
@@ -151,7 +142,6 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
 
   case .onDisappear:
     // stop the Discovery effects.
-    state.listener = nil
     return .cancel(ids: PacketPublisherId(), ClientPublisherId())
   }
 }
@@ -164,22 +154,20 @@ struct ConnectPublisherId: Hashable {}
 // ----------------------------------------------------------------------------
 // MARK: - Production effects
 
-public func listenerEffect() -> Effect<PickerAction, Never> {
-  return Effect(value: .listenerStarted( Listener() ))
-}
+private let listener = Listener()
 
-public func packetEffect(_ listener: Listener) -> Effect<PickerAction, Never> {
+public func packetsEffect() -> Effect<PickerAction, Never> {
   return listener.packetPublisher
     .receive(on: DispatchQueue.main)
-    .map { update in .pickerUpdate(update) }
+    .map { update in .packetsUpdate(update) }
     .eraseToEffect()
     .cancellable(id: PacketPublisherId())
 }
 
-public func guiClientEffect(_ listener: Listener) -> Effect<PickerAction,Never> {
+public func clientsEffect() -> Effect<PickerAction,Never> {
   return listener.clientPublisher
     .receive(on: DispatchQueue.main)
-    .map { update in PickerAction.guiClientUpdate(update) }
+    .map { update in PickerAction.clientsUpdate(update) }
     .eraseToEffect()
     .cancellable(id: ClientPublisherId())
 }

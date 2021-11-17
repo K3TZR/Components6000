@@ -11,19 +11,24 @@ import ComposableArchitecture
 import PickerCore
 import Discovery
 
-public struct PickerListView: View {
+public struct PickerView: View {
   let store: Store<PickerState, PickerAction>
   
   public init(store: Store<PickerState, PickerAction>) {
     self.store = store
   }
+
+  @State var pickerSelection: UUID?
   
   public var body: some View {
+    
     WithViewStore(self.store) { viewStore in
       VStack(alignment: .leading, spacing: 10) {
         PickerHeader()
         Divider()
-        PickerList(viewStore: viewStore)
+        List(viewStore.packets, selection: $pickerSelection) { packet in
+          PacketItemView(packet: packet)
+        }
         Divider()
         PickerFooter(viewStore: viewStore)
       }
@@ -43,29 +48,12 @@ struct PickerHeader: View {
       Text("Status")
       Text("Station(s)")
     }
-//    .frame(width: 100, alignment: .leading)
     .padding(.horizontal, 10)
     .font(.title)
   }
 }
 
-struct PickerList: View {
-  let viewStore: ViewStore<PickerState, PickerAction>
-  
-  @State var pickerSelection: UUID?
-  @State var isDefault = false
-  
-  let stdColor = Color(.controlTextColor)
-  var body: some View {
-    
-    List(viewStore.packets, selection: $pickerSelection) { packet in
-        PacketView(packet: packet)
-    }.frame(alignment: .leading)
-  }
-  //      .foregroundColor( packet.isDefault ? .red : stdColor )
-}
-
-struct PacketView: View {
+struct PacketItemView: View {
   let packet: Packet
 
   @State var isDefault = false
@@ -107,11 +95,11 @@ struct PickerFooter: View {
   }
 }
 
-struct PickerListView_Previews: PreviewProvider {
+struct PickerView_Previews: PreviewProvider {
   
   static var previews: some View {
 
-    PickerListView(
+    PickerView(
       store: Store(
         initialState: PickerState(packets: testPackets(),
                                   testStatus: true),
