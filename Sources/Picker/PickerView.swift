@@ -25,11 +25,30 @@ public struct PickerView: View {
       VStack(alignment: .leading, spacing: 10) {
         PickerHeader()
         Divider()
-        List(viewStore.packets, selection: $pickerSelection) { packet in
-          PacketItemView(packet: packet)
+        List {
+          ForEach(Array(viewStore.packets.enumerated()), id: \.element.id) { index, packet in
+            //          PacketItemView(packet: packet)
+            HStack {
+              //            Toggle("", isOn: $isDefault).frame(width: 100, alignment: .leading)
+              
+              
+              Button(action: { viewStore.send(.packet(index: index, action: .checkboxTapped )) }) {
+                Image(systemName: packet.isDefault ? "checkmark.square" : "square")
+              }
+              .buttonStyle(PlainButtonStyle())
+              
+              
+              
+              Text(packet.isWan ? "Smartlink" : "Local").frame(width: 100, alignment: .leading)
+              Text(packet.nickname).frame(width: 100, alignment: .leading)
+              Text(packet.status).frame(width: 100, alignment: .leading)
+              Text(packet.guiClientStations).frame(width: 100, alignment: .leading)
+            }
+            .foregroundColor(packet.isDefault ? .red : .green)
+          }
+          Divider()
+          PickerFooter(viewStore: viewStore)
         }
-        Divider()
-        PickerFooter(viewStore: viewStore)
       }
       .onAppear {
         viewStore.send(.onAppear)

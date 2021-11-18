@@ -10,6 +10,23 @@ import ComposableArchitecture
 import Dispatch
 import Discovery
 
+
+public enum PacketAction {
+  case checkboxTapped
+}
+
+public struct PacketEnvironment {
+}
+
+let packetReducer = Reducer<Packet, PacketAction, PacketEnvironment> {
+  state, action, environment in
+  switch action {
+  case .checkboxTapped:
+    state.isDefault.toggle()
+    return .none
+  }
+}
+
 public struct PickerState: Equatable {
   public init( packets: [Packet] = [],
               defaultPacket: Packet? = nil,
@@ -36,7 +53,6 @@ public struct PickerState: Equatable {
 public enum PickerAction: Equatable {
   case onAppear
   case onDisappear
-  case defaultButtonTapped(Packet)
   case testButtonTapped
   case testResultReceived(Bool)
   case cancelButtonTapped
@@ -44,6 +60,7 @@ public enum PickerAction: Equatable {
   case connectResultReceived(Bool)
   case packetsUpdate(PacketUpdate)
   case clientsUpdate(ClientUpdate)
+  case packet(index: Int, action: PacketAction)
 }
 
 public struct PickerEnvironment {
@@ -68,83 +85,84 @@ public struct PickerEnvironment {
 //  var doConnectEffect: (Packet) -> Effect<PickerAction, Never> = connectEffect(_:)
 }
 
-public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
-{ state, action, environment in
-  switch action {
+public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
+  packetReducer.forEach(state: \.packets,
+                        action: /PickerAction.packet(index:action:),
+                        environment: { _ in PacketEnvironment() }
+                       ),
+  Reducer { state, action, environment in
+    switch action {
+      
+    case .onAppear:
+      // start listening for Discovery broadcasts
+      return .concatenate( environment.getPacketsEffect,
+                           environment.getClientsEffect
+      )
+      
+    case .packetsUpdate(let update):
+      // process a DiscoveryPacket change
+      switch update.action {
+      case .added:
+        state.packets = update.packets
+        state.forceUpdate.toggle()
+        
+      case .updated:
+        state.packets = update.packets
+        state.forceUpdate.toggle()
+        
+      case .deleted:
+        state.packets = update.packets
+        state.forceUpdate.toggle()
+      }
+      return .none
+      
+    case .clientsUpdate(let update):
+      // process a GuiClient change
+      switch update.action {
+        
+      case .add:
+        state.forceUpdate.toggle()
+      case .update:
+        state.forceUpdate.toggle()
+      case .delete:
+        state.forceUpdate.toggle()
+      }
+      return .none
+      
+    case .testButtonTapped:
+      // TODO:
+      //    return environment.testEffectStart(state.selectedPacket!)
+      return .none
+      
+    case .testResultReceived(let result):
+      // TODO: Bool versus actual test results???
+      state.testStatus = result
+      return .none
+      
+    case .cancelButtonTapped:
+      // TODO:
+      return .none
+      
+    case .connectButtonTapped:
+      // TODO:
+      //    return environment.connectEffectStart(state.selectedPacket!)
+      return .none
+      
+    case .connectResultReceived(let result):
+      state.isConnected = result
+      return .none
+      
+    case .onDisappear:
+      // stop the Discovery effects.
+      return .cancel(ids: PacketPublisherId(), ClientPublisherId())
 
-  case .onAppear:
-    // start listening for Discovery broadcasts
-    return .concatenate( environment.getPacketsEffect,
-                         environment.getClientsEffect
-    )
-
-  case .defaultButtonTapped(let packet):
-    // set/clear the Default property
-    if state.defaultPacket == packet {
-      state.defaultPacket = nil
-    } else {
-      state.defaultPacket = packet
+    case .packet(index: let index, action: let action):
+      state.forceUpdate.toggle()
+      return .none
     }
-    return .none
-    
-  case .packetsUpdate(let update):
-    // process a DiscoveryPacket change
-    switch update.action {
-    case .added:
-      state.packets = update.packets
-      state.forceUpdate.toggle()
-    
-    case .updated:
-      state.packets = update.packets
-      state.forceUpdate.toggle()
-    
-    case .deleted:
-      state.packets = update.packets
-      state.forceUpdate.toggle()
-    }
-    return .none
-
-  case .clientsUpdate(let update):
-    // process a GuiClient change
-    switch update.action {
-    
-    case .add:
-      state.forceUpdate.toggle()
-    case .update:
-      state.forceUpdate.toggle()
-    case .delete:
-      state.forceUpdate.toggle()
-    }
-    return .none
-  
-  case .testButtonTapped:
-    // TODO:
-//    return environment.testEffectStart(state.selectedPacket!)
-    return .none
-
-  case .testResultReceived(let result):
-    // TODO: Bool versus actual test results???
-    state.testStatus = result
-    return .none
-
-  case .cancelButtonTapped:
-    // TODO:
-    return .none
-
-  case .connectButtonTapped:
-    // TODO:
-//    return environment.connectEffectStart(state.selectedPacket!)
-    return .none
-
-  case .connectResultReceived(let result):
-    state.isConnected = result
-    return .none
-
-  case .onDisappear:
-    // stop the Discovery effects.
-    return .cancel(ids: PacketPublisherId(), ClientPublisherId())
   }
-}
+)
+  .debug()
 
 struct PacketPublisherId: Hashable {}
 struct ClientPublisherId: Hashable {}

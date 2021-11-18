@@ -47,6 +47,7 @@ let package = Package(
     .target(
       name: "Picker",
       dependencies: [
+        "Discovery",
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
