@@ -25,26 +25,19 @@ public struct PickerView: View {
       VStack(alignment: .leading, spacing: 10) {
         PickerHeader()
         Divider()
-        List {
-          ForEach(Array(viewStore.packets.enumerated()), id: \.element.id) { index, packet in
-            //          PacketItemView(packet: packet)
-            HStack {
-              //            Toggle("", isOn: $isDefault).frame(width: 100, alignment: .leading)
-              
-              
-              Button(action: { viewStore.send(.packet(index: index, action: .checkboxTapped )) }) {
-                Image(systemName: packet.isDefault ? "checkmark.square" : "square")
-              }
-              .buttonStyle(PlainButtonStyle())
-              
-              
-              
-              Text(packet.isWan ? "Smartlink" : "Local").frame(width: 100, alignment: .leading)
-              Text(packet.nickname).frame(width: 100, alignment: .leading)
-              Text(packet.status).frame(width: 100, alignment: .leading)
-              Text(packet.guiClientStations).frame(width: 100, alignment: .leading)
+        if viewStore.packets.count == 0 {
+          HStack {
+            Spacer()
+            Text("----- No packets -----")
+            Spacer()
+          }
+        } else {
+          List {
+            ForEachStore(
+              self.store.scope(state: \.packets, action: PickerAction.packet(index:action:))
+            ) { packetStore in
+              PacketView(store: packetStore)
             }
-            .foregroundColor(packet.isDefault ? .red : .green)
           }
           Divider()
           PickerFooter(viewStore: viewStore)
@@ -71,19 +64,23 @@ struct PickerHeader: View {
   }
 }
 
-struct PacketItemView: View {
-  let packet: Packet
+struct PacketView: View {
+  let store: Store<Packet, PacketAction>
 
-  @State var isDefault = false
-
-  let stdColor = Color(.controlTextColor)
   var body: some View {
-    HStack {
-      Toggle("", isOn: $isDefault).frame(width: 100, alignment: .leading)
-      Text(packet.isWan ? "Smartlink" : "Local").frame(width: 100, alignment: .leading)
-      Text(packet.nickname).frame(width: 100, alignment: .leading)
-      Text(packet.status).frame(width: 100, alignment: .leading)
-      Text(packet.guiClientStations).frame(width: 100, alignment: .leading)
+    WithViewStore(self.store) { viewStore in
+      HStack {
+        Button(action: { viewStore.send(.checkboxTapped) }) {
+          Image(systemName: viewStore.isDefault ? "checkmark.square" : "square")
+        }
+        .buttonStyle(PlainButtonStyle())
+
+        Text(viewStore.isWan ? "Smartlink" : "Local").frame(width: 100, alignment: .leading)
+        Text(viewStore.nickname).frame(width: 100, alignment: .leading)
+        Text(viewStore.status).frame(width: 100, alignment: .leading)
+        Text(viewStore.guiClientStations).frame(width: 100, alignment: .leading)
+      }
+      .foregroundColor(viewStore.isDefault ? .red : nil)
     }
   }
 }
@@ -144,7 +141,7 @@ private func testPackets() -> [Packet] {
   packet.guiClientIps = "192.168.1.200,192.168.1.201"
   packet.isWan = false
   packets.append(packet)
-  
+
   packet = Packet()
   packet.nickname = "Dougs 6700"
   packet.status = "Available"

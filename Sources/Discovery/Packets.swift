@@ -9,7 +9,7 @@ import Foundation
 
 final public class Packets {
                                                         
-  public var collection : [Packet] = []
+  public var collection: [Packet] = []
 //  {
 //      get { _objectQ.sync { _collection } }
 //      set { _objectQ.sync(flags: .barrier) { _collection = newValue }}}
