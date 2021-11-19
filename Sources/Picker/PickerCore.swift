@@ -9,23 +9,7 @@ import Combine
 import ComposableArchitecture
 import Dispatch
 import Discovery
-
-
-public enum PacketAction {
-  case checkboxTapped
-}
-
-public struct PacketEnvironment {
-}
-
-let packetReducer = Reducer<Packet, PacketAction, PacketEnvironment> {
-  state, action, environment in
-  switch action {
-  case .checkboxTapped:
-    state.isDefault.toggle()
-    return .none
-  }
-}
+import Shared
 
 public struct PickerState: Equatable {
   public init( packets: [Packet] = [],

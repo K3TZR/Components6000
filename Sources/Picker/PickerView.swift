@@ -9,6 +9,7 @@ import SwiftUI
 import Combine
 import ComposableArchitecture
 import Discovery
+import Shared
 
 public struct PickerView: View {
   let store: Store<PickerState, PickerAction>

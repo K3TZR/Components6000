@@ -17,6 +17,8 @@ final public class Packets {
   private static let _objectQ = DispatchQueue(label: "Packets.objectQ", attributes: [.concurrent])
   private static var _collection = [Packet]()
   
+  public init() {}
+  
   /// Add a packet to the collection
   /// - Parameter packet: a Packet
   public func add(_ packet: Packet) {
@@ -25,7 +27,7 @@ final public class Packets {
 
   /// Update a packet in the collection
   /// - Parameter packet: a Packet
-  func update(_ packet: Packet) {
+  public func update(_ packet: Packet) {
     if let i = collection.firstIndex(of: packet) {
       collection[i] = packet
     }
@@ -39,7 +41,7 @@ final public class Packets {
 
   /// Remove a packet from the collection
   /// - Parameter condition:  a closure defining the condition for removal
-  func remove(condition: (Packet) -> Bool) -> [Packet] {
+  public func remove(condition: (Packet) -> Bool) -> [Packet] {
     var deleteList = [Packet]()
     
     for packet in collection where condition(packet) {
@@ -54,7 +56,7 @@ final public class Packets {
   /// Is the packet known (i.e. in the collection)
   /// - Parameter packet: the incoming packet
   /// - Returns: the index, if any, of the matching packet
-  func isKnownPacket(_ packet: Packet) -> Int? {
+  public func isKnownPacket(_ packet: Packet) -> Int? {
     if let index = collection.firstIndex(where: { $0 == packet }) {
       // update the lastSeen property
       collection[index].lastSeen = Date()

@@ -8,7 +8,6 @@
 
 import Foundation
 import Combine
-import Shared
 
 public struct GuiClient: Equatable, Identifiable {
   // ----------------------------------------------------------------------------
