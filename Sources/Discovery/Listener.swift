@@ -1,6 +1,6 @@
 //
 //  Listener.swift
-//  FlexComponents/Discovery
+//  TestDiscoveryPackage/Discovery
 //
 //  Created by Douglas Adams on 10/28/21
 //  Copyright © 2021 Douglas Adams. All rights reserved.

@@ -1,6 +1,6 @@
 //
-//  PickerCoreTests.swift
-//
+//  PickerTests.swift
+//  TestDiscoveryPackage/PickerTests
 //
 //  Created by Douglas Adams on 11/14/21.
 //
@@ -15,17 +15,17 @@ import XCTest
 class PickerCoreTests: XCTestCase {
   let testListener = Listener()
   let scheduler = DispatchQueue.test
-//  let scheduler = DispatchQueue.main
   
   func testIntegration() {
     let store = TestStore(
       initialState: .init(),
       reducer: pickerReducer,
-      environment: PickerEnvironment(queue: { self.scheduler.eraseToAnyScheduler() },
-                                     listenerEffectStart: { self.testListenerEffect() },
-                                     packetEffectStart: { _ in self.testPacketEffect(self.testListener) },
-                                     guiClientEffectStart: { _ in self.testGuiClientEffect(self.testListener) }
-                                    )
+      environment: PickerEnvironment(
+        queue: { self.scheduler.eraseToAnyScheduler() },
+        listenerEffectStart: { self.testListenerEffect() },
+        packetEffectStart: { _ in self.testPacketEffect(self.testListener) },
+        guiClientEffectStart: { _ in self.testGuiClientEffect(self.testListener) }
+      )
     )
     
     store.send(.onAppear)
@@ -34,14 +34,12 @@ class PickerCoreTests: XCTestCase {
       $0.listener = self.testListener
     }
     self.scheduler.advance(by: 1.0)
-//    _ = XCTWaiter.wait(for: [expectation(description: "Wait for 1 seconds")], timeout: 1.0)
 
     store.receive( .pickerUpdate(testPacketUpdate()) ) {
       $0.packets = self.testPackets()
       $0.forceUpdate.toggle()
     }
     self.scheduler.advance(by: 0.5)
-//    _ = XCTWaiter.wait(for: [expectation(description: "Wait for 0.5 seconds")], timeout: 0.5)
 
     store.receive( .guiClientUpdate(testGuiClientUpdate()) ) {
       $0.forceUpdate.toggle()

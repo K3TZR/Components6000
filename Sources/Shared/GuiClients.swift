@@ -1,6 +1,6 @@
 //
 //  GuiClients.swift
-//  FlexComponents/Discovery
+//  TestDiscoveryPackage/Discovery
 //
 //  Created by Douglas Adams on 11/6/21.
 //

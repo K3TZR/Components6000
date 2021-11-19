@@ -1,6 +1,6 @@
 //
 //  Vita.swift
-//  FlexComponents/Shared
+//  TestDiscoveryPackage/Shared
 //
 //  Created by Douglas Adams on 5/9/17.
 //  Copyright © 2018 Douglas Adams & Mario Illgen. All rights reserved.

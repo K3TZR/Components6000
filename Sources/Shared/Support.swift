@@ -1,6 +1,6 @@
 //
 //  Support.swift
-//  FlexComponents/Shared
+//  TestDiscoveryPackage/Shared
 //
 //  Created by Douglas Adams on 10/23/21.
 //

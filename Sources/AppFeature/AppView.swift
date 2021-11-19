@@ -1,6 +1,6 @@
 //
 //  AppView.swift
-//  TestDiscoveryPackage/AppView
+//  TestDiscoveryPackage/AppFeature
 //
 //  Created by Douglas Adams on 10/19/21.
 //

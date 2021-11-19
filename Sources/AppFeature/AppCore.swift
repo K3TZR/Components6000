@@ -1,6 +1,6 @@
 //
 //  AppCore.swift
-//  TestDiscoveryPackage/AppCore
+//  TestDiscoveryPackage/AppFeature
 //
 //  Created by Douglas Adams on 11/13/21.
 //
