@@ -6,7 +6,6 @@
 //
 
 import ComposableArchitecture
-import Discovery
 import Shared
 
 public enum PacketAction {

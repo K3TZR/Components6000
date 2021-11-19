@@ -8,6 +8,24 @@
 
 import Foundation
 
+public enum PacketAction {
+  case added
+  case updated
+  case deleted
+}
+
+public struct PacketUpdate: Equatable {
+  public var action: PacketAction
+  public var packet: Packet
+  public var packets: [Packet]
+
+  public init(_ action: PacketAction, packet: Packet, packets: [Packet]) {
+    self.action = action
+    self.packet = packet
+    self.packets = packets
+  }
+}
+
 public struct Packet: Identifiable, Equatable, Hashable {
   
   public init(connectionType: ConnectionType = .local) {

@@ -8,7 +8,7 @@
 import Combine
 import ComposableArchitecture
 import Dispatch
-import Discovery
+//import Discovery
 import Shared
 
 public struct PickerState: Equatable {

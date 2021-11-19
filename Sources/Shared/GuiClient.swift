@@ -9,6 +9,21 @@
 import Foundation
 import Combine
 
+public enum ClientAction {
+  case add
+  case update
+  case delete
+}
+public struct ClientUpdate: Equatable {
+  public var action: ClientAction
+  public var client: GuiClient
+
+  public init(_ action: ClientAction, client: GuiClient) {
+    self.action = action
+    self.client = client
+  }
+}
+
 public struct GuiClient: Equatable, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
