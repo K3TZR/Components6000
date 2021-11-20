@@ -23,15 +23,17 @@ public struct PickerView: View {
   public var body: some View {
     
     WithViewStore(self.store) { viewStore in
-      VStack(alignment: .leading, spacing: 10) {
+      VStack(alignment: .leading) {
         PickerHeader()
         Divider()
         if viewStore.packets.count == 0 {
+          Spacer()
           HStack {
             Spacer()
             Text("----- No packets -----")
             Spacer()
           }
+          Spacer()
         } else {
           List {
             ForEachStore(
@@ -40,10 +42,11 @@ public struct PickerView: View {
               PacketView(store: packetStore)
             }
           }
-          Divider()
-          PickerFooter(viewStore: viewStore)
         }
+        Divider()
+        PickerFooter(viewStore: viewStore)
       }
+      .frame(minWidth: 650, minHeight: 200, idealHeight: 300, maxHeight: 400)
       .onAppear {
         viewStore.send(.onAppear)
       }
@@ -53,14 +56,20 @@ public struct PickerView: View {
 
 struct PickerHeader: View {
   var body: some View {
-    HStack(spacing: 50) {
-      Text("Default")
-      Text("Type")
-      Text("Name")
-      Text("Status")
-      Text("Station(s)")
+    HStack(spacing: 0) {
+      Group {
+        Text("Default")
+        Text("Type")
+      }.frame(width: 95, alignment: .leading)
+      
+      Group {
+        Text("Name")
+        Text("Status")
+        Text("Station(s)")
+      }.frame(width: 140, alignment: .leading)
     }
-    .padding(.horizontal, 10)
+    .padding(.vertical, 10)
+    .padding(.horizontal)
     .font(.title)
   }
 }
@@ -70,16 +79,20 @@ struct PacketView: View {
 
   var body: some View {
     WithViewStore(self.store) { viewStore in
-      HStack {
+      HStack(spacing: 0) {
         Button(action: { viewStore.send(.checkboxTapped) }) {
           Image(systemName: viewStore.isDefault ? "checkmark.square" : "square")
         }
+        .frame(width: 95, alignment: .center)
         .buttonStyle(PlainButtonStyle())
-
-        Text(viewStore.isWan ? "Smartlink" : "Local").frame(width: 100, alignment: .leading)
-        Text(viewStore.nickname).frame(width: 100, alignment: .leading)
-        Text(viewStore.status).frame(width: 100, alignment: .leading)
-        Text(viewStore.guiClientStations).frame(width: 100, alignment: .leading)
+        
+        Text(viewStore.isWan ? "Smartlink" : "Local").frame(width: 95, alignment: .leading)
+        
+        Group {
+          Text(viewStore.nickname)
+          Text(viewStore.status)
+          Text(viewStore.guiClientStations)
+        }.frame(width: 140, alignment: .leading)
       }
       .foregroundColor(viewStore.isDefault ? .red : nil)
     }
@@ -123,7 +136,20 @@ struct PickerView_Previews: PreviewProvider {
         environment: PickerEnvironment()
       )
     )
+    PickerView(
+      store: Store(
+        initialState: PickerState(packets: emptyTestPackets(),
+                                  testStatus: true),
+        reducer: pickerReducer,
+        environment: PickerEnvironment()
+      )
+    )
   }
+}
+
+
+private func emptyTestPackets() -> [Packet] {
+  return [Packet]()
 }
 
 private func testPackets() -> [Packet] {
