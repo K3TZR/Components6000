@@ -9,6 +9,9 @@ import SwiftUI
 import ComposableArchitecture
 import Picker
 
+// ----------------------------------------------------------------------------
+// MARK: - View(s)
+
 public struct AppView: View {
   let store: Store<AppState, AppAction>
   
@@ -39,6 +42,9 @@ public struct AppView: View {
 //    }
   }
 }
+
+// ----------------------------------------------------------------------------
+// MARK: - Preview(s)
 
 struct Appiew_Previews: PreviewProvider {
   static var previews: some View {

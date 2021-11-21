@@ -11,6 +11,9 @@ import ComposableArchitecture
 import Discovery
 import Shared
 
+// ----------------------------------------------------------------------------
+// MARK: - View(s)
+
 public struct PickerView: View {
   let store: Store<PickerState, PickerAction>
   
@@ -19,18 +22,20 @@ public struct PickerView: View {
   }
 
   @State var pickerSelection: UUID?
-  
+  @State var selectMessage = "Select a Radio Connection"
+  @State var emptyMessage = "----- No Radios Detected -----"
+
   public var body: some View {
     
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store) { viewStore in
       VStack(alignment: .leading) {
-        PickerHeader()
+        PickerHeader(message: selectMessage)
         Divider()
         if viewStore.packets.count == 0 {
           Spacer()
           HStack {
             Spacer()
-            Text("----- No packets -----")
+            Text(emptyMessage)
             Spacer()
           }
           Spacer()
@@ -44,7 +49,7 @@ public struct PickerView: View {
           }
         }
         Divider()
-        PickerFooter(viewStore: viewStore)
+        PickerFooter(store: store)
       }
       .frame(minWidth: 650, minHeight: 200, idealHeight: 300, maxHeight: 400)
       .onAppear {
@@ -55,22 +60,29 @@ public struct PickerView: View {
 }
 
 struct PickerHeader: View {
+  let message: String
+  
   var body: some View {
-    HStack(spacing: 0) {
-      Group {
-        Text("Default")
-        Text("Type")
-      }.frame(width: 95, alignment: .leading)
-      
-      Group {
-        Text("Name")
-        Text("Status")
-        Text("Station(s)")
-      }.frame(width: 140, alignment: .leading)
+    VStack {
+      Text(message)
+        .font(.title)
+        .padding(.bottom, 10)
+      HStack(spacing: 0) {
+        Group {
+          Text("Default")
+          Text("Type")
+        }.frame(width: 95, alignment: .leading)
+        
+        Group {
+          Text("Name")
+          Text("Status")
+          Text("Station(s)")
+        }.frame(width: 140, alignment: .leading)
+      }
     }
+    .font(.title2)
     .padding(.vertical, 10)
     .padding(.horizontal)
-    .font(.title)
   }
 }
 
@@ -100,32 +112,37 @@ struct PacketView: View {
 }
 
 struct PickerFooter: View {
-  let viewStore: ViewStore<PickerState, PickerAction>
-
+  let store: Store<PickerState, PickerAction>
+  
   var body: some View {
-    HStack(){
-      Button("Test") {viewStore.send(.testButtonTapped)}
-        .disabled(viewStore.selectedPacket == nil)
-      Circle()
-        .fill(viewStore.testStatus ? Color.green : Color.red)
-          .frame(width: 20, height: 20)
-
-      Spacer()
-      Button("Cancel") {viewStore.send(.cancelButtonTapped)}
-        .keyboardShortcut(.cancelAction)
+    WithViewStore(store) { viewStore in
       
-      Spacer()
-      Button("Connect") {viewStore.send(.connectButtonTapped)}
+      HStack(){
+        Button("Test") {viewStore.send(.testButtonTapped)}
+        .disabled(viewStore.selectedPacket == nil)
+        Circle()
+          .fill(viewStore.testStatus ? Color.green : Color.red)
+          .frame(width: 20, height: 20)
+        
+        Spacer()
+        Button("Cancel") {viewStore.send(.cancelButtonTapped)}
+        .keyboardShortcut(.cancelAction)
+        
+        Spacer()
+        Button("Connect") {viewStore.send(.connectButtonTapped)}
         .keyboardShortcut(.defaultAction)
         .disabled(viewStore.selectedPacket == nil)
+      }
     }
-    .padding(.horizontal, 20)
-    .padding(.bottom, 10)
+    .padding(.vertical, 10)
+    .padding(.horizontal)
   }
 }
 
+// ----------------------------------------------------------------------------
+// MARK: - Preview(s)
+
 struct PickerView_Previews: PreviewProvider {
-  
   static var previews: some View {
 
     PickerView(
@@ -147,6 +164,25 @@ struct PickerView_Previews: PreviewProvider {
   }
 }
 
+struct PickerHeader_Previews: PreviewProvider {
+  static var previews: some View {
+    PickerHeader(message: "Select a Radio Connection")
+  }
+}
+
+struct PickerFooter_Previews: PreviewProvider {
+  static var previews: some View {
+
+    PickerFooter(store: Store(
+      initialState: PickerState(packets: testPackets(),testStatus: true),
+      reducer: pickerReducer,
+      environment: PickerEnvironment() )
+    )
+  }
+}
+
+// ----------------------------------------------------------------------------
+// MARK: - Test data
 
 private func emptyTestPackets() -> [Packet] {
   return [Packet]()
