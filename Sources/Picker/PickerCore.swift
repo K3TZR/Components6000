@@ -83,7 +83,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
                            environment.getClientsEffect
       )
       
-    case .packetsUpdate(let update):
+    case let .packetsUpdate(update):
       // process a DiscoveryPacket change
       switch update.action {
       case .added:
@@ -100,7 +100,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       }
       return .none
       
-    case .clientsUpdate(let update):
+    case let .clientsUpdate(update):
       // process a GuiClient change
       switch update.action {
         
@@ -118,13 +118,14 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       //    return environment.testEffectStart(state.selectedPacket!)
       return .none
       
-    case .testResultReceived(let result):
+    case let .testResultReceived(result):
       // TODO: Bool versus actual test results???
       state.testStatus = result
       return .none
       
     case .cancelButtonTapped:
       // TODO:
+      
       return .none
       
     case .connectButtonTapped:
@@ -132,7 +133,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       //    return environment.connectEffectStart(state.selectedPacket!)
       return .none
       
-    case .connectResultReceived(let result):
+    case let .connectResultReceived(result):
       state.isConnected = result
       return .none
       
@@ -140,7 +141,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // stop the Discovery effects.
       return .cancel(ids: PacketPublisherId(), ClientPublisherId())
 
-    case .packet(index: let index, action: let action):
+    case let .packet(index: index, action: action):
       state.forceUpdate.toggle()
       return .none
     }

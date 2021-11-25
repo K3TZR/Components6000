@@ -11,40 +11,7 @@ import Combine
 import CocoaAsyncSocket
 import Shared
 
-//public enum PacketAction {
-//  case added
-//  case updated
-//  case deleted
-//}
-//
-//public struct PacketUpdate: Equatable {
-//  public var action: PacketAction
-//  public var packet: Packet
-//  public var packets: [Packet]
-//
-//  public init(_ action: PacketAction, packet: Packet, packets: [Packet]) {
-//    self.action = action
-//    self.packet = packet
-//    self.packets = packets
-//  }
-//}
-//
-//public enum ClientAction {
-//  case add
-//  case update
-//  case delete
-//}
-//public struct ClientUpdate: Equatable {
-//  public var action: ClientAction
-//  public var client: GuiClient
-//
-//  public init(_ action: ClientAction, client: GuiClient) {
-//    self.action = action
-//    self.client = client
-//  }
-//}
-
-/// Discovery implementation
+/// Listener implementation
 ///
 ///      listens for the udp broadcasts announcing the presence
 ///      of a Flex-6000 Radio, publishes changes
@@ -55,39 +22,6 @@ public final class Listener: NSObject {
   
   public var packetPublisher = PassthroughSubject<PacketUpdate, Never>()
   public var clientPublisher = PassthroughSubject<ClientUpdate, Never>()
-
-//  public enum PacketAction {
-//    case added
-//    case updated
-//    case deleted
-//  }
-//
-//  public struct PacketUpdate: Equatable {
-//    public var action: PacketAction
-//    public var packet: Packet
-//    public var packets: [Packet]
-//
-//    public init(_ action: PacketAction, packet: Packet, packets: [Packet]) {
-//      self.action = action
-//      self.packet = packet
-//      self.packets = packets
-//    }
-//  }
-
-//  public enum ClientAction {
-//    case add
-//    case update
-//    case delete
-//  }
-//  public struct ClientUpdate: Equatable {
-//    public var action: ClientAction
-//    public var client: GuiClient
-//
-//    public init(_ action: ClientAction, client: GuiClient) {
-//      self.action = action
-//      self.client = client
-//    }
-//  }
 
   // ----------------------------------------------------------------------------
   // MARK: - Private properties

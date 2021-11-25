@@ -86,31 +86,6 @@ struct PickerHeader: View {
   }
 }
 
-struct PacketView: View {
-  let store: Store<Packet, PacketAction>
-
-  var body: some View {
-    WithViewStore(self.store) { viewStore in
-      HStack(spacing: 0) {
-        Button(action: { viewStore.send(.checkboxTapped) }) {
-          Image(systemName: viewStore.isDefault ? "checkmark.square" : "square")
-        }
-        .frame(width: 95, alignment: .center)
-        .buttonStyle(PlainButtonStyle())
-        
-        Text(viewStore.isWan ? "Smartlink" : "Local").frame(width: 95, alignment: .leading)
-        
-        Group {
-          Text(viewStore.nickname)
-          Text(viewStore.status)
-          Text(viewStore.guiClientStations)
-        }.frame(width: 140, alignment: .leading)
-      }
-      .foregroundColor(viewStore.isDefault ? .red : nil)
-    }
-  }
-}
-
 struct PickerFooter: View {
   let store: Store<PickerState, PickerAction>
   
@@ -190,9 +165,15 @@ private func emptyTestPackets() -> [Packet] {
 
 private func testPackets() -> [Packet] {
   var packets = [Packet]()
-  var packet: Packet
   
-  packet = Packet()
+  packets.append(testPacket1())
+  packets.append(testPacket2())
+
+  return packets
+}
+
+func testPacket1() -> Packet {
+  var packet = Packet()
   packet.nickname = "Dougs 6500"
   packet.status = "Available"
   packet.serialNumber = "1234-5678-9012-3456"
@@ -203,9 +184,12 @@ private func testPackets() -> [Packet] {
   packet.guiClientHosts = ""
   packet.guiClientIps = "192.168.1.200,192.168.1.201"
   packet.isWan = false
-  packets.append(packet)
 
-  packet = Packet()
+  return packet
+}
+
+func testPacket2() -> Packet {
+  var packet = Packet()
   packet.nickname = "Dougs 6700"
   packet.status = "Available"
   packet.serialNumber = "5678-9012-3456-7890"
@@ -216,8 +200,7 @@ private func testPackets() -> [Packet] {
   packet.guiClientHosts = ""
   packet.guiClientIps = ""
   packet.isWan = true
-  packets.append(packet)
 
-  return packets
+  return packet
 }
 
