@@ -11,19 +11,28 @@ import Dispatch
 //import Discovery
 import Shared
 
+public enum PickType: String, Equatable {
+  case station = "STATION"
+  case radio = "RADIO"
+}
+
 public struct PickerState: Equatable {
   public init( packets: [Packet] = [],
-              defaultPacket: Packet? = nil,
-              forceUpdate: Bool = false,
-              testStatus: Bool = false,
-              selectedPacket: Packet? = nil,
-              isConnected: Bool = false) {
+               defaultPacket: Packet? = nil,
+               forceUpdate: Bool = false,
+               testStatus: Bool = false,
+               selectedPacket: Packet? = nil,
+               isConnected: Bool = false,
+               pickType: PickType = .radio,
+               pickerShouldClose: Bool = false)
+  {
     self.packets = packets
     self.defaultPacket = defaultPacket
     self.forceUpdate = forceUpdate
     self.testStatus = testStatus
     self.selectedPacket = selectedPacket
     self.isConnected = false
+    self.pickType = pickType
   }
   
   public var packets: [Packet] = []
@@ -32,6 +41,7 @@ public struct PickerState: Equatable {
   public var testStatus = false
   public var selectedPacket: Packet?
   public var isConnected = false
+  public var pickType: PickType = .radio
 }
 
 public enum PickerAction: Equatable {
@@ -70,7 +80,7 @@ public struct PickerEnvironment {
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
-  packetReducer.forEach(state: \.packets,
+  packetReducer.forEach(state: \PickerState.packets,
                         action: /PickerAction.packet(index:action:),
                         environment: { _ in PacketEnvironment() }
                        ),
@@ -125,7 +135,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       
     case .cancelButtonTapped:
       // TODO:
-      
+      print("PickerCore: .cancelButtonTapped")
       return .none
       
     case .connectButtonTapped:
@@ -142,8 +152,9 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .cancel(ids: PacketPublisherId(), ClientPublisherId())
 
     case let .packet(index: index, action: action):
+      print("PickerCore: .packet, index=\(index), action=\(action)")
       state.forceUpdate.toggle()
-      return .none
+      return .none      
     }
   }
 )

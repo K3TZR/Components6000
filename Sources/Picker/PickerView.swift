@@ -21,21 +21,17 @@ public struct PickerView: View {
     self.store = store
   }
 
-  @State var pickerSelection: UUID?
-  @State var selectMessage = "Select a Radio Connection"
-  @State var emptyMessage = "----- No Radios Detected -----"
-
   public var body: some View {
     
     WithViewStore(store) { viewStore in
       VStack(alignment: .leading) {
-        PickerHeader(message: selectMessage)
+        PickerHeader(pickType: viewStore.pickType)
         Divider()
         if viewStore.packets.count == 0 {
           Spacer()
           HStack {
             Spacer()
-            Text(emptyMessage)
+            Text("----------  NO  \(viewStore.pickType.rawValue)S  FOUND  ----------")
             Spacer()
           }
           Spacer()
@@ -60,24 +56,28 @@ public struct PickerView: View {
 }
 
 struct PickerHeader: View {
-  let message: String
+  let pickType: PickType
   
   var body: some View {
     VStack {
-      Text(message)
+      Text("Select a \(pickType.rawValue)")
         .font(.title)
         .padding(.bottom, 10)
+      
       HStack(spacing: 0) {
         Group {
           Text("Default")
           Text("Type")
-        }.frame(width: 95, alignment: .leading)
+        }
+        .font(.title2)
+        .frame(width: 95, alignment: .leading)
         
         Group {
           Text("Name")
           Text("Status")
           Text("Station(s)")
-        }.frame(width: 140, alignment: .leading)
+        }
+        .frame(width: 140, alignment: .leading)
       }
     }
     .font(.title2)
@@ -100,7 +100,7 @@ struct PickerFooter: View {
           .frame(width: 20, height: 20)
         
         Spacer()
-        Button("Cancel") {viewStore.send(.cancelButtonTapped)}
+        Button("Cancel") {viewStore.send(.cancelButtonTapped) }
         .keyboardShortcut(.cancelAction)
         
         Spacer()
@@ -131,7 +131,7 @@ struct PickerView_Previews: PreviewProvider {
     PickerView(
       store: Store(
         initialState: PickerState(packets: emptyTestPackets(),
-                                  testStatus: true),
+                                  testStatus: true, pickType: .radio),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
@@ -141,7 +141,7 @@ struct PickerView_Previews: PreviewProvider {
 
 struct PickerHeader_Previews: PreviewProvider {
   static var previews: some View {
-    PickerHeader(message: "Select a Radio Connection")
+    PickerHeader(pickType: .radio)
   }
 }
 
@@ -149,7 +149,7 @@ struct PickerFooter_Previews: PreviewProvider {
   static var previews: some View {
 
     PickerFooter(store: Store(
-      initialState: PickerState(packets: testPackets(),testStatus: true),
+      initialState: PickerState(packets: testPackets(), testStatus: true, pickType: .radio),
       reducer: pickerReducer,
       environment: PickerEnvironment() )
     )

@@ -19,6 +19,7 @@ let packetReducer = Reducer<Packet, PacketAction, PacketEnvironment> {
   state, action, environment in
   switch action {
   case .checkboxTapped:
+    print("PacketCore: .checkboxTapped")
     state.isDefault.toggle()
     return .none
   }
