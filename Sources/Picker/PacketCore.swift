@@ -9,7 +9,8 @@ import ComposableArchitecture
 import Shared
 
 public enum PacketAction {
-  case checkboxTapped
+  case defaultButtonClicked
+  case packetSelected
 }
 
 public struct PacketEnvironment {
@@ -17,10 +18,18 @@ public struct PacketEnvironment {
 
 let packetReducer = Reducer<Packet, PacketAction, PacketEnvironment> {
   state, action, environment in
+
   switch action {
-  case .checkboxTapped:
-    print("PacketCore: .checkboxTapped")
+
+  case .defaultButtonClicked:
+    print("PacketCore: .defaultButtonClicked")
     state.isDefault.toggle()
+    return .none
+
+  case .packetSelected:
+    print("PacketCore: .packetSelected")
+    state.isSelected.toggle()
     return .none
   }
 }
+//  .debug()

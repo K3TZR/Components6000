@@ -37,7 +37,7 @@ public struct PickerView: View {
           Spacer()
         } else {
           List {
-            ForEachStore(
+          ForEachStore(
               self.store.scope(state: \.packets, action: PickerAction.packet(index:action:))
             ) { packetStore in
               PacketView(store: packetStore)
@@ -51,6 +51,9 @@ public struct PickerView: View {
       .onAppear {
         viewStore.send(.onAppear)
       }
+//      .onDisappear {
+//        viewStore.send(.onDisappear)
+//      }
     }
   }
 }
@@ -67,12 +70,12 @@ struct PickerHeader: View {
       HStack(spacing: 0) {
         Group {
           Text("Default")
-          Text("Type")
         }
         .font(.title2)
         .frame(width: 95, alignment: .leading)
         
         Group {
+          Text("Type")
           Text("Name")
           Text("Status")
           Text("Station(s)")
@@ -94,7 +97,7 @@ struct PickerFooter: View {
       
       HStack(){
         Button("Test") {viewStore.send(.testButtonTapped)}
-        .disabled(viewStore.selectedPacket == nil)
+//        .disabled(viewStore.isSelected == false)
         Circle()
           .fill(viewStore.testStatus ? Color.green : Color.red)
           .frame(width: 20, height: 20)
@@ -106,7 +109,7 @@ struct PickerFooter: View {
         Spacer()
         Button("Connect") {viewStore.send(.connectButtonTapped)}
         .keyboardShortcut(.defaultAction)
-        .disabled(viewStore.selectedPacket == nil)
+//        .disabled(viewStore.selectedPacket == nil)
       }
     }
     .padding(.vertical, 10)
@@ -122,7 +125,8 @@ struct PickerView_Previews: PreviewProvider {
 
     PickerView(
       store: Store(
-        initialState: PickerState(packets: testPackets(),
+        initialState: PickerState(listener: Listener(),
+                                  packets: testPackets(),
                                   testStatus: true),
         reducer: pickerReducer,
         environment: PickerEnvironment()
@@ -130,7 +134,8 @@ struct PickerView_Previews: PreviewProvider {
     )
     PickerView(
       store: Store(
-        initialState: PickerState(packets: emptyTestPackets(),
+        initialState: PickerState(listener: Listener(),
+                                  packets: emptyTestPackets(),
                                   testStatus: true, pickType: .radio),
         reducer: pickerReducer,
         environment: PickerEnvironment()
@@ -149,7 +154,10 @@ struct PickerFooter_Previews: PreviewProvider {
   static var previews: some View {
 
     PickerFooter(store: Store(
-      initialState: PickerState(packets: testPackets(), testStatus: true, pickType: .radio),
+      initialState: PickerState(listener: Listener(),
+                                packets: testPackets(),
+                                testStatus: true,
+                                pickType: .radio),
       reducer: pickerReducer,
       environment: PickerEnvironment() )
     )
