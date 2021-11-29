@@ -132,23 +132,31 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .none
       
     case let .defaultSelected(packet):
-      // TODO:
-      //    return environment.connectEffectStart(state.selectedPacket!)
       return .none
 
-    case let .packet(index: index, action: .packetSelected):
+    case let .packet(index: index, action: .packetTapped):
+      state.packets[index].isSelected.toggle()
+      for (i, packet) in state.packets.enumerated() where i != index {
+        state.packets[i].isSelected = false
+      }
       if state.packets[index].isSelected {
         state.selectedPacket = index
-        for (i, packet) in state.packets.enumerated() where i != index {
-          state.packets[i].isSelected = false
-        }
+      } else {
+        state.selectedPacket = nil
       }
       state.forceUpdate.toggle()
       return .none
  
     case let .packet(index: index, action: .buttonTapped(.defaultBox)):
-      state.defaultPacket = index
-      state.forceUpdate.toggle()
+      state.packets[index].isDefault.toggle()
+      for (i, packet) in state.packets.enumerated() where i != index {
+        state.packets[i].isDefault = false
+      }
+      if state.packets[index].isDefault {
+        state.defaultPacket = index
+      } else {
+        state.defaultPacket = nil
+      }
       return Effect(value: .defaultSelected(state.packets[index]))
 
     case let .packet(index: index, action: action):

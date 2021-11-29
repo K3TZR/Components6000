@@ -31,17 +31,12 @@ struct PacketView: View {
           Text(viewStore.status)
           Text(viewStore.guiClientStations)
         }.onTapGesture {
-          viewStore.send(.packetSelected)
+          viewStore.send(.packetTapped)
         }
         .font(.title3)
         .frame(width: 140, alignment: .leading)
       }
-//      .background(viewStore.isSelected ? "listForeground" : "listBackground")
       .foregroundColor(viewStore.isSelected ? Color(.red) : Color(.white))
-
-//      .border(viewStore.isSelected ? .red : .gray)
-//      .font(viewStore.isSelected ? .title : nil)
-//      .foregroundColor(viewStore.isDefault ? .red : nil)
     }
   }
 }

@@ -14,7 +14,7 @@ public enum PacketButton: Equatable {
 
 public enum PacketAction: Equatable {
   case buttonTapped(PacketButton)
-  case packetSelected
+  case packetTapped
 }
 
 public struct PacketEnvironment {
@@ -27,12 +27,10 @@ let packetReducer = Reducer<Packet, PacketAction, PacketEnvironment> {
   case let .buttonTapped(button):
     switch button {
     case .defaultBox:
-      state.isDefault.toggle()
       return .none
     }
     
-  case .packetSelected:
-    state.isSelected.toggle()
+  case .packetTapped:
     return .none
   }
 }
