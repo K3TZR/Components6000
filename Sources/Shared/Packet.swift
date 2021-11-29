@@ -8,6 +8,11 @@
 
 import Foundation
 
+public enum ConnectionType: String {
+  case local = "Local"
+  case smartlink = "Smartlink"
+}
+
 public enum PacketAction {
   case added
   case updated
@@ -34,11 +39,6 @@ public struct Packet: Identifiable, Equatable, Hashable {
     self.connectionType = connectionType
   }
 
-  public enum ConnectionType: String {
-    case local = "Local"
-    case smartlink = "Smartlink"
-  }
-  
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
@@ -46,6 +46,7 @@ public struct Packet: Identifiable, Equatable, Hashable {
   public var lastSeen: Date
   public var connectionType: ConnectionType
   public var isDefault = false
+  public var isSelected = false
   public var isWan = false
 
   public var availableClients = 0

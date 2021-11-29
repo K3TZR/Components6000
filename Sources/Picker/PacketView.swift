@@ -18,7 +18,7 @@ struct PacketView: View {
   var body: some View {
     WithViewStore(self.store) { viewStore in
       HStack(spacing: 0) {
-        Button(action: { viewStore.send(.defaultButtonClicked) }) {
+        Button(action: { viewStore.send(.buttonTapped(.defaultBox)) }) {
           Image(systemName: viewStore.isDefault ? "checkmark.square" : "square")
         }
         .frame(width: 95, alignment: .center)

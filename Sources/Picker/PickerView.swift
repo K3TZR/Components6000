@@ -96,18 +96,18 @@ struct PickerFooter: View {
     WithViewStore(store) { viewStore in
       
       HStack(){
-        Button("Test") {viewStore.send(.testButtonTapped)}
+        Button("Test") {viewStore.send(.buttonTapped(.test))}
 //        .disabled(viewStore.isSelected == false)
         Circle()
           .fill(viewStore.testStatus ? Color.green : Color.red)
           .frame(width: 20, height: 20)
         
         Spacer()
-        Button("Cancel") {viewStore.send(.cancelButtonTapped) }
+        Button("Cancel") {viewStore.send(.buttonTapped(.cancel)) }
         .keyboardShortcut(.cancelAction)
         
         Spacer()
-        Button("Connect") {viewStore.send(.connectButtonTapped)}
+        Button("Connect") {viewStore.send(.buttonTapped(.connect))}
         .keyboardShortcut(.defaultAction)
 //        .disabled(viewStore.selectedPacket == nil)
       }
@@ -127,7 +127,8 @@ struct PickerView_Previews: PreviewProvider {
       store: Store(
         initialState: PickerState(listener: Listener(),
                                   packets: testPackets(),
-                                  testStatus: true),
+                                  testStatus: true
+                                 ),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
@@ -135,8 +136,10 @@ struct PickerView_Previews: PreviewProvider {
     PickerView(
       store: Store(
         initialState: PickerState(listener: Listener(),
+                                  pickType: .radio,
                                   packets: emptyTestPackets(),
-                                  testStatus: true, pickType: .radio),
+                                  testStatus: true
+                                 ),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
@@ -155,9 +158,10 @@ struct PickerFooter_Previews: PreviewProvider {
 
     PickerFooter(store: Store(
       initialState: PickerState(listener: Listener(),
+                                pickType: .radio,
                                 packets: testPackets(),
-                                testStatus: true,
-                                pickType: .radio),
+                                testStatus: true
+                                ),
       reducer: pickerReducer,
       environment: PickerEnvironment() )
     )
