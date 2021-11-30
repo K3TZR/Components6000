@@ -12,7 +12,9 @@ import Discovery
 // ----------------------------------------------------------------------------
 // MARK: - Production effects
 
-public func packetsSubscription(_ listener: Listener) -> Effect<PickerAction, Never> {
+private var listener = Listener()
+
+public func packetsSubscription() -> Effect<PickerAction, Never> {
   return listener.packetPublisher
     .receive(on: DispatchQueue.main)
     .map { update in .packetsUpdate(update) }
@@ -20,7 +22,23 @@ public func packetsSubscription(_ listener: Listener) -> Effect<PickerAction, Ne
     .cancellable(id: PacketsSubscriptionId())
 }
 
-public func clientsSubscription(_ listener: Listener) -> Effect<PickerAction,Never> {
+
+//public func testPacketsSubscription() -> Effect<PickerAction, Never> {
+//  return listener.packetPublisher
+//    .receive(on: DispatchQueue.main)
+//    .map { update in .packetsUpdate(update) }
+//    .eraseToEffect()
+//    .cancellable(id: PacketsSubscriptionId())
+//}
+
+
+
+
+
+
+
+
+public func clientsSubscription() -> Effect<PickerAction,Never> {
   return listener.clientPublisher
     .receive(on: DispatchQueue.main)
     .map { update in PickerAction.clientsUpdate(update) }
@@ -28,20 +46,10 @@ public func clientsSubscription(_ listener: Listener) -> Effect<PickerAction,Nev
     .cancellable(id: ClientsSubscriptionId())
 }
 
-// TODO: Where is this publisher?
-//public func testEffect(_ packet: Packet) -> Effect<PickerAction,Never> {
-//  return listener.testPublisher
+//public func testClientsSubscription() -> Effect<PickerAction,Never> {
+//  return listener.clientPublisher
 //    .receive(on: DispatchQueue.main)
-//    .map { result in PickerAction.testResultReceived(result) }
+//    .map { update in PickerAction.clientsUpdate(update) }
 //    .eraseToEffect()
-//    .cancellable(id: TestPublisherId())
-//}
-
-// TODO: Where is this publisher?
-//public func connectEffect(_ packet: Packet) -> Effect<PickerAction,Never> {
-//  return listener.testPublisher
-//    .receive(on: DispatchQueue.main)
-//    .map { result in PickerAction.connectResultReceived(result) }
-//    .eraseToEffect()
-//    .cancellable(id: ConnectPublisherId())
+//    .cancellable(id: ClientsSubscriptionId())
 //}

@@ -13,7 +13,7 @@ let package = Package(
     // Products define the executables and libraries a package produces, and make them visible to other packages.
     .library(name: "Shared", targets: ["Shared"]),
     .library(name: "Discovery", targets: ["Discovery"]),
-    .library(name: "AppFeature", targets: ["AppFeature"]),
+//    .library(name: "AppFeature", targets: ["AppFeature"]),
     .library(name: "Picker", targets: ["Picker"]),
   ],
   dependencies: [
@@ -37,13 +37,13 @@ let package = Package(
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),
-    .target(
-      name: "AppFeature",
-      dependencies: [
-        "Picker",
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-      ]
-    ),
+//    .target(
+//      name: "AppFeature",
+//      dependencies: [
+//        "Picker",
+//        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+//      ]
+//    ),
     .target(
       name: "Picker",
       dependencies: [
@@ -56,9 +56,9 @@ let package = Package(
 //      name: "AppFeatureTests",
 //      dependencies: ["AppFeature"]
 //    ),
-//    .testTarget(
-//      name: "PickerFeatureTests",
-//      dependencies: ["PickerFeature"]
-//    ),
+    .testTarget(
+      name: "PickerTests",
+      dependencies: ["Picker"]
+    ),
   ]
 )

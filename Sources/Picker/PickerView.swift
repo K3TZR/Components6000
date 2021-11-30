@@ -125,8 +125,7 @@ struct PickerView_Previews: PreviewProvider {
 
     PickerView(
       store: Store(
-        initialState: PickerState(listener: Listener(),
-                                  packets: testPackets(),
+        initialState: PickerState(packets: testPackets(),
                                   testStatus: true
                                  ),
         reducer: pickerReducer,
@@ -135,8 +134,7 @@ struct PickerView_Previews: PreviewProvider {
     )
     PickerView(
       store: Store(
-        initialState: PickerState(listener: Listener(),
-                                  pickType: .radio,
+        initialState: PickerState(pickType: .radio,
                                   packets: emptyTestPackets(),
                                   testStatus: true
                                  ),
@@ -157,8 +155,7 @@ struct PickerFooter_Previews: PreviewProvider {
   static var previews: some View {
 
     PickerFooter(store: Store(
-      initialState: PickerState(listener: Listener(),
-                                pickType: .radio,
+      initialState: PickerState(pickType: .radio,
                                 packets: testPackets(),
                                 testStatus: true
                                 ),

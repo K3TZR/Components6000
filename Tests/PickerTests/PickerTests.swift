@@ -5,14 +5,15 @@
 //  Created by Douglas Adams on 11/14/21.
 //
 
+import XCTest
+import ComposableArchitecture
+import Shared
 import Picker
 import Discovery
-import ComposableArchitecture
-import XCTest
 
 @testable import Picker
 
-class PickerCoreTests: XCTestCase {
+class PickerTests: XCTestCase {
   let testListener = Listener()
   let scheduler = DispatchQueue.test
   
@@ -22,48 +23,56 @@ class PickerCoreTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.scheduler.eraseToAnyScheduler() },
-        listenerEffectStart: { self.testListenerEffect() },
-        packetEffectStart: { _ in self.testPacketEffect(self.testListener) },
-        guiClientEffectStart: { _ in self.testGuiClientEffect(self.testListener) }
+        packetsEffect: { self.testPacketSubscription() },
+        clientsEffect: { self.testClientSubscription() }
       )
     )
     
     store.send(.onAppear)
     
-    store.receive( .listenerStarted(testListener) ) {
-      $0.listener = self.testListener
-    }
     self.scheduler.advance(by: 1.0)
 
-    store.receive( .pickerUpdate(testPacketUpdate()) ) {
+    store.receive( .packetsUpdate(testPacketUpdate()) ) {
       $0.packets = self.testPackets()
       $0.forceUpdate.toggle()
     }
     self.scheduler.advance(by: 0.5)
 
-    store.receive( .guiClientUpdate(testGuiClientUpdate()) ) {
+    store.receive( .clientsUpdate(testClientUpdate()) ) {
       $0.forceUpdate.toggle()
     }
+    
+    store.send(.packet(index: 0, action: .buttonTapped(.defaultBox)) ) {
+      $0.defaultPacket = 0
+    }
+    store.receive( .defaultSelected(testPacket()) ) {
+      $0.packets[0] = self.testPacket()
+    }
+    store.send(.packet(index: 0, action: .buttonTapped(.defaultBox)) ) {
+      $0.defaultPacket = nil
+    }
+    store.receive( .defaultSelected(nil) )
+
+    store.send(.buttonTapped(.test))
+    store.send(.buttonTapped(.connect))
+    store.send(.buttonTapped(.cancel))
   }
   
   // ----------------------------------------------------------------------------
   // MARK: - Test effects
   
-  private func testListenerEffect() -> Effect<PickerAction, Never> {
-    Effect(value: .listenerStarted( testListener ))
-  }
-  
-  private func testPacketEffect(_ listener: Listener) -> Effect<PickerAction, Never> {
-    return Effect(value: .pickerUpdate(testPacketUpdate()))
+  private func testPacketSubscription() -> Effect<PickerAction, Never> {
+    return Effect(value: .packetsUpdate(testPacketUpdate()))
       .delay(for: .milliseconds(1000), scheduler: self.scheduler.eraseToAnyScheduler())
       .eraseToEffect()
-
+      .cancellable(id: PacketsSubscriptionId())
   }
-  
-  private func testGuiClientEffect(_ listener: Listener) -> Effect<PickerAction, Never> {
-    return Effect(value: .guiClientUpdate(testGuiClientUpdate()))
+
+  private func testClientSubscription() -> Effect<PickerAction, Never> {
+    return Effect(value: .clientsUpdate(testClientUpdate()))
       .delay(for: .milliseconds(500), scheduler: self.scheduler.eraseToAnyScheduler())
       .eraseToEffect()
+      .cancellable(id: ClientsSubscriptionId())
   }
   
   private func testPacket() -> Packet {
@@ -86,31 +95,15 @@ class PickerCoreTests: XCTestCase {
     return [testPacket()]
   }
   
-  private func testPacketUpdate() -> Listener.PacketUpdate {
-//    var packets = [Packet]()
-//    var packet = Packet()
-//
-//    packet.nickname = "Dougs 6500"
-//    packet.status = "Available"
-//    packet.serialNumber = "1234-5678-9012-3456"
-//    packet.publicIp = "10.0.1.200"
-//    packet.guiClientHandles = "1,2"
-//    packet.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
-//    packet.guiClientStations = "Windows,iPad"
-//    packet.guiClientHosts = ""
-//    packet.guiClientIps = "192.168.1.200,192.168.1.201"
-//
-//    packets.append(packet)
-    
-//    return Listener.PacketUpdate(.added, packet: packet, packets: packets)
-    return Listener.PacketUpdate(.added, packet: testPacket(), packets: testPackets())
+  private func testPacketUpdate() -> PacketUpdate {
+    return PacketUpdate(.added, packet: testPacket(), packets: testPackets())
   }
   
-  private func testGuiClientUpdate() -> Listener.ClientUpdate {
+  private func testClientUpdate() -> ClientUpdate {
     let client = GuiClient(clientHandle: UInt32(2),
                            station: "iPad",
                            program: "SmartSDR-iOS")
     
-    return Listener.ClientUpdate(.add, client: client)
+    return ClientUpdate(.add, client: client)
   }
 }

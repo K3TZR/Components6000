@@ -23,8 +23,7 @@ public enum PickerButton: Equatable {
 }
 
 public struct PickerState: Equatable {
-  public init(listener: Listener,
-              pickType: PickType = .radio,
+  public init(pickType: PickType = .radio,
               packets: [Packet] = [],
               selectedPacket: Int? = nil,
               defaultPacket: Int? = nil,
@@ -32,7 +31,6 @@ public struct PickerState: Equatable {
               forceUpdate: Bool = false,
               testStatus: Bool = false)
   {
-    self.listener = listener
     self.pickType = pickType
     self.packets = packets
     self.selectedPacket = selectedPacket
@@ -42,7 +40,6 @@ public struct PickerState: Equatable {
     self.testStatus = testStatus
   }
   
-  public var listener: Listener
   public var pickType: PickType = .radio
   public var packets: [Packet] = []
   public var selectedPacket: Int? = nil
@@ -66,14 +63,14 @@ public enum PickerAction: Equatable {
   case packetsUpdate(PacketUpdate)
   case clientsUpdate(ClientUpdate)
   case packet(index: Int, action: PacketAction)
-  case defaultSelected(Packet)
+  case defaultSelected(Packet?)
 }
 
 public struct PickerEnvironment {
   public init(
     queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
-    packetsEffect: @escaping (Listener) -> Effect<PickerAction, Never> = packetsSubscription(_:),
-    clientsEffect: @escaping (Listener) -> Effect<PickerAction, Never> = clientsSubscription(_:)
+    packetsEffect: @escaping () -> Effect<PickerAction, Never> = packetsSubscription,
+    clientsEffect: @escaping () -> Effect<PickerAction, Never> = clientsSubscription
   )
   {
     self.queue = queue
@@ -82,8 +79,8 @@ public struct PickerEnvironment {
   }
   
   var queue: () -> AnySchedulerOf<DispatchQueue>
-  var packetsEffect: (Listener) -> Effect<PickerAction, Never>
-  var clientsEffect: (Listener) -> Effect<PickerAction, Never>
+  var packetsEffect: () -> Effect<PickerAction, Never>
+  var clientsEffect: () -> Effect<PickerAction, Never>
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
@@ -95,23 +92,19 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     switch action {
     case .onAppear:
       // start listening for Discovery broadcasts
-      return .concatenate( environment.packetsEffect(state.listener),
-                           environment.clientsEffect(state.listener)
+      return .concatenate( environment.packetsEffect(),
+                           environment.clientsEffect()
       )
       
     case let .buttonTapped(button):
       switch button {
       case .test:
-        // TODO:
-        //    return environment.testEffectStart(state.selectedPacket!)
         return .none
       
       case .cancel:
         return .cancel(ids: PacketsSubscriptionId(), ClientsSubscriptionId())
       
       case .connect:
-        // TODO:
-        //    return environment.connectEffectStart(state.selectedPacket!)
         return .none
       }
       
@@ -154,10 +147,11 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       }
       if state.packets[index].isDefault {
         state.defaultPacket = index
+        return Effect(value: .defaultSelected(state.packets[index]))
       } else {
         state.defaultPacket = nil
+        return Effect(value: .defaultSelected(nil))
       }
-      return Effect(value: .defaultSelected(state.packets[index]))
 
     case let .packet(index: index, action: action):
       state.forceUpdate.toggle()
