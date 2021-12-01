@@ -33,8 +33,6 @@ public struct LogViewer: View {
         LogFooter(store: store)
       }
       .frame(minWidth: 700)
-      .padding(.horizontal)
-//      .padding(.vertical, 10)
       .toolbar {
         Button("Api Tester") { viewStore.send(.buttonTapped(.apiTester)) }
       }
@@ -55,20 +53,26 @@ struct LogHeader: View {
   var body: some View {
     WithViewStore(self.store) { viewStore in
       HStack {
-        Picker("Show Level", selection: viewStore.binding(get: \.logLevel, send: .logLevelChanged("debug")) ) {
+        Picker("Show Level", selection: viewStore.binding(
+          get: \.logLevel,
+          send: { value in .logLevelChanged(value) } )) {
           ForEach(LogLevel.allCases, id: \.self) {
             Text($0.rawValue)
           }
         }.frame(width: 175)
         
         Spacer()
-        Picker("Filter by", selection: viewStore.binding(get: \.filterBy, send: .filterByChanged("none")) ) {
+        Picker("Filter by", selection: viewStore.binding(
+          get: \.filterBy,
+          send: { value in .filterByChanged(value) } )) {
           ForEach(LogFilter.allCases, id: \.self) {
             Text($0.rawValue)
           }
         }.frame(width: 175)
         
-        TextField("Filter text", text: viewStore.binding(get: \.filterByText, send: .filterByTextChanged("")) )
+        TextField("Filter text", text: viewStore.binding(
+          get: \.filterByText,
+          send: { value in .filterByTextChanged(value) } ))
           .frame(maxWidth: 300, alignment: .leading)
         //                .modifier(ClearButton(boundText: $logManager.filterByText))
         
@@ -116,9 +120,13 @@ struct LogFooter: View {
   var body: some View {
     WithViewStore(self.store) { viewStore in
       HStack {
-        Stepper("Font Size", value: viewStore.binding(get: \.fontSize, send: .fontSizeChanged(14)) )
+        Stepper("Font Size",
+                value: viewStore.binding(
+                  get: \.fontSize,
+                  send: { value in .fontSizeChanged(value) }),
+                in: 8...14)
         Text(String(format: "%2.0f", viewStore.fontSize)).frame(alignment: .leading)
-
+        
         Spacer()
         Button("Email") { viewStore.send(.buttonTapped(.email)) }
         

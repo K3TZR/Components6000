@@ -37,14 +37,16 @@ public struct LogState: Equatable {
   public var logLevel: LogLevel = .debug
   public var fontSize: CGFloat = 12
   
-  public init() {}
+  public init(fontSize: CGFloat) {
+    self.fontSize = fontSize
+  }
 }
 
 public enum LogAction: Equatable {
   case buttonTapped(LogButton)
   case filterByTextChanged(String)
-  case filterByChanged(String)
-  case logLevelChanged(String)
+  case filterByChanged(LogFilter)
+  case logLevelChanged(LogLevel)
   case fontSizeChanged(CGFloat)
 }
 
@@ -93,18 +95,17 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     state.filterByText = text
     return .none
 
-  case let .filterByChanged(string):
-    state.filterBy = LogFilter(rawValue: string) ?? .none
+  case let .filterByChanged(filter):
+    state.filterBy = filter
     return .none
 
-  case let .logLevelChanged(string):
-    state.logLevel = LogLevel(rawValue: string) ?? .debug
+  case let .logLevelChanged(level):
+    state.logLevel = level
     return .none
 
   case let .fontSizeChanged(value):
     state.fontSize = value
     return .none
   }
-  
 }
   .debug()

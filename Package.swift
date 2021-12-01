@@ -29,6 +29,7 @@ let package = Package(
     .target(
       name: "LogViewer",
       dependencies: [
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
     .target(
