@@ -9,7 +9,7 @@ import ComposableArchitecture
 
 public enum LogButton: Equatable {
   case showTimestamps
-  case apiTester
+  case apiView
   case email
   case load
   case save
@@ -66,8 +66,8 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
       state.showTimestamps.toggle()
       return .none
       
-    case .apiTester:
-      print("LogCore: button .apiTester")
+    case .apiView:
+      print("LogCore: button .apiView")
       return .none
 
     case .email:

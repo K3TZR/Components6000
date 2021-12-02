@@ -11,7 +11,7 @@ import SwiftUI
 
 /// A View to display the contents of the app's log
 ///
-public struct LogViewer: View {
+public struct LogView: View {
   let store: Store<LogState, LogAction>
   
   public init(store: Store<LogState, LogAction>) {
@@ -34,7 +34,7 @@ public struct LogViewer: View {
       }
       .frame(minWidth: 700)
       .toolbar {
-        Button("Api Tester") { viewStore.send(.buttonTapped(.apiTester)) }
+        Button("Api View") { viewStore.send(.buttonTapped(.apiView)) }
       }
     }
     //    .onAppear() {
