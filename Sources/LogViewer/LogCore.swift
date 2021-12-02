@@ -67,27 +67,33 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
       return .none
       
     case .apiView:
-      print("LogCore: button .apiView")
+      // TODO
+      print("-----> LogCore: NOT IMPLEMENTED \(action)")
       return .none
 
     case .email:
-      print("LogCore: button .email")
+      // TODO
+      print("-----> LogCore: NOT IMPLEMENTED \(action)")
       return .none
 
     case .load:
-      print("LogCore: button .load")
+      // TODO
+      print("-----> LogCore: NOT IMPLEMENTED \(action)")
       return .none
 
     case .save:
-      print("LogCore: button .save")
+      // TODO
+      print("-----> LogCore: NOT IMPLEMENTED \(action)")
       return .none
 
     case .refresh:
-      print("LogCore: button .refresh")
+      // TODO
+      print("-----> LogCore: NOT IMPLEMENTED \(action)")
       return .none
 
     case .clear:
-      print("LogCore: button .clear")
+      // TODO
+      print("-----> LogCore: NOT IMPLEMENTED \(action)")
       return .none
     }
     
@@ -108,4 +114,4 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     return .none
   }
 }
-  .debug()
+  .debug("LOG ")

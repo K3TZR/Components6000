@@ -23,15 +23,16 @@ public struct PacketEnvironment {
 let packetReducer = Reducer<Packet, PacketAction, PacketEnvironment> {
   state, action, environment in
   
-  switch action {
-  case let .buttonTapped(button):
-    switch button {
-    case .defaultBox:
-      return .none
-    }
-    
-  case .packetTapped:
-    return .none
-  }
+//  switch action {
+//  case let .buttonTapped(button):
+//    switch button {
+//    case .defaultBox:
+//      return .none
+//    }
+//
+//  case .packetTapped:
+//    return .none
+//  }
+  return .none
 }
-  .debug()
+  .debug("PACKET ")

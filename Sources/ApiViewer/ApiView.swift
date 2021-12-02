@@ -42,7 +42,7 @@ public struct ApiView: View {
       }
       .sheet(
         isPresented: viewStore.binding(
-          get: { $0.showPicker },
+          get: { $0.pickerState != nil },
           send: ApiAction.sheetClosed),
         content: {
           IfLetStore(

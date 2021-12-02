@@ -14,7 +14,6 @@ import Shared
 
 public enum ApiButton {
   case logView
-  case apiView
   case startStop
   case gui
   case times
@@ -37,9 +36,7 @@ public struct ApiState: Equatable {
   public var showPings = false
   public var showReplies = false
   public var showButtons = false
-  public var showPicker = false
-  public var pickerState: PickerState?
-//  public var logState: LogState?
+  public var pickerState: PickerState? = nil
   public var connectedPacket: Packet? = nil
   public var defaultPacket: Packet? = nil
   public var clearNow = false
@@ -92,15 +89,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case let .buttonTapped(button):
       switch button {
       case .logView:
-        print("RootCore: Log Viewer button tapped")
-//        state.rootViewType = .log
-//        state.logState = LogState(fontSize: state.fontSize)
-      case .apiView:
-        print("RootCore: Log Viewer button tapped")
-//        state.rootViewType = .api
-      case .startStop:
+        // handled by Root
+        break
+     case .startStop:
         state.pickerState = PickerState(pickType: .radio)
-        state.showPicker = true
       case .gui:
         state.isGui.toggle()
       case .times:
@@ -114,76 +106,58 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       case .clearDefault:
         state.defaultPacket = nil
       case .smartlink:
-        print("RootCore: smartlink button tapped")
+        print("-----> ApiCore: NOT IMPLEMENTED \(action)")
       case .status:
-        print("RootCore: status button tapped")
+        print("-----> ApiCore: NOT IMPLEMENTED \(action)")
       case .clearOnConnect:
         state.clearOnConnect.toggle()
       case .clearOnDisconnect:
         state.clearOnDisconnect.toggle()
       case .clearNow:
-        print("RootCore: Clear Now button tapped")
+        print("-----> ApiCore: NOT IMPLEMENTED \(action)")
       case .send:
-        print("RootCore: Send button tapped")
+        print("-----> ApiCore: NOT IMPLEMENTED \(action)")
       case .clearOnSend:
         state.clearOnSend.toggle()
       }
       return .none
       
     case .sheetClosed:
-      print("RootCore: .sheetClosed")
       state.pickerState = nil
       return .none
       
     case let .fontSizeChanged(size):
-      print("RootCore: .fontSizeChanged")
       state.fontSize = size
       return .none
       
     case let .commandToSendChanged(value):
-      print("RootCore: .commandToSendChanged, \(value)")
       state.commandToSend = value
       return .none
 
     case let .pickerAction(.defaultSelected(packet)):
-      print("RootCore: .pickerAction: \(action)")
       state.defaultPacket = packet
       return .none
       
     case .pickerAction(.buttonTapped(.cancel)):
-      print("RootCore: .pickerAction: \(action)")
-      state.showPicker = false
       state.pickerState = nil
       return .none
       
     case let .pickerAction(.connectResultReceived(index)):
-      print("RootCore: .picker: \(action), index = \(index == nil ? "none" : String(index!))")
+      print("-----> ApiCore: NOT IMPLEMENTED \(action)")
       return .none
       
     case .pickerAction(.buttonTapped(.test)):
-      print("RootCore: .picker: \(action)")
+      print("-----> ApiCore: NOT IMPLEMENTED \(action)")
+      return .none
+      
+    case .pickerAction(.buttonTapped(.connect)):
+      print("-----> ApiCore: NOT IMPLEMENTED \(action)")
       return .none
       
     case .pickerAction(_):
-      print("RootCore: .pickerAction: \(action)")
+      // IGNORE ALL OTHERS
       return .none
-      
-//    case .logAction(.buttonTapped(.apiView)):
-//      print("RootCore: .logAction: \(action)")
-//      state.logState = nil
-//      state.viewType = .api
-//      return .none
-//
-//    case let .logAction(.fontSizeChanged(size)):
-//      print("RootCore: .logAction(.fontSizeChanged): \(size)")
-//      state.fontSize = size
-//      return .none
-//
-//    case .logAction(_):
-//      print("RootCore: .logAction: \(action)")
-//      return .none
     }
   }
 )
-
-//  .debug()
+  .debug("API ")

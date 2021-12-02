@@ -100,12 +100,16 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     case let .buttonTapped(button):
       switch button {
       case .test:
+        // TODO
+        print("-----> PickerCore: NOT IMPLEMENTED \(action)")
         return .none
       
       case .cancel:
         return .cancel(ids: PacketsSubscriptionId(), ClientsSubscriptionId())
       
       case .connect:
+        // TODO
+        print("-----> PickerCore: NOT IMPLEMENTED \(action)")
         return .none
       }
       
@@ -158,12 +162,14 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       state.forceUpdate.toggle()
       return .none
     
-    case .connectResultReceived(_):
+    case let .connectResultReceived(result):
+      // TODO
+      print("-----> PickerCore: NOT IMPLEMENTED \(action)")
       return .none
     }
   }
 )
-  .debug()
+  .debug("PICKER ")
 
 struct PacketsSubscriptionId: Hashable {}
 struct ClientsSubscriptionId: Hashable {}
