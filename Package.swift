@@ -15,6 +15,7 @@ let package = Package(
     .library(name: "Discovery", targets: ["Discovery"]),
 //    .library(name: "AppFeature", targets: ["AppFeature"]),
     .library(name: "Picker", targets: ["Picker"]),
+    .library(name: "ApiViewer", targets: ["ApiViewer"]),
     .library(name: "LogViewer", targets: ["LogViewer"]),
   ],
   dependencies: [
@@ -26,6 +27,14 @@ let package = Package(
   targets: [
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.
     // Targets can depend on other targets in this package, and on products in packages this package depends on.
+    .target(
+      name: "ApiViewer",
+      dependencies: [
+        "Picker",
+        "Discovery",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
     .target(
       name: "LogViewer",
       dependencies: [

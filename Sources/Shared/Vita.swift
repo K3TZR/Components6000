@@ -21,7 +21,7 @@ public struct VitaHeader {
   //      This header is 28 bytes / 4 UInt32's
   //
   var packetDesc                            : UInt8 = 0
-  var timeStampDesc                         : UInt8 = 0                           // the lsb four bits are used for sequence number
+  var timeStampDesc                         : UInt8 = 0   // the lsb four bits are used for sequence number
   var packetSize                            : UInt16 = 0
   var streamId                              : UInt32 = 0
   var oui                                   : UInt32 = 0
