@@ -1,6 +1,6 @@
 //
 //  Packet.swift
-//  TestDiscoveryPackage/Discovery
+//  TestSmartlink/Shared
 //
 //  Created by Douglas Adams on 10/28/21
 //  Copyright © 2021 Douglas Adams. All rights reserved.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-public enum ConnectionType: String {
+public enum Source: String {
   case local = "Local"
   case smartlink = "Smartlink"
 }
@@ -33,71 +33,78 @@ public struct PacketUpdate: Equatable {
 
 public struct Packet: Identifiable, Equatable, Hashable {
   
-  public init(connectionType: ConnectionType = .local) {
+  public init(source: Source = .local) {
     id = UUID()
     lastSeen = Date() // now
-    self.connectionType = connectionType
+    self.source = source
   }
 
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  public var id: UUID
-  public var lastSeen: Date
-  public var connectionType: ConnectionType
-  public var isDefault = false
-  public var isSelected = false
-  public var isWan = false
+  // these fields are NOT in the received packet but are in the Packet struct
+  public var id: UUID                             //  NOT in received packet
+  public var lastSeen: Date                       //  NOT in received packet
+  public var source: Source                       //  NOT in received packet
+  public var isDefault = false                    //  NOT in received packet
+  public var isPortForwardOn = false              //  NOT in received packet
+  public var isSelected = false                   //  NOT in received packet
+  public var guiClients = GuiClients().collection //  NOT in received packet
+  public var localInterfaceIP = ""                //  NOT in received packet
+  public var requiresHolePunch = false            //  NOT in received packet
 
-  public var availableClients = 0
-  public var availablePanadapters = 0
-  public var availableSlices = 0
-  public var callsign = ""
-  public var discoveryVersion = ""
-  public var firmwareVersion = ""
-  public var fpcMac = ""
-  public var guiClientHandles = ""
-  public var guiClientPrograms = ""
-  public var guiClientStations = ""
-  public var guiClientHosts = ""
-  public var guiClientIps = ""
-  public var inUseHost = ""
-  public var inUseIp = ""
-  public var licensedClients = 0
-  public var maxLicensedVersion = ""
-  public var maxPanadapters = 0
-  public var maxSlices = 0
-  public var model = ""
-  public var nickname = ""
-  public var port = 0
-  public var publicIp = ""
-  public var publicTlsPort: Int?
-  public var publicUdpPort: Int?
-  public var publicUpnpTlsPort: Int?
-  public var publicUpnpUdpPort: Int?
-  public var radioLicenseId = ""
-  public var requiresAdditionalLicense = false
-  public var serialNumber = ""
-  public var status = ""
-  public var upnpSupported = false
-  public var wanConnected = false
-  
-  public var guiClients = GuiClients().collection
-    
+  // PACKET TYPE                                     LAN   WAN
+
+  // these fields in the received packet are copied to the Packet struct
+  public var callsign = ""                        //  X     X
+  public var guiClientHandles = ""                //  X     X
+  public var guiClientPrograms = ""               //  X     X
+  public var guiClientStations = ""               //  X     X
+  public var guiClientHosts = ""                  //  X     X
+  public var guiClientIps = ""                    //  X     X
+  public var inUseHost = ""                       //  X     X
+  public var inUseIp = ""                         //  X     X
+  public var model = ""                           //  X     X
+  public var nickname = ""                        //  X     X   in WAN as "radio_name"
+  public var port = 0                             //  X
+  public var publicIp = ""                        //  X     X   in LAN as "ip"
+  public var publicTlsPort: Int?                  //        X
+  public var publicUdpPort: Int?                  //        X
+  public var publicUpnpTlsPort: Int?              //        X
+  public var publicUpnpUdpPort: Int?              //        X
+  public var serial = ""                          //  X     X
+  public var status = ""                          //  X     X
+  public var upnpSupported = false                //        X
+  public var version = ""                         //  X     X
+
+  // these fields in the received packet are NOT copied to the Packet struct
+//  public var availableClients = 0                 //  X         ignored
+//  public var availablePanadapters = 0             //  X         ignored
+//  public var availableSlices = 0                  //  X         ignored
+//  public var discoveryProtocolVersion = ""        //  X         ignored
+//  public var fpcMac = ""                          //  X         ignored
+//  public var licensedClients = 0                  //  X         ignored
+//  public var maxLicensedVersion = ""              //  X     X   ignored
+//  public var maxPanadapters = 0                   //  X         ignored
+//  public var maxSlices = 0                        //  X         ignored
+//  public var radioLicenseId = ""                  //  X     X   ignored
+//  public var requiresAdditionalLicense = false    //  X     X   ignored
+//  public var wanConnected = false                 //  X         ignored
+
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
   
   public static func ==(lhs: Packet, rhs: Packet) -> Bool {
     // same serial number
-    return lhs.serialNumber == rhs.serialNumber && lhs.publicIp == rhs.publicIp
+    return lhs.serial == rhs.serial && lhs.publicIp == rhs.publicIp
   }
   
   public func isDifferent(from currentPacket: Packet) -> Bool {
     // status
     guard self.status == currentPacket.status else { return true }
-    guard self.availableClients == currentPacket.availableClients else { return true }
-    guard self.availablePanadapters == currentPacket.availablePanadapters else { return true }
-    guard self.availableSlices == currentPacket.availableSlices else { return true }
+//    guard self.availableClients == currentPacket.availableClients else { return true }
+//    guard self.availablePanadapters == currentPacket.availablePanadapters else { return true }
+//    guard self.availableSlices == currentPacket.availableSlices else { return true }
     // GuiClient
     guard self.guiClientHandles == currentPacket.guiClientHandles else { return true }
     guard self.guiClientPrograms == currentPacket.guiClientPrograms else { return true }
@@ -130,7 +137,7 @@ public struct Packet: Identifiable, Equatable, Hashable {
   }
 
   /// Parse the GuiClient CSV fields in a packet
-  public mutating func parse() -> (additions: [GuiClient], deletions: [GuiClient]) {
+  public mutating func parseGuiClients() -> (additions: [GuiClient], deletions: [GuiClient]) {
     
     guard guiClientPrograms != "" && guiClientStations != "" && guiClientHandles != "" else { return ([GuiClient](), [GuiClient]()) }
     

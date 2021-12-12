@@ -7,22 +7,57 @@
 
 import Foundation
 
+public struct LogEntry {
+  public init(_ message: String, _ logLevel: LogLevel, _ function: StaticString, _ file: StaticString, _ line: Int) {
+    self.message = message
+    self.logLevel = logLevel
+    self.function = function
+    self.file = file
+    self.line = line
+  }
+  
+  public var message: String
+  public var logLevel: LogLevel
+  public var function: StaticString
+  public var file: StaticString
+  public var line: Int
+}
+
+public enum LogLevel: String, CaseIterable {
+    case debug    = "Debug"
+    case info     = "Info"
+    case warning  = "Warning"
+    case error    = "Error"
+}
+
 // ----------------------------------------------------------------------------
 // MARK: - Aliases
 
 public typealias GuiClientId = String
 public typealias Handle = UInt32
+public typealias IdToken = String
 public typealias KeyValuesArray = [(key:String, value:String)]
 public typealias ValuesArray = [String]
 
 // ----------------------------------------------------------------------------
 // MARK: - Extensions
 
+public extension Bool {
+    var as1or0Int: Int { self ? 1 : 0 }
+    var as1or0: String { self ? "1" : "0" }
+    var asTrueFalse: String { self ? "True" : "False" }
+    var asTF: String { self ? "T" : "F" }
+    var asOnOff: String { self ? "on" : "off" }
+    var asPassFail: String { self ? "PASS" : "FAIL" }
+    var asYesNo: String { self ? "YES" : "NO" }
+}
+
 public extension String {
-  var handle          : Handle?         { self.hasPrefix("0x") ? UInt32(String(self.dropFirst(2)), radix: 16) : UInt32(self, radix: 16) }
-  var bValue          : Bool            { (Int(self) ?? 0) == 1 ? true : false }
-  var iValue          : Int             { Int(self) ?? 0 }
-  
+  var handle: Handle? { self.hasPrefix("0x") ? UInt32(String(self.dropFirst(2)), radix: 16) : UInt32(self, radix: 16) }
+  var bValue: Bool { (Int(self) ?? 0) == 1 ? true : false }
+  var iValue: Int { Int(self) ?? 0 }
+  var tValue: Bool { self.lowercased() == "true" ? true : false }
+
   /// Parse a String of <key=value>'s separated by the given Delimiter
   /// - Parameters:
   ///   - delimiter:          the delimiter between key values (defaults to space)
@@ -142,4 +177,28 @@ extension Version {
 
   public var isNewApi: Bool { isV3 || isV2NewApi }
   public var isOldApi: Bool { isV1 || isV2 }
+}
+
+// ----------------------------------------------------------------------------
+// MARK: - Property Wrappers
+
+@propertyWrapper
+final public class Atomic {
+  static let q = DispatchQueue(label: "AtomicQ", attributes: [.concurrent])
+  
+  public var projectedValue: Atomic { return self }
+  
+  private var value : Int
+  
+  public init(_ wrappedValue: Int) {
+    self.value = wrappedValue
+  }
+  
+  public var wrappedValue: Int {
+    get { Atomic.q.sync { value }}
+    set { Atomic.q.sync(flags: .barrier) { value = newValue }} }
+  
+  public func mutate(_ mutation: (inout Int) -> Void) {
+    return Atomic.q.sync(flags: .barrier) { mutation(&value) }
+  }
 }

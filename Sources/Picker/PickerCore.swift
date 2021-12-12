@@ -25,29 +25,29 @@ public enum PickerButton: Equatable {
 
 public struct PickerState: Equatable {
   public init(pickType: PickType = .radio,
-              packets: [Packet] = [],
               selectedPacket: Int? = nil,
               defaultPacket: Int? = nil,
               connectedPacket: Int? = nil,
               forceUpdate: Bool = false,
-              testStatus: Bool = false)
+              testStatus: Bool = false,
+              discovery: Discovery = Discovery.sharedInstance)
   {
     self.pickType = pickType
-    self.packets = packets
     self.selectedPacket = selectedPacket
     self.defaultPacket = defaultPacket
     self.connectedPacket = connectedPacket
     self.forceUpdate = forceUpdate
     self.testStatus = testStatus
+    self.discovery = discovery
   }
   
-  public var pickType: PickType = .radio
-  public var packets: [Packet] = []
-  public var selectedPacket: Int? = nil
-  public var defaultPacket: Int? = nil
-  public var connectedPacket: Int? = nil
+  public var pickType: PickType
+  public var selectedPacket: Int?
+  public var defaultPacket: Int?
+  public var connectedPacket: Int?
   public var forceUpdate = false
   public var testStatus = false
+  public var discovery: Discovery
 }
 
 public enum PickerAction: Equatable {
@@ -61,8 +61,8 @@ public enum PickerAction: Equatable {
   case connectResultReceived(Int?)
   
   // subscriptions
-  case packetsUpdate(PacketUpdate)
-  case clientsUpdate(ClientUpdate)
+  case packetUpdate(PacketUpdate)
+  case clientUpdate(ClientUpdate)
   case packet(index: Int, action: PacketAction)
   case defaultSelected(Packet?)
 }
@@ -70,32 +70,27 @@ public enum PickerAction: Equatable {
 public struct PickerEnvironment {
   public init(
     queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
-    packetsEffect: @escaping () -> Effect<PickerAction, Never> = packetsSubscription,
-    clientsEffect: @escaping () -> Effect<PickerAction, Never> = clientsSubscription
+    subscriptions: @escaping () -> Effect<PickerAction, Never> = discoverySubscriptions
   )
   {
     self.queue = queue
-    self.packetsEffect = packetsEffect
-    self.clientsEffect = clientsEffect
+    self.subscriptions = subscriptions
   }
   
   var queue: () -> AnySchedulerOf<DispatchQueue>
-  var packetsEffect: () -> Effect<PickerAction, Never>
-  var clientsEffect: () -> Effect<PickerAction, Never>
+  var subscriptions: () -> Effect<PickerAction, Never>
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
-  packetReducer.forEach(state: \PickerState.packets,
+  packetReducer.forEach(state: \PickerState.discovery.packets.collection,
                         action: /PickerAction.packet(index:action:),
                         environment: { _ in PacketEnvironment() }
                        ),
   Reducer { state, action, environment in
     switch action {
     case .onAppear:
-      // start listening for Discovery broadcasts
-      return .concatenate( environment.packetsEffect(),
-                           environment.clientsEffect()
-      )
+      // start listening for Discovery broadcasts (long-running Effect)
+      return environment.subscriptions()
       
     case let .buttonTapped(button):
       switch button {
@@ -105,7 +100,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
         return .none
       
       case .cancel:
-        return .cancel(ids: PacketsSubscriptionId(), ClientsSubscriptionId())
+        return .cancel(ids: PacketSubscriptionId(), ClientSubscriptionId())
       
       case .connect:
         // TODO
@@ -113,13 +108,13 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
         return .none
       }
       
-    case let .packetsUpdate(update):
+    case let .packetUpdate(update):
       // process a DiscoveryPacket change
-      state.packets = update.packets
+      state.discovery.packets.collection = update.packets
       state.forceUpdate.toggle()
       return .none
       
-    case let .clientsUpdate(update):
+    case let .clientUpdate(update):
       // process a GuiClient change
       state.forceUpdate.toggle()
       return .none
@@ -133,11 +128,11 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .none
 
     case let .packet(index: index, action: .packetTapped):
-      state.packets[index].isSelected.toggle()
-      for (i, packet) in state.packets.enumerated() where i != index {
-        state.packets[i].isSelected = false
+      state.discovery.packets.collection[index].isSelected.toggle()
+      for (i, packet) in state.discovery.packets.collection.enumerated() where i != index {
+        state.discovery.packets.collection[i].isSelected = false
       }
-      if state.packets[index].isSelected {
+      if state.discovery.packets.collection[index].isSelected {
         state.selectedPacket = index
       } else {
         state.selectedPacket = nil
@@ -146,13 +141,13 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .none
  
     case let .packet(index: index, action: .buttonTapped(.defaultBox)):
-      state.packets[index].isDefault.toggle()
-      for (i, packet) in state.packets.enumerated() where i != index {
-        state.packets[i].isDefault = false
+      state.discovery.packets.collection[index].isDefault.toggle()
+      for (i, packet) in state.discovery.packets.collection.enumerated() where i != index {
+        state.discovery.packets.collection[i].isDefault = false
       }
-      if state.packets[index].isDefault {
+      if state.discovery.packets.collection[index].isDefault {
         state.defaultPacket = index
-        return Effect(value: .defaultSelected(state.packets[index]))
+        return Effect(value: .defaultSelected(state.discovery.packets.collection[index]))
       } else {
         state.defaultPacket = nil
         return Effect(value: .defaultSelected(nil))
@@ -171,6 +166,6 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
 )
   .debug("PICKER ")
 
-struct PacketsSubscriptionId: Hashable {}
-struct ClientsSubscriptionId: Hashable {}
+struct PacketSubscriptionId: Hashable {}
+struct ClientSubscriptionId: Hashable {}
 

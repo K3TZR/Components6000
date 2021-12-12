@@ -16,12 +16,14 @@ let package = Package(
     .library(name: "Picker", targets: ["Picker"]),
     .library(name: "ApiViewer", targets: ["ApiViewer"]),
     .library(name: "LogViewer", targets: ["LogViewer"]),
+    .library(name: "Commands", targets: ["Commands"]),
   ],
   dependencies: [
     // Dependencies declare other packages that this package depends on.
     // .package(url: /* package url */, from: "1.0.0"),
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
     .package(url: "https://github.com/pointfreeco/swift-composable-architecture.git", from: "0.28.1"),
+    .package(name: "JWTDecode", url: "https://github.com/auth0/JWTDecode.swift.git", from: "2.6.0")
   ],
   targets: [
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -48,6 +50,7 @@ let package = Package(
     .target(
       name: "Discovery",
       dependencies: [
+        "JWTDecode",
         "Shared",
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
@@ -57,6 +60,13 @@ let package = Package(
       dependencies: [
         "Discovery",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
+    .target(
+      name: "Commands",
+      dependencies: [
+        "Shared",
+        .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),
     .testTarget(

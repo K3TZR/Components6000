@@ -7,50 +7,27 @@
 
 import Foundation
 import ComposableArchitecture
+import Combine
 
 import Discovery
+import Shared
 
 // ----------------------------------------------------------------------------
 // MARK: - Production effects
 
-private var listener = Listener()
-
-public func packetsSubscription() -> Effect<PickerAction, Never> {
-  return listener.packetPublisher
-    .receive(on: DispatchQueue.main)
-    .map { update in .packetsUpdate(update) }
-    .eraseToEffect()
-    .cancellable(id: PacketsSubscriptionId())
+public func discoverySubscriptions() -> Effect<PickerAction, Never> {
+  
+  return Effect.concatenate(
+    Discovery.sharedInstance.packetPublisher
+      .receive(on: DispatchQueue.main)
+      .map { update in .packetUpdate(update) }
+      .eraseToEffect()
+      .cancellable(id: PacketSubscriptionId()),
+    
+    Discovery.sharedInstance.clientPublisher
+      .receive(on: DispatchQueue.main)
+      .map { update in PickerAction.clientUpdate(update) }
+      .eraseToEffect()
+      .cancellable(id: ClientSubscriptionId())
+  )
 }
-
-
-//public func testPacketsSubscription() -> Effect<PickerAction, Never> {
-//  return listener.packetPublisher
-//    .receive(on: DispatchQueue.main)
-//    .map { update in .packetsUpdate(update) }
-//    .eraseToEffect()
-//    .cancellable(id: PacketsSubscriptionId())
-//}
-
-
-
-
-
-
-
-
-public func clientsSubscription() -> Effect<PickerAction,Never> {
-  return listener.clientPublisher
-    .receive(on: DispatchQueue.main)
-    .map { update in PickerAction.clientsUpdate(update) }
-    .eraseToEffect()
-    .cancellable(id: ClientsSubscriptionId())
-}
-
-//public func testClientsSubscription() -> Effect<PickerAction,Never> {
-//  return listener.clientPublisher
-//    .receive(on: DispatchQueue.main)
-//    .map { update in PickerAction.clientsUpdate(update) }
-//    .eraseToEffect()
-//    .cancellable(id: ClientsSubscriptionId())
-//}

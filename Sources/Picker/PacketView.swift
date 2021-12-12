@@ -27,7 +27,7 @@ struct PacketView: View {
         
         
         Group {
-          Text(viewStore.isWan ? "Smartlink" : "Local")
+          Text(viewStore.source.rawValue)
           Text(viewStore.nickname)
           Text(viewStore.status)
           Text(viewStore.guiClientStations)

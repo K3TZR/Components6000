@@ -28,18 +28,18 @@ public struct PickerView: View {
       VStack(alignment: .leading) {
         PickerHeader(pickType: viewStore.pickType)
         Divider()
-        if viewStore.packets.count == 0 {
+        if viewStore.discovery.packets.collection.count == 0 {
           Spacer()
           HStack {
             Spacer()
-            Text("----------  NO  \(viewStore.pickType.rawValue)S  FOUND  ----------")
+            Text("----------  NO  \(viewStore.pickType.rawValue)S  FOUND  ----------").foregroundColor(.red)
             Spacer()
           }
           Spacer()
         } else {
           List {
           ForEachStore(
-              self.store.scope(state: \.packets, action: PickerAction.packet(index:action:))
+            self.store.scope(state: \.discovery.packets.collection, action: PickerAction.packet(index:action:))
             ) { packetStore in
               PacketView(store: packetStore)
             }
@@ -126,19 +126,14 @@ struct PickerView_Previews: PreviewProvider {
 
     PickerView(
       store: Store(
-        initialState: PickerState(packets: testPackets(),
-                                  testStatus: true
-                                 ),
+        initialState: PickerState(testStatus: true),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
     )
     PickerView(
       store: Store(
-        initialState: PickerState(pickType: .radio,
-                                  packets: emptyTestPackets(),
-                                  testStatus: true
-                                 ),
+        initialState: PickerState(pickType: .radio, testStatus: true),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
@@ -156,10 +151,7 @@ struct PickerFooter_Previews: PreviewProvider {
   static var previews: some View {
 
     PickerFooter(store: Store(
-      initialState: PickerState(pickType: .radio,
-                                packets: testPackets(),
-                                testStatus: true
-                                ),
+      initialState: PickerState(pickType: .radio, testStatus: true),
       reducer: pickerReducer,
       environment: PickerEnvironment() )
     )
@@ -169,11 +161,11 @@ struct PickerFooter_Previews: PreviewProvider {
 // ----------------------------------------------------------------------------
 // MARK: - Test data
 
-private func emptyTestPackets() -> [Packet] {
+func emptyTestPackets() -> [Packet] {
   return [Packet]()
 }
 
-private func testPackets() -> [Packet] {
+func testPackets() -> [Packet] {
   var packets = [Packet]()
   
   packets.append(testPacket1())
@@ -186,14 +178,13 @@ func testPacket1() -> Packet {
   var packet = Packet()
   packet.nickname = "Dougs 6500"
   packet.status = "Available"
-  packet.serialNumber = "1234-5678-9012-3456"
+  packet.serial = "1234-5678-9012-3456"
   packet.publicIp = "10.0.1.200"
   packet.guiClientHandles = "1,2"
   packet.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
   packet.guiClientStations = "Windows,iPad"
   packet.guiClientHosts = ""
   packet.guiClientIps = "192.168.1.200,192.168.1.201"
-  packet.isWan = false
 
   return packet
 }
@@ -202,14 +193,14 @@ func testPacket2() -> Packet {
   var packet = Packet()
   packet.nickname = "Dougs 6700"
   packet.status = "Available"
-  packet.serialNumber = "5678-9012-3456-7890"
+  packet.serial = "5678-9012-3456-7890"
   packet.publicIp = "40.0.2.278"
   packet.guiClientHandles = ""
   packet.guiClientPrograms = ""
   packet.guiClientStations = ""
   packet.guiClientHosts = ""
   packet.guiClientIps = ""
-  packet.isWan = true
+
 
   return packet
 }

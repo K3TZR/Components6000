@@ -15,13 +15,13 @@ import Shared
 public enum ApiButton {
   case logView
   case startStop
-  case gui
-  case times
-  case pings
-  case replies
-  case buttons
+  case isGui
+  case showTimes
+  case showPings
+  case showReplies
+  case showButtons
   case clearDefault
-  case smartlink
+  case smartlinkLogin
   case status
   case clearNow
   case clearOnConnect
@@ -31,6 +31,10 @@ public enum ApiButton {
 }
 
 public struct ApiState: Equatable {
+  public let kAppName = "TestDiscoveryApp"
+  public let kPlatform = "macOS"
+  public var smartlinkEmail: String
+  public var discovery: Discovery? = nil
   public var isGui = true
   public var showTimes = false
   public var showPings = false
@@ -45,33 +49,34 @@ public struct ApiState: Equatable {
   public var clearOnSend = false
   public var fontSize: CGFloat = 12
   public var commandToSend = ""
+  public var discoveryAlert: DiscoveryAlert?
   
-  public init(fontSize: CGFloat) {
+  public init(fontSize: CGFloat, smartlinkEmail: String) {
+    self.smartlinkEmail = smartlinkEmail
     self.fontSize = fontSize
   }
 }
 
 public enum ApiAction: Equatable {
+  case onAppear
   case buttonTapped(ApiButton)
   
   case sheetClosed
   case pickerAction(PickerAction)
   case fontSizeChanged(CGFloat)
   case commandToSendChanged(String)
+  case discoveryAlertDismissed
 }
 
 public struct ApiEnvironment {
   public init(
-    queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
-    listener: @escaping () -> Listener = { Listener() }
+    queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main }
   )
   {
     self.queue = queue
-    self.listener = listener
   }
   
   var queue: () -> AnySchedulerOf<DispatchQueue>
-  var listener: () -> Listener
 }
 
 // swiftlint:disable trailing_closure
@@ -92,36 +97,51 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         // handled by Root
         break
      case .startStop:
-        state.pickerState = PickerState(pickType: .radio)
-      case .gui:
+        if state.pickerState == nil {
+          state.pickerState = PickerState(pickType: .radio)
+        } else {
+          state.pickerState = nil
+        }
+      case .isGui:
         state.isGui.toggle()
-      case .times:
+      case .showTimes:
         state.showTimes.toggle()
-      case .pings:
+      case .showPings:
         state.showPings.toggle()
-      case .replies:
+      case .showReplies:
         state.showReplies.toggle()
-      case .buttons:
+      case .showButtons:
         state.showButtons.toggle()
       case .clearDefault:
         state.defaultPacket = nil
-      case .smartlink:
-        print("-----> ApiCore: NOT IMPLEMENTED \(action)")
+      case .smartlinkLogin:
+        print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       case .status:
-        print("-----> ApiCore: NOT IMPLEMENTED \(action)")
+        print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       case .clearOnConnect:
         state.clearOnConnect.toggle()
       case .clearOnDisconnect:
         state.clearOnDisconnect.toggle()
       case .clearNow:
-        print("-----> ApiCore: NOT IMPLEMENTED \(action)")
+        print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       case .send:
-        print("-----> ApiCore: NOT IMPLEMENTED \(action)")
+        print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       case .clearOnSend:
         state.clearOnSend.toggle()
       }
       return .none
       
+    case .onAppear:
+      state.discovery = Discovery.sharedInstance
+      do {
+        try state.discovery?.startListeners(smartlinkEmail: state.smartlinkEmail,
+                                            appName: state.kAppName,
+                                            platform: state.kPlatform)
+      } catch {
+        state.discoveryAlert = DiscoveryAlert(title: "Failed to load Discovery")
+      }
+      return .none
+
     case .sheetClosed:
       state.pickerState = nil
       return .none
@@ -143,19 +163,23 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
     case let .pickerAction(.connectResultReceived(index)):
-      print("-----> ApiCore: NOT IMPLEMENTED \(action)")
+      print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
       
     case .pickerAction(.buttonTapped(.test)):
-      print("-----> ApiCore: NOT IMPLEMENTED \(action)")
+      print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
       
     case .pickerAction(.buttonTapped(.connect)):
-      print("-----> ApiCore: NOT IMPLEMENTED \(action)")
+      print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
       
     case .pickerAction(_):
       // IGNORE ALL OTHERS
+      return .none
+
+    case .discoveryAlertDismissed:
+      state.discoveryAlert = nil
       return .none
     }
   }

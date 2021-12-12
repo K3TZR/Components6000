@@ -39,6 +39,12 @@ final public class Packets {
     collection.removeAll( where: {$0 == packet} )
   }
 
+  /// Remove all packet sfrom the collection
+  /// - Parameter packet: a Packet
+  public func removeAll() {
+    collection.removeAll()
+  }
+
   /// Remove a packet from the collection
   /// - Parameter condition:  a closure defining the condition for removal
   public func remove(condition: (Packet) -> Bool) -> [Packet] {

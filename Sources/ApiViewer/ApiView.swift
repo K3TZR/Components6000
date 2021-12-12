@@ -72,17 +72,17 @@ struct TopButtonsView: View {
         .help("Using the Default connection type")
         
         HStack(spacing: 20) {
-          Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .buttonTapped(.gui)))
-          Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .buttonTapped(.times)))
-          Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .buttonTapped(.pings)))
-          Toggle("Replies", isOn: viewStore.binding(get: \.showReplies, send: .buttonTapped(.replies)))
-          Toggle("Buttons", isOn: viewStore.binding(get: \.showButtons, send: .buttonTapped(.buttons)))
+          Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .buttonTapped(.isGui)))
+          Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .buttonTapped(.showTimes)))
+          Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .buttonTapped(.showPings)))
+          Toggle("Replies", isOn: viewStore.binding(get: \.showReplies, send: .buttonTapped(.showReplies)))
+          Toggle("Buttons", isOn: viewStore.binding(get: \.showButtons, send: .buttonTapped(.showButtons)))
         }
         
         Spacer()
         HStack(spacing: 10) {
           Text("SmartLink")
-          Button(smartlinkIsLoggedIn ? "Logout" : "Login") { viewStore.send(.buttonTapped(.smartlink)) }
+          Button(smartlinkIsLoggedIn ? "Logout" : "Login") { viewStore.send(.buttonTapped(.smartlinkLogin)) }
           
           Button("Status") { viewStore.send(.buttonTapped(.status)) }
         }.disabled(viewStore.connectedPacket != nil)
@@ -90,8 +90,22 @@ struct TopButtonsView: View {
         Spacer()
         Button("Clear Default") { viewStore.send(.buttonTapped(.clearDefault)) }
       }
+      .onAppear(perform: { viewStore.send(.onAppear) })
+      .alert(
+        item: viewStore.binding(
+          get: { $0.discoveryAlert },
+          send: .discoveryAlertDismissed
+        ),
+        content: { Alert(title: Text($0.title)) }
+      )
+
     }
   }
+}
+
+public struct DiscoveryAlert: Equatable, Identifiable {
+  public var title: String
+  public var id: String { self.title }
 }
 
 struct SendView: View {
@@ -112,13 +126,6 @@ struct SendView: View {
             .frame(width: 17, height: 17)
             .cornerRadius(20)
             .disabled(viewStore.connectedPacket == nil)
-//            Image(systemName: "x.circle")
-//              .resizable()
-//              .frame(width: 17, height: 17)
-//              .foregroundColor(viewStore.connectedPacket == nil ? .gray : nil)
-//              .onTapGesture {
-//                viewStore.send(.commandToSendChanged(""))
-//              }
             TextField("Command to send", text: viewStore.binding(
               get: \.commandToSend,
               send: { value in .commandToSendChanged(value) } ))
@@ -179,7 +186,7 @@ struct TopButtonsView_Previews: PreviewProvider {
   static var previews: some View {
     TopButtonsView(
       store: Store(
-        initialState: ApiState(fontSize: 12),
+        initialState: ApiState(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
@@ -191,7 +198,7 @@ struct SendView_Previews: PreviewProvider {
   static var previews: some View {
     SendView(
       store: Store(
-        initialState: ApiState(fontSize: 12),
+        initialState: ApiState(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
@@ -203,7 +210,7 @@ struct ObjectsView_Previews: PreviewProvider {
   static var previews: some View {
     ObjectsView(
       store: Store(
-        initialState: ApiState(fontSize: 12),
+        initialState: ApiState(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
@@ -215,7 +222,7 @@ struct MessagesView_Previews: PreviewProvider {
   static var previews: some View {
     MessagesView(
       store: Store(
-        initialState: ApiState(fontSize: 12),
+        initialState: ApiState(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
@@ -227,22 +234,10 @@ struct BottomButtonsView_Previews: PreviewProvider {
   static var previews: some View {
     BottomButtonsView(
       store: Store(
-        initialState: ApiState(fontSize: 12),
+        initialState: ApiState(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
     )
   }
-}
-
-struct ApiViewer_Previews: PreviewProvider {
-    static var previews: some View {
-      ApiView(
-        store: Store(
-          initialState: ApiState(fontSize: 12),
-          reducer: apiReducer,
-          environment: ApiEnvironment()
-        )
-      )
-    }
 }
