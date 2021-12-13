@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import LogProxy
 import Shared
 
 public final class Discovery: Equatable, ObservableObject {
@@ -23,15 +24,17 @@ public final class Discovery: Equatable, ObservableObject {
   // MARK: - Public properties
   
   public var clientPublisher = PassthroughSubject<ClientUpdate, Never>()
-  public var logPublisher = PassthroughSubject<LogEntry, Never>()
+//  public var logPublisher = PassthroughSubject<LogEntry, Never>()
   public var packetPublisher = PassthroughSubject<PacketUpdate, Never>()
 
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
   private var _lanListener: LanListener?
-  private var _logCancellable: AnyCancellable?
+//  private var _logCancellable: AnyCancellable?
   private var _wanListener: WanListener?
+  
+  let _log = LogPublisher.sharedInstance.publish
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
@@ -39,10 +42,10 @@ public final class Discovery: Equatable, ObservableObject {
   public static var sharedInstance = Discovery()
 
   private init() {
-    _logCancellable = logPublisher
-      .sink { logEntry in
-        print("Discovery: \(logEntry.message), level = \(logEntry.logLevel.rawValue)")
-      }
+//    _logCancellable = logPublisher
+//      .sink { logEntry in
+//        print("Discovery: \(logEntry.message), level = \(logEntry.logLevel.rawValue)")
+//      }
   }
 
   // ----------------------------------------------------------------------------
@@ -52,22 +55,6 @@ public final class Discovery: Equatable, ObservableObject {
     _lanListener = try LanListener(discovery: self)
     _wanListener = try WanListener(discovery: self, smartlinkEmail: smartlinkEmail, appName: appName, platform: platform)
   }
-
-//  public func startLanListener() throws {
-//    _lanListener = try LanListener(discovery: self)
-//  }
-//
-//  public func startWanListener(smartlinkEmail: String, appName: String, platform: String ) throws {
-//    _wanListener = try WanListener(discovery: self, smartlinkEmail: smartlinkEmail, appName: appName, platform: platform)
-//  }
-
-//  public func stopListeners() {
-//    _lanListener?.stop()
-//    _wanListener?.stop()
-//    _lanListener = nil
-//    _wanListener = nil
-//    packets.removeAll()
-//  }
 
   // ----------------------------------------------------------------------------
   // MARK: - Internal methods
@@ -87,7 +74,7 @@ public final class Discovery: Equatable, ObservableObject {
       // YES, known packet, has it changed?
       if newPacket.isDifferent(from: prevPacket) {
         
-        logPublisher.send(LogEntry("known packet with changes received, \(newPacket.serial), \(newPacket.source.rawValue)", .debug, #function, #file, #line))
+        _log(LogEntry("Discovery: packet updated, \(newPacket.serial), \(newPacket.source.rawValue)", .debug, #function, #file, #line))
 
         // YES, changed, parse its GuiClients
         let (additions, deletions) = newPacket.parseGuiClients()
@@ -111,7 +98,7 @@ public final class Discovery: Equatable, ObservableObject {
     // NO, not seen previously, parse its GuiClients
     _ = newPacket.parseGuiClients()
 
-    logPublisher.send(LogEntry("new packet received, \(newPacket.serial), \(newPacket.source.rawValue)", .debug, #function, #file, #line))
+    _log(LogEntry("Discovery: packet added, \(newPacket.serial), \(newPacket.source.rawValue)", .debug, #function, #file, #line))
 
     // add it and publish
     packets.add(newPacket)

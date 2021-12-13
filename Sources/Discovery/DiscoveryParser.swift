@@ -7,6 +7,7 @@
 
 import Foundation
 import Shared
+import LogProxy
 
 extension Discovery {
 
@@ -60,7 +61,7 @@ extension Discovery {
       // check for unknown Keys
       guard let token = DiscoveryTokens(rawValue: property.key) else {
         // log it and ignore the Key
-        logPublisher.send(LogEntry("Unknown Discovery token - \(property.key) = \(property.value)", .warning, #function, #file, #line))
+        _log(LogEntry("Discovery: Unknown token - \(property.key) = \(property.value)", .warning, #function, #file, #line))
         continue
       }
       switch token {

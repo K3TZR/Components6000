@@ -9,6 +9,7 @@ import Foundation
 import CocoaAsyncSocket
 import Combine
 import Shared
+import LogProxy
 
 public enum WanListenerError: Error {
   case kIdTokenError
@@ -76,6 +77,8 @@ final class WanListener: NSObject, ObservableObject {
   private var _timeout = 0.0                // seconds
   private var _user: String?
 
+  let _log = LogPublisher.sharedInstance.publish
+
   // ------------------------------------------------------------------------------
   // MARK: - Initialization
   
@@ -132,6 +135,7 @@ final class WanListener: NSObject, ObservableObject {
     do {
       try _tcpSocket.connect(toHost: "smartlink.flexradio.com", onPort: 443, withTimeout: _timeout)
       DispatchQueue.main.async { self.isConnected = true }
+      _log(LogEntry("Discovery: TCP Socket connection initiated", .debug, #function, #file, #line))
 
     } catch _ {
       throw WanListenerError.kConnectError
@@ -158,6 +162,8 @@ final class WanListener: NSObject, ObservableObject {
         self.sendTlsCommand("ping from client", timeout: -1)
       }
       .store(in: &_cancellables)
+    _log(LogEntry("Discovery: Started pinging", .debug, #function, #file, #line))
+
   }
   
   /// Send a command to the server using TLS
@@ -189,15 +195,21 @@ extension WanListener: GCDAsyncSocketDelegate {
     _currentHost = host
     _currentPort = port
     
+    _log(LogEntry("Discovery: TCP Socket connection established", .debug, #function, #file, #line))
+
     // initiate a secure (TLS) connection to the Smartlink server
     var tlsSettings = [String : NSObject]()
     tlsSettings[kCFStreamSSLPeerName as String] = "smartlink.flexradio.com" as NSObject
     _tcpSocket.startTLS(tlsSettings)
-    
+
+    _log(LogEntry("Discovery: TLS Socket connection initiated", .debug, #function, #file, #line))
+
     DispatchQueue.main.async { self.isConnected = true }
   }
   
   public func socketDidSecure(_ sock: GCDAsyncSocket) {
+    _log(LogEntry("Discovery: TLS Socket did secure", .debug, #function, #file, #line))
+
     // start pinging SmartLink server
     startPinging()
     
@@ -220,10 +232,11 @@ extension WanListener: GCDAsyncSocketDelegate {
   
   public func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
     // Disconnected from the Smartlink server
-    if err != nil {
-      let error = (err == nil ? "" : " with error: " + err!.localizedDescription)
-      _discovery?.logPublisher.send(LogEntry("WanListener, disconnected\(error) from: Host=\(_currentHost ?? "nil") Port=\(_currentPort)", .warning, #function, #file, #line))
-    }
+    let error = (err == nil ? "" : " with error: " + err!.localizedDescription)
+    _log(LogEntry("Discovery: TCP socket disconnected \(error) from: Host=\(_currentHost ?? "nil") Port=\(_currentPort)",
+                  err == nil ? .debug : .warning,
+                  #function, #file, #line))
+
     DispatchQueue.main.async { self.isConnected = false }
     _currentHost = ""
     _currentPort = 0

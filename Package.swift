@@ -17,6 +17,7 @@ let package = Package(
     .library(name: "ApiViewer", targets: ["ApiViewer"]),
     .library(name: "LogViewer", targets: ["LogViewer"]),
     .library(name: "Commands", targets: ["Commands"]),
+    .library(name: "LogProxy", targets: ["LogProxy"]),
   ],
   dependencies: [
     // Dependencies declare other packages that this package depends on.
@@ -28,6 +29,11 @@ let package = Package(
   targets: [
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.
     // Targets can depend on other targets in this package, and on products in packages this package depends on.
+    .target(
+      name: "LogProxy",
+      dependencies: [
+      ]
+    ),
     .target(
       name: "ApiViewer",
       dependencies: [
@@ -52,6 +58,7 @@ let package = Package(
       dependencies: [
         "JWTDecode",
         "Shared",
+        "LogProxy",
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),

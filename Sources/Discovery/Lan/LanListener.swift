@@ -11,6 +11,7 @@ import Combine
 
 import CocoaAsyncSocket
 import Shared
+import LogProxy
 
 public enum LanListenerError: Error {
   case kSocketError
@@ -39,6 +40,8 @@ final class LanListener: NSObject, ObservableObject {
   private let _udpQ = DispatchQueue(label: "DiscoveryListener" + ".udpQ")
   private var _udpSocket: GCDAsyncUdpSocket!
 
+  let _log = LogPublisher.sharedInstance.publish
+
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
@@ -56,6 +59,7 @@ final class LanListener: NSObject, ObservableObject {
       try _udpSocket.bind(toPort: port)
       try _udpSocket.beginReceiving()
       DispatchQueue.main.async { self.isConnected = true }
+      _log(LogEntry("Discovery: UDP Socket created", .debug, #function, #file, #line))
 
     } catch {
       throw LanListenerError.kSocketError
