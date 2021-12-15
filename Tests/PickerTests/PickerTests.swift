@@ -33,29 +33,18 @@ class PickerTests: XCTestCase {
     
     store.send(.onAppear)
 
-//    self.testScheduler.advance(by: 1)
-//
-//    mockPacketPublisher.send(PacketUpdate(.added, packet: testPacket(), packets: [testPacket()]))
-//
-//    self.testScheduler.advance(by: 1)
-
     store.receive( .packetUpdate(testPacketUpdate()) ) {
-      $0.packets = [self.testPacket()]
+      $0.discovery.packets.collection = [self.testPacket()]
       $0.forceUpdate.toggle()
     }
-//    self.testScheduler.advance(by: 1)
 
-//    store.receive( .clientUpdate(testClientUpdate()) ) {
-//      $0.forceUpdate.toggle()
-//    }
-
-    store.send(.packet(index: 0, action: .buttonTapped(.defaultBox)) ) {
-      $0.defaultPacket = 0
+    store.send(.packet(id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!, action: .buttonTapped(.defaultBox)) ) {
+      $0.defaultPacket = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
     }
     store.receive( .defaultSelected(testPacket()) ) {
-      $0.packets[0] = self.testPacket()
+      $0.discovery.packets.collection[id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!] = self.testPacket()
     }
-    store.send(.packet(index: 0, action: .buttonTapped(.defaultBox)) ) {
+    store.send(.packet(id: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!, action: .buttonTapped(.defaultBox)) ) {
       $0.defaultPacket = nil
     }
     store.receive( .defaultSelected(nil) )
@@ -66,25 +55,12 @@ class PickerTests: XCTestCase {
   }
   
   // ----------------------------------------------------------------------------
-  // MARK: - Test effects
-  
-//  private func testPacketSubscription() -> Effect<PickerAction, Never> {
-//    return Effect(value: .packetUpdate(testPacketUpdate()))
-//      .delay(for: .milliseconds(1000), scheduler: self.scheduler.eraseToAnyScheduler())
-//      .eraseToEffect()
-//      .cancellable(id: PacketSubscriptionId())
-//  }
-//
-//  private func testClientSubscription() -> Effect<PickerAction, Never> {
-//    return Effect(value: .clientUpdate(testClientUpdate()))
-//      .delay(for: .milliseconds(500), scheduler: self.scheduler.eraseToAnyScheduler())
-//      .eraseToEffect()
-//      .cancellable(id: ClientSubscriptionId())
-//  }
+  // MARK: - Test related
   
   private func testPacket() -> Packet {
     var packet = Packet()
     
+    packet.id = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
     packet.nickname = "Dougs 6500"
     packet.status = "Available"
     packet.serial = "1234-5678-9012-3456"
@@ -98,42 +74,19 @@ class PickerTests: XCTestCase {
     return packet
   }
   
-//  private func testPackets() -> [Packet] {
-//    return [testPacket()]
-//  }
-//
   private func testPacketUpdate() -> PacketUpdate {
     return PacketUpdate(.added, packet: testPacket(), packets: [testPacket()])
   }
-//
-//  private func testClientUpdate() -> ClientUpdate {
-//    let client = GuiClient(clientHandle: UInt32(2),
-//                           station: "iPad",
-//                           program: "SmartSDR-iOS")
-//
-//    return ClientUpdate(.add, client: client)
-//  }
-
-
 
   var mockPacketPublisher = PassthroughSubject<PacketUpdate, Never>()
   var mockClientPublisher = PassthroughSubject<ClientUpdate, Never>()
 
   public func mockDiscoverySubscriptions() -> Effect<PickerAction, Never> {
-    
     return
-//    Effect.concatenate(
       mockPacketPublisher
         .receive(on: DispatchQueue.main)
         .map { update in .packetUpdate(update) }
         .eraseToEffect()
         .cancellable(id: PacketSubscriptionId())
-//      ,
-//      mockClientPublisher
-//        .receive(on: DispatchQueue.main)
-//        .map { update in PickerAction.clientUpdate(update) }
-//        .eraseToEffect()
-//        .cancellable(id: ClientSubscriptionId())
-//    )
   }
 }
