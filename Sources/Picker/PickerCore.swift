@@ -11,6 +11,7 @@ import Dispatch
 
 import Discovery
 import Shared
+import CloudKit
 
 public enum PickType: String, Equatable {
   case station = "STATION"
@@ -25,9 +26,9 @@ public enum PickerButton: Equatable {
 
 public struct PickerState: Equatable {
   public init(pickType: PickType = .radio,
-              selectedPacket: Int? = nil,
-              defaultPacket: Int? = nil,
-              connectedPacket: Int? = nil,
+              selectedPacket: UUID? = nil,
+              defaultPacket: UUID? = nil,
+              connectedPacket: UUID? = nil,
               forceUpdate: Bool = false,
               testStatus: Bool = false,
               discovery: Discovery = Discovery.sharedInstance)
@@ -42,9 +43,9 @@ public struct PickerState: Equatable {
   }
   
   public var pickType: PickType
-  public var selectedPacket: Int?
-  public var defaultPacket: Int?
-  public var connectedPacket: Int?
+  public var selectedPacket: UUID?
+  public var defaultPacket: UUID?
+  public var connectedPacket: UUID?
   public var forceUpdate = false
   public var testStatus = false
   public var discovery: Discovery
@@ -63,7 +64,7 @@ public enum PickerAction: Equatable {
   // subscriptions
   case packetUpdate(PacketUpdate)
   case clientUpdate(ClientUpdate)
-  case packet(index: Int, action: PacketAction)
+  case packet(id: UUID, action: PacketAction)
   case defaultSelected(Packet?)
 }
 
@@ -82,10 +83,16 @@ public struct PickerEnvironment {
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
-  packetReducer.forEach(state: \PickerState.discovery.packets.collection,
-                        action: /PickerAction.packet(index:action:),
-                        environment: { _ in PacketEnvironment() }
-                       ),
+  packetReducer.forEach(
+    state: \PickerState.discovery.packets.collection,
+    action: /PickerAction.packet(id:action:),
+    environment: { _ in PacketEnvironment() }
+      ),
+//  packetReducer.forEach(
+//    state: \PickerState.discovery.packets.collection,
+//    action: /PickerAction.packet(index:action:),
+//    environment: { _ in PacketEnvironment() }
+//  ),
   Reducer { state, action, environment in
     switch action {
     case .onAppear:
@@ -127,33 +134,33 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     case let .defaultSelected(packet):
       return .none
 
-    case let .packet(index: index, action: .packetTapped):
-      state.discovery.packets.collection[index].isSelected.toggle()
-      for (i, packet) in state.discovery.packets.collection.enumerated() where i != index {
-        state.discovery.packets.collection[i].isSelected = false
+    case let .packet(id: id, action: .packetTapped):
+      state.discovery.packets.collection[id: id]?.isSelected.toggle()
+      for packet in state.discovery.packets.collection where packet.id != id {
+        state.discovery.packets.collection[id: id]?.isSelected = false
       }
-      if state.discovery.packets.collection[index].isSelected {
-        state.selectedPacket = index
+      if state.discovery.packets.collection[id: id]?.isSelected == nil {
+        state.selectedPacket = id
       } else {
         state.selectedPacket = nil
       }
       state.forceUpdate.toggle()
       return .none
  
-    case let .packet(index: index, action: .buttonTapped(.defaultBox)):
-      state.discovery.packets.collection[index].isDefault.toggle()
-      for (i, packet) in state.discovery.packets.collection.enumerated() where i != index {
-        state.discovery.packets.collection[i].isDefault = false
+    case let .packet(id: id, action: .buttonTapped(.defaultBox)):
+      state.discovery.packets.collection[id: id]?.isDefault.toggle()
+      for packet in state.discovery.packets.collection where packet.id != id {
+        state.discovery.packets.collection[id: id]?.isDefault = false
       }
-      if state.discovery.packets.collection[index].isDefault {
-        state.defaultPacket = index
-        return Effect(value: .defaultSelected(state.discovery.packets.collection[index]))
+      if state.discovery.packets.collection[id: id]?.isDefault == nil {
+        state.defaultPacket = id
+        return Effect(value: .defaultSelected(state.discovery.packets.collection[id: id]))
       } else {
         state.defaultPacket = nil
         return Effect(value: .defaultSelected(nil))
       }
 
-    case let .packet(index: index, action: action):
+    case let .packet(id: id, action: action):
       state.forceUpdate.toggle()
       return .none
     
@@ -164,7 +171,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     }
   }
 )
-  .debug("PICKER ")
+//  .debug("PICKER ")
 
 struct PacketSubscriptionId: Hashable {}
 struct ClientSubscriptionId: Hashable {}

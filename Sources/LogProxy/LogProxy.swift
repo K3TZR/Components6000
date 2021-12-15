@@ -1,5 +1,5 @@
 //
-//  LogPublisher.swift
+//  LogProxy.swift
 //  TestDiscoveryPackage/LogProxy
 //
 //  Created by Douglas Adams on 12/12/21.
@@ -32,11 +32,11 @@ public struct LogEntry {
   }
 }
 
-final public class LogPublisher {
+final public class LogProxy {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  public static var sharedInstance = LogPublisher()
+  public static var sharedInstance = LogProxy()
   public var logPublisher = PassthroughSubject<LogEntry, Never>()
 
   private var _logCancellable: AnyCancellable?

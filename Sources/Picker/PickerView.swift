@@ -38,8 +38,18 @@ public struct PickerView: View {
           Spacer()
         } else {
           List {
-          ForEachStore(
-            self.store.scope(state: \.discovery.packets.collection, action: PickerAction.packet(index:action:))
+
+            
+            
+//            ForEachStore(
+//              self.store.scope(state: \.todos, AppAction.todo(id:action:))
+//            ) { todoStore in
+//              TodoView(store: todoStore)
+//            }
+            
+            
+            ForEachStore(
+              self.store.scope(state: \.discovery.packets.collection, action: PickerAction.packet(id:action:))
             ) { packetStore in
               PacketView(store: packetStore)
             }

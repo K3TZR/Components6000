@@ -144,7 +144,11 @@ struct ObjectsView: View {
   let store: Store<ApiState, ApiAction>
   
   var body: some View {
-    Text("----- Objects go here -----").frame(minWidth: 950, minHeight: 100, idealHeight: 200, maxHeight: 300, alignment: .leading)
+    WithViewStore(self.store) { viewStore in
+      Text("----- Objects go here -----")
+        .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
+        .frame(minWidth: 950, minHeight: 100, idealHeight: 200, maxHeight: 300, alignment: .leading)
+    }
   }
 }
 
@@ -152,7 +156,12 @@ struct MessagesView: View {
   let store: Store<ApiState, ApiAction>
   
   var body: some View {
-    Text("----- Messages go here -----").frame(minWidth: 950, minHeight: 100, idealHeight: 200, maxHeight: 300, alignment: .leading)
+    
+    WithViewStore(self.store) { viewStore in
+      Text("----- Messages go here -----")
+        .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
+        .frame(minWidth: 950, minHeight: 100, idealHeight: 200, maxHeight: 300, alignment: .leading)
+    }
   }
 }
 

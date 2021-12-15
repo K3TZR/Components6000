@@ -34,7 +34,7 @@ public final class Discovery: Equatable, ObservableObject {
 //  private var _logCancellable: AnyCancellable?
   private var _wanListener: WanListener?
   
-  let _log = LogPublisher.sharedInstance.publish
+  let _log = LogProxy.sharedInstance.publish
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
@@ -68,8 +68,8 @@ public final class Discovery: Equatable, ObservableObject {
     newPacket = packet
     
     // is it a Packet that has been seen previously?
-    if let index = packets.isKnownPacket(packet) {
-      prevPacket = packets.collection[index]
+    if let id = packets.isKnownRadio(newPacket) {
+      prevPacket = packets.collection[id: id]!
       
       // YES, known packet, has it changed?
       if newPacket.isDifferent(from: prevPacket) {
