@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import ComposableArchitecture
 
 public enum Source: String {
   case local = "Local"
@@ -22,9 +23,9 @@ public enum PacketAction {
 public struct PacketUpdate: Equatable {
   public var action: PacketAction
   public var packet: Packet
-  public var packets: [Packet]
+  public var packets: IdentifiedArrayOf<Packet>
 
-  public init(_ action: PacketAction, packet: Packet, packets: [Packet]) {
+  public init(_ action: PacketAction, packet: Packet, packets: IdentifiedArrayOf<Packet>) {
     self.action = action
     self.packet = packet
     self.packets = packets
@@ -46,7 +47,8 @@ public struct Packet: Identifiable, Equatable, Hashable {
   public var id: UUID                             //  NOT in received packet
   public var lastSeen: Date                       //  NOT in received packet
   public var source: Source                       //  NOT in received packet
-  public var isDefault = false                    //  NOT in received packet
+  public var isDefault = false  {                  //  NOT in received packet
+    didSet { print("Packet DidSet: isDefault set to \(isDefault.asTrueFalse)") } }
   public var isPortForwardOn = false              //  NOT in received packet
   public var isSelected = false                   //  NOT in received packet
   public var guiClients = GuiClients().collection //  NOT in received packet

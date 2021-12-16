@@ -25,4 +25,4 @@ let packetReducer = Reducer<Packet, PacketAction, PacketEnvironment>
   
   return .none
   }
-  .debug("PACKET ")
+//  .debug("PACKET ")

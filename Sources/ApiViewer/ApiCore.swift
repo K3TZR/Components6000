@@ -33,23 +33,25 @@ public enum ApiButton {
 public struct ApiState: Equatable {
   public let kAppName = "TestDiscoveryApp"
   public let kPlatform = "macOS"
-  public var smartlinkEmail: String
-  public var discovery: Discovery? = nil
-  public var isGui = true
-  public var showTimes = false
-  public var showPings = false
-  public var showReplies = false
-  public var showButtons = false
-  public var pickerState: PickerState? = nil
-  public var connectedPacket: Packet? = nil
-  public var defaultPacket: Packet? = nil
+
   public var clearNow = false
   public var clearOnConnect = false
   public var clearOnDisconnect = false
   public var clearOnSend = false
-  public var fontSize: CGFloat = 12
   public var commandToSend = ""
+  public var connectedPacket: Packet? = nil
+  public var defaultPacket: UUID? = nil
+  public var discovery: Discovery? = nil
   public var discoveryAlert: DiscoveryAlert?
+  public var fontSize: CGFloat = 12
+  public var isGui = true
+  public var pickerState: PickerState? = nil
+  public var showButtons = false
+  public var showTimes = false
+  public var showPings = false
+  public var showReplies = false
+  public var smartlinkEmail: String
+
   
   public init(fontSize: CGFloat, smartlinkEmail: String) {
     self.smartlinkEmail = smartlinkEmail
@@ -154,8 +156,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.commandToSend = value
       return .none
 
-    case let .pickerAction(.defaultSelected(packet)):
-      state.defaultPacket = packet
+    case let .pickerAction(.defaultSelected(id)):
+      print("---------- ApiCore: .defaultSelected, id = \(id)")
+      state.defaultPacket = id
       return .none
       
     case .pickerAction(.buttonTapped(.cancel)):

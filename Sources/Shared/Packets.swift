@@ -6,16 +6,17 @@
 //
 
 import Foundation
+import ComposableArchitecture
 
 final public class Packets {
                                                         
-  public var collection: [Packet] = []
-//  {
-//      get { _objectQ.sync { _collection } }
-//      set { _objectQ.sync(flags: .barrier) { _collection = newValue }}}
+  public var collection: IdentifiedArrayOf<Packet> {
+      get { _objectQ.sync { _collection } }
+      set { _objectQ.sync(flags: .barrier) { _collection = newValue }}
+  }
   
-  private static let _objectQ = DispatchQueue(label: "Packets.objectQ", attributes: [.concurrent])
-  private static var _collection = [Packet]()
+  private let _objectQ = DispatchQueue(label: "Packets.objectQ", attributes: [.concurrent])
+  private var _collection = IdentifiedArrayOf<Packet>()
   
   public init() {}
   
@@ -28,15 +29,13 @@ final public class Packets {
   /// Update a packet in the collection
   /// - Parameter packet: a Packet
   public func update(_ packet: Packet) {
-    if let i = collection.firstIndex(of: packet) {
-      collection[i] = packet
-    }
+    collection[id: packet.id] = packet
   }
 
   /// Remove a packet from the collection
   /// - Parameter packet: a Packet
   public func remove(_ packet: Packet) {
-    collection.removeAll( where: {$0 == packet} )
+    collection.remove(id: packet.id)
   }
 
   /// Remove all packet sfrom the collection
@@ -60,14 +59,15 @@ final public class Packets {
   }
   
   /// Is the packet known (i.e. in the collection)
-  /// - Parameter packet: the incoming packet
-  /// - Returns: the index, if any, of the matching packet
-  public func isKnownPacket(_ packet: Packet) -> Int? {
-    if let index = collection.firstIndex(where: { $0 == packet }) {
-      // update the lastSeen property
-      collection[index].lastSeen = Date()
-      return index
+  /// - Parameter newPacket:  the incoming packet
+  /// - Returns:              the id, if any, of the matching packet
+  public func isKnownRadio(_ newPacket: Packet) -> UUID? {
+    var id: UUID?
+    
+    for packet in collection where packet.serial == newPacket.serial && packet.publicIp == newPacket.publicIp {
+      id = packet.id
+      break
     }
-    return nil
+    return id
   }
 }

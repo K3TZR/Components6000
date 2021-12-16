@@ -40,7 +40,7 @@ final class LanListener: NSObject, ObservableObject {
   private let _udpQ = DispatchQueue(label: "DiscoveryListener" + ".udpQ")
   private var _udpSocket: GCDAsyncUdpSocket!
 
-  let _log = LogPublisher.sharedInstance.publish
+  let _log = LogProxy.sharedInstance.publish
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
