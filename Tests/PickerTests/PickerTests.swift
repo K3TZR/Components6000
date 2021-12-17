@@ -18,11 +18,26 @@ import Discovery
 class PickerTests: XCTestCase {
   let testScheduler = DispatchQueue.test
   
-//  func testButtons() {
-//    
-//  }
+  func testButtons() {
+    let store = TestStore(
+      initialState: .init(),
+      reducer: pickerReducer,
+      environment: PickerEnvironment(
+        queue: { self.testScheduler.eraseToAnyScheduler() },
+        subscriptions: mockDiscoverySubscriptions
+      )
+    )
+
+    store.send(.connectButton)
+    // TODO: do connection
+    
+    store.send(.testButton)
+    // TODO: do testing
+    
+    store.send(.cancelButton)
+  }
   
-  func testIntegration() {
+  func testSubscription() {
     let store = TestStore(
       initialState: .init(),
       reducer: pickerReducer,
@@ -35,27 +50,76 @@ class PickerTests: XCTestCase {
     store.send(.onAppear)
     
     testScheduler.advance()
-    // PUBLISH a PacketUpdate
-    mockPacketPublisher.send(PacketUpdate(.added, packet: testPacket(), packets: [self.testPacket()] ))
+    // PUBLISH a Packet added
+    mockPacketPublisher.send( PacketChange(.added, packet: testPacket(), packets: [self.testPacket()] ))
     
-//    store.send(.packetUpdate(PacketUpdate(.added, packet: testPacket(), packets: [self.testPacket()]))) {
-//      $0.discovery.packets.collection = [self.testPacket()]
+    testScheduler.advance()
+    // Receive the added Packet
+    store.receive( .packetChange( PacketChange(.added, packet: testPacket(), packets: [self.testPacket()] ))) {
+      $0.discovery.packets.collection = [self.testPacket()]
 //      $0.forceUpdate.toggle()
-//    }
+    }
+    store.send(.cancelButton)
+  }
+  
+  func testPacketUpdates() {
+    let store = TestStore(
+      initialState: .init(),
+      reducer: pickerReducer,
+      environment: PickerEnvironment(
+        queue: { self.testScheduler.eraseToAnyScheduler() },
+        subscriptions: mockDiscoverySubscriptions
+      )
+    )
+    store.send(.onAppear)
 
     testScheduler.advance()
-    // Receive the PacketUpdate
-    store.receive( .packetUpdate(testPacketUpdate()) ) {
+    // add a Packet
+    store.send(.packetChange( PacketChange(.added, packet: testPacket(), packets: [testPacket()] ))) {
       $0.discovery.packets.collection = [self.testPacket()]
-      $0.forceUpdate.toggle()
+    }
+    
+    testScheduler.advance()
+    // update a Packet
+    var updatedTestPacket = testPacket()
+    updatedTestPacket.nickname = "Petes 6700"
+    store.send(.packetChange( PacketChange(.updated, packet: updatedTestPacket, packets: [updatedTestPacket] ))) {
+      $0.discovery.packets.collection = [updatedTestPacket]
+    }
+    
+    testScheduler.advance()
+    // delete a Packet
+    store.send(.packetChange( PacketChange(.deleted, packet: testPacket(), packets: [self.testPacket()] ))) {
+      $0.discovery.packets.collection = []
+    }
+    store.send(.cancelButton)
+  }
+
+  
+  func testDefault() {
+    let store = TestStore(
+      initialState: .init(),
+      reducer: pickerReducer,
+      environment: PickerEnvironment(
+        queue: { self.testScheduler.eraseToAnyScheduler() },
+        subscriptions: mockDiscoverySubscriptions
+      )
+    )
+    // ON APPEAR
+    store.send(.onAppear)
+    
+    testScheduler.advance()
+    // add a Packet
+    store.send(.packetChange( PacketChange(.added, packet: testPacket(), packets: [testPacket()] ))) {
+      $0.discovery.packets.collection = [self.testPacket()]
     }
     
     testScheduler.advance()
     // Tap the Packet to make it the Default
-    store.send(.packet(id: self.testPacket().id, action: .buttonTapped(.defaultBox)) ) {
+    store.send(.packet(id: self.testPacket().id, action: .defaultButton) ) {
       $0.discovery.packets.collection[id: self.testPacket().id]?.isDefault = true
       $0.defaultPacket = self.testPacket().id
-      $0.forceUpdate.toggle()
+//      $0.forceUpdate.toggle()
     }
 
     testScheduler.advance()
@@ -66,10 +130,10 @@ class PickerTests: XCTestCase {
 
     testScheduler.advance()
     // Tap the Packet again to undo it's Default status
-    store.send(.packet(id: self.testPacket().id, action: .buttonTapped(.defaultBox)) ) {
+    store.send(.packet(id: self.testPacket().id, action: .defaultButton) ) {
       $0.discovery.packets.collection[id: self.testPacket().id]?.isDefault = false
       $0.defaultPacket = nil
-      $0.forceUpdate.toggle()
+//      $0.forceUpdate.toggle()
     }
 
     testScheduler.advance()
@@ -77,18 +141,9 @@ class PickerTests: XCTestCase {
     store.receive( .defaultSelected(nil) ) {
       $0.defaultPacket = nil
     }
-
-//    testScheduler.advance()
-//    // Confirm the Default status
-//    store.receive( .defaultSelected(nil) )
-
-//    store.send(.buttonTapped(.test))
-//    store.send(.buttonTapped(.connect))
-//    store.send(.buttonTapped(.cancel))
-
-    store.send(.buttonTapped(.cancel))
+    store.send(.cancelButton)
   }
-  
+
   // ----------------------------------------------------------------------------
   // MARK: - Test related
   
@@ -109,18 +164,24 @@ class PickerTests: XCTestCase {
     return packet
   }
   
-  private func testPacketUpdate() -> PacketUpdate {
-    return PacketUpdate(.added, packet: testPacket(), packets: [testPacket()])
+  private func testPacketAdd() -> PacketChange {
+    return PacketChange(.added, packet: testPacket(), packets: [testPacket()])
   }
 
-  var mockPacketPublisher = PassthroughSubject<PacketUpdate, Never>()
-  var mockClientPublisher = PassthroughSubject<ClientUpdate, Never>()
+  private func testPacketUpdate() -> PacketChange {
+    var updatedTestPacket = testPacket()
+    updatedTestPacket.nickname = "Dougs 6700"
+    return PacketChange(.updated, packet: updatedTestPacket, packets: [updatedTestPacket])
+  }
+
+  var mockPacketPublisher = PassthroughSubject<PacketChange, Never>()
+  var mockClientPublisher = PassthroughSubject<ClientChange, Never>()
 
   public func mockDiscoverySubscriptions() -> Effect<PickerAction, Never> {
     return
       mockPacketPublisher
         .receive(on: testScheduler)
-        .map { update in .packetUpdate(update) }
+        .map { update in .packetChange(update) }
         .eraseToEffect()
         .cancellable(id: PacketSubscriptionId())
   }

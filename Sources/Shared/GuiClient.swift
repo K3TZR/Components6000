@@ -14,7 +14,7 @@ public enum ClientAction {
   case update
   case delete
 }
-public struct ClientUpdate: Equatable {
+public struct ClientChange: Equatable {
   public var action: ClientAction
   public var client: GuiClient
 

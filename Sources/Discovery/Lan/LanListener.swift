@@ -72,7 +72,7 @@ final class LanListener: NSObject, ObservableObject {
           $0.source == .local && abs($0.lastSeen.timeIntervalSince(now)) > timeout
         } )
         for packet in deletedList {
-          self._discovery!.packetPublisher.send(PacketUpdate(.deleted, packet: packet, packets: self._discovery!.packets.collection))
+          self._discovery!.packetPublisher.send(PacketChange(.deleted, packet: packet, packets: self._discovery!.packets.collection))
         }
       }
       .store(in: &_cancellables)

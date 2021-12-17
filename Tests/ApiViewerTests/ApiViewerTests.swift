@@ -17,7 +17,7 @@ class ApiViewerTests: XCTestCase {
   
   func testButtons() {
     let store = TestStore(
-      initialState: .init(fontSize: 12),
+      initialState: .init(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
       reducer: apiReducer,
       environment: ApiEnvironment(
         queue: { self.scheduler.eraseToAnyScheduler() }

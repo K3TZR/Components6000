@@ -77,7 +77,7 @@ final class WanListener: NSObject, ObservableObject {
   private var _timeout = 0.0                // seconds
   private var _user: String?
 
-  let _log = LogPublisher.sharedInstance.publish
+  let _log = LogProxy.sharedInstance.publish
 
   // ------------------------------------------------------------------------------
   // MARK: - Initialization

@@ -11,7 +11,9 @@ import Dispatch
 
 import Discovery
 import Shared
-import CloudKit
+
+struct PacketSubscriptionId: Hashable {}
+struct ClientSubscriptionId: Hashable {}
 
 public enum PickType: String, Equatable {
   case station = "STATION"
@@ -55,15 +57,17 @@ public enum PickerAction: Equatable {
   case onAppear
   
   // buttons
-  case buttonTapped(PickerButton)
-  
+  case cancelButton
+  case connectButton
+  case testButton
+
   // effects
   case testResultReceived(Bool)
   case connectResultReceived(Int?)
   
   // subscriptions
-  case packetUpdate(PacketUpdate)
-  case clientUpdate(ClientUpdate)
+  case packetChange(PacketChange)
+  case clientChange(ClientChange)
   case packet(id: UUID, action: PacketAction)
   case defaultSelected(UUID?)
 }
@@ -96,31 +100,28 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // start listening for Discovery broadcasts (long-running Effect)
       return environment.subscriptions()
       
-    case let .buttonTapped(button):
-      switch button {
-      case .test:
+    case .cancelButton:
+      return .cancel(ids: PacketSubscriptionId(), ClientSubscriptionId())
+
+    case .connectButton:
+      // TODO
+      print("-----> PickerCore: NOT IMPLEMENTED \(action)")
+      return .none
+
+    case .testButton:
         // TODO
         print("-----> PickerCore: NOT IMPLEMENTED \(action)")
         return .none
       
-      case .cancel:
-        return .cancel(ids: PacketSubscriptionId(), ClientSubscriptionId())
-      
-      case .connect:
-        // TODO
-        print("-----> PickerCore: NOT IMPLEMENTED \(action)")
-        return .none
-      }
-      
-    case let .packetUpdate(update):
+    case let .packetChange(update):
       // process a DiscoveryPacket change
       state.discovery.packets.collection = update.packets
-      state.forceUpdate.toggle()
+//      state.forceUpdate.toggle()
       return .none
       
-    case let .clientUpdate(update):
+    case let .clientChange(update):
       // process a GuiClient change
-      state.forceUpdate.toggle()
+//      state.forceUpdate.toggle()
       return .none
       
     case let .testResultReceived(result):
@@ -129,37 +130,36 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .none
       
     case let .defaultSelected(id):
-      print("------------ .defaultSelected \(String(describing: id))")
       return .none
 
     case let .connectResultReceived(result):
       // TODO
-      print("-----> PickerCore: NOT IMPLEMENTED \(action)")
       return .none
 
       
       // ----- Packet level actions -----
-    case let .packet(id: id, action: .packetTapped):
-      if state.discovery.packets.collection[id: id] != nil {
-        state.discovery.packets.collection[id: id]!.isSelected.toggle()
-        if state.discovery.packets.collection[id: id]!.isSelected {
-          state.selectedPacket = id
+    case let .packet(id: id, action: .packetSelected):
+      
+      if var packet = state.discovery.packets.collection[id: id] {
+        packet.isSelected.toggle()
+
+        if packet.isSelected {
+          state.selectedPacket = packet.id
         } else {
           state.selectedPacket = nil
         }
+        state.discovery.packets.update(packet)
+//        state.forceUpdate.toggle()
+        return Effect(value: .defaultSelected(state.selectedPacket))
+
+      } else {
+        return .none
       }
-      for packet in state.discovery.packets.collection where packet.id != id {
-        state.discovery.packets.collection[id: id]?.isSelected = false
-      }
-      state.forceUpdate.toggle()
-      return .none
- 
-    case let .packet(id: id, action: .buttonTapped(.defaultBox)):
+
+    case let .packet(id: id, action: .defaultButton):
       
       if var packet = state.discovery.packets.collection[id: id] {
-        print("----------> BEFORE: \(packet.isDefault)")
         packet.isDefault.toggle()
-        print("----------> AFTER: \(packet.isDefault)")
 
         if packet.isDefault {
           state.defaultPacket = packet.id
@@ -167,51 +167,16 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
           state.defaultPacket = nil
         }
         state.discovery.packets.update(packet)
-        state.forceUpdate.toggle()
-        return Effect(value: .defaultSelected(packet.isDefault ? packet.id : nil))
-//        return .none
+//        state.forceUpdate.toggle()
+        return Effect(value: .defaultSelected(state.defaultPacket))
 
       } else {
         return .none
       }
       
-      
-//      if state.discovery.packets.collection[id: id] != nil {
-//        print("---------- isDefault was \(state.discovery.packets.collection[id: id]!.isDefault)")
-//
-//        state.discovery.packets.collection[id: id]!.isDefault.toggle()
-//
-//        print("---------- isDefault became \(state.discovery.packets.collection[id: id]!.isDefault)")
-//
-//        print("---------- defaultPacket was \(state.defaultPacket)")
-//
-//        if state.discovery.packets.collection[id: id]!.isDefault {
-//          state.defaultPacket = id
-//        } else {
-//          state.defaultPacket = nil
-//        }
-//
-//        print("---------- defaultPacket became \(state.defaultPacket)")
-//      }
-//      for packet in state.discovery.packets.collection where packet.id != id {
-//        state.discovery.packets.collection[id: id]?.isDefault = false
-//      }
-
-//      print("---------- defaultPacket is finally \(state.defaultPacket)")
-      
-
-
     case let .packet(id: id, action: action):
-      
-      print("------------ --> PickerCore: NOT IMPLEMENTED \(action)")
-
-      return .none
-    
+      return .none    
     }
   }
 )
   .debug("PICKER ")
-
-struct PacketSubscriptionId: Hashable {}
-struct ClientSubscriptionId: Hashable {}
-

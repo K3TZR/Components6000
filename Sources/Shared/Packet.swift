@@ -20,7 +20,7 @@ public enum PacketAction {
   case deleted
 }
 
-public struct PacketUpdate: Equatable {
+public struct PacketChange: Equatable {
   public var action: PacketAction
   public var packet: Packet
   public var packets: IdentifiedArrayOf<Packet>
@@ -47,8 +47,7 @@ public struct Packet: Identifiable, Equatable, Hashable {
   public var id: UUID                             //  NOT in received packet
   public var lastSeen: Date                       //  NOT in received packet
   public var source: Source                       //  NOT in received packet
-  public var isDefault = false  {                  //  NOT in received packet
-    didSet { print("Packet DidSet: isDefault set to \(isDefault.asTrueFalse)") } }
+  public var isDefault = false                    //  NOT in received packet
   public var isPortForwardOn = false              //  NOT in received packet
   public var isSelected = false                   //  NOT in received packet
   public var guiClients = GuiClients().collection //  NOT in received packet

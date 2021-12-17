@@ -20,13 +20,13 @@ public func discoverySubscriptions() -> Effect<PickerAction, Never> {
   return Effect.concatenate(
     Discovery.sharedInstance.packetPublisher
       .receive(on: DispatchQueue.main)
-      .map { update in .packetUpdate(update) }
+      .map { update in .packetChange(update) }
       .eraseToEffect()
       .cancellable(id: PacketSubscriptionId()),
     
     Discovery.sharedInstance.clientPublisher
       .receive(on: DispatchQueue.main)
-      .map { update in PickerAction.clientUpdate(update) }
+      .map { update in .clientChange(update) }
       .eraseToEffect()
       .cancellable(id: ClientSubscriptionId())
   )

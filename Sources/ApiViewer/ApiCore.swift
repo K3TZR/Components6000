@@ -157,11 +157,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
 
     case let .pickerAction(.defaultSelected(id)):
-      print("---------- ApiCore: .defaultSelected, id = \(id)")
       state.defaultPacket = id
       return .none
       
-    case .pickerAction(.buttonTapped(.cancel)):
+    case .pickerAction(.cancelButton):
       state.pickerState = nil
       return .none
       
@@ -169,11 +168,11 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
       
-    case .pickerAction(.buttonTapped(.test)):
+    case .pickerAction(.testButton):
       print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
       
-    case .pickerAction(.buttonTapped(.connect)):
+    case .pickerAction(.connectButton):
       print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
       

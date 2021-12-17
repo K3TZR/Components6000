@@ -8,13 +8,9 @@
 import ComposableArchitecture
 import Shared
 
-public enum PacketButton: Equatable {
-  case defaultBox
-}
-
 public enum PacketAction: Equatable {
-  case buttonTapped(PacketButton)
-  case packetTapped
+  case defaultButton
+  case packetSelected
 }
 
 public struct PacketEnvironment {

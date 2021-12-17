@@ -23,9 +23,9 @@ public final class Discovery: Equatable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  public var clientPublisher = PassthroughSubject<ClientUpdate, Never>()
+  public var clientPublisher = PassthroughSubject<ClientChange, Never>()
 //  public var logPublisher = PassthroughSubject<LogEntry, Never>()
-  public var packetPublisher = PassthroughSubject<PacketUpdate, Never>()
+  public var packetPublisher = PassthroughSubject<PacketChange, Never>()
 
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
@@ -81,12 +81,12 @@ public final class Discovery: Equatable, ObservableObject {
 
         // update it and publish
         packets.update(newPacket)
-        packetPublisher.send(PacketUpdate(.updated, packet: newPacket, packets: packets.collection))
+        packetPublisher.send(PacketChange(.updated, packet: newPacket, packets: packets.collection))
         for client in additions {
-          clientPublisher.send(ClientUpdate(.add, client: client))
+          clientPublisher.send(ClientChange(.add, client: client))
         }
         for client in deletions {
-          clientPublisher.send(ClientUpdate(.delete, client: client))
+          clientPublisher.send(ClientChange(.delete, client: client))
         }
         return
 
@@ -102,9 +102,9 @@ public final class Discovery: Equatable, ObservableObject {
 
     // add it and publish
     packets.add(newPacket)
-    packetPublisher.send(PacketUpdate(.added, packet: newPacket, packets: packets.collection))
+    packetPublisher.send(PacketChange(.added, packet: newPacket, packets: packets.collection))
     for client in newPacket.guiClients {
-      clientPublisher.send(ClientUpdate(.add, client: client))
+      clientPublisher.send(ClientChange(.add, client: client))
     }
   }
 }
