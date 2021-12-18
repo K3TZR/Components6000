@@ -34,7 +34,7 @@ public struct LogView: View {
       }
       .frame(minWidth: 700)
       .toolbar {
-        Button("Api View") { viewStore.send(.buttonTapped(.apiView)) }
+        Button("Api View") { viewStore.send(.apiViewButton) }
       }
     }
     //    .onAppear() {
@@ -55,7 +55,7 @@ struct LogHeader: View {
       HStack {
         Picker("Show Level", selection: viewStore.binding(
           get: \.logLevel,
-          send: { value in .logLevelChanged(value) } )) {
+          send: { value in .logLevel(value) } )) {
           ForEach(LogLevel.allCases, id: \.self) {
             Text($0.rawValue)
           }
@@ -64,7 +64,7 @@ struct LogHeader: View {
         Spacer()
         Picker("Filter by", selection: viewStore.binding(
           get: \.filterBy,
-          send: { value in .filterByChanged(value) } )) {
+          send: { value in .filterBy(value) } )) {
           ForEach(LogFilter.allCases, id: \.self) {
             Text($0.rawValue)
           }
@@ -72,12 +72,12 @@ struct LogHeader: View {
         
         TextField("Filter text", text: viewStore.binding(
           get: \.filterByText,
-          send: { value in .filterByTextChanged(value) } ))
+          send: { value in .filterByText(value) } ))
           .frame(maxWidth: 300, alignment: .leading)
         //                .modifier(ClearButton(boundText: $logManager.filterByText))
         
         Spacer()
-        Toggle("Show Timestamps", isOn: viewStore.binding(get: \.showTimestamps, send: .buttonTapped(.showTimestamps)))
+        Toggle("Show Timestamps", isOn: viewStore.binding(get: \.showTimestamps, send: .timestampsButton))
       }
     }
   }
@@ -123,22 +123,22 @@ struct LogFooter: View {
         Stepper("Font Size",
                 value: viewStore.binding(
                   get: \.fontSize,
-                  send: { value in .fontSizeChanged(value) }),
+                  send: { value in .fontSize(value) }),
                 in: 8...14)
         Text(String(format: "%2.0f", viewStore.fontSize)).frame(alignment: .leading)
         
         Spacer()
-        Button("Email") { viewStore.send(.buttonTapped(.email)) }
+        Button("Email") { viewStore.send(.emailButton) }
         
         Spacer()
         HStack (spacing: 20) {
-          Button("Refresh") { viewStore.send(.buttonTapped(.refresh)) }
-          Button("Load") { viewStore.send(.buttonTapped(.load)) }
-          Button("Save") { viewStore.send(.buttonTapped(.save)) }
+          Button("Refresh") { viewStore.send(.refreshButton) }
+          Button("Load") { viewStore.send(.loadButton) }
+          Button("Save") { viewStore.send(.saveButton) }
         }
         
         Spacer()
-        Button("Clear") { viewStore.send(.buttonTapped(.clear)) }
+        Button("Clear") { viewStore.send(.clearButton) }
       }
     }
   }

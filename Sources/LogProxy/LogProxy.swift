@@ -39,6 +39,9 @@ final public class LogProxy {
   public static var sharedInstance = LogProxy()
   public var logPublisher = PassthroughSubject<LogEntry, Never>()
 
+  // ----------------------------------------------------------------------------
+  // MARK: - Private properties
+  
   private var _logCancellable: AnyCancellable?
 
   // ----------------------------------------------------------------------------

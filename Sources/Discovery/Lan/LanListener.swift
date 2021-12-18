@@ -68,12 +68,7 @@ final class LanListener: NSObject, ObservableObject {
     Timer.publish(every: checkInterval, on: .main, in: .default)
       .autoconnect()
       .sink { now in
-        let deletedList = self._discovery!.packets.remove(condition: {
-          $0.source == .local && abs($0.lastSeen.timeIntervalSince(now)) > timeout
-        } )
-        for packet in deletedList {
-          self._discovery!.packetPublisher.send(PacketChange(.deleted, packet: packet, packets: self._discovery!.packets.collection))
-        }
+        self.remove(condition: { $0.source == .local && abs($0.lastSeen.timeIntervalSince(now)) > timeout } )
       }
       .store(in: &_cancellables)
   }
@@ -86,6 +81,18 @@ final class LanListener: NSObject, ObservableObject {
     _cancellables = Set<AnyCancellable>()
     _udpSocket?.close()
     DispatchQueue.main.async { self.isConnected = false }
+  }
+  
+  // ----------------------------------------------------------------------------
+  // MARK: - Private methods
+  
+  /// Remove a packet from the collection
+  /// - Parameter condition:  a closure defining the condition for removal
+  private func remove(condition: (Packet) -> Bool) {
+    for packet in _discovery!.packets where condition(packet) { 
+      _discovery?.packets.remove(id: packet.id)
+      _discovery?.packetPublisher.send(PacketChange(.deleted, packet: packet))
+    }
   }
 }
 

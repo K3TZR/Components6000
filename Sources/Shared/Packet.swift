@@ -23,12 +23,11 @@ public enum PacketAction {
 public struct PacketChange: Equatable {
   public var action: PacketAction
   public var packet: Packet
-  public var packets: IdentifiedArrayOf<Packet>
 
-  public init(_ action: PacketAction, packet: Packet, packets: IdentifiedArrayOf<Packet>) {
+  public init(_ action: PacketAction, packet: Packet) {
     self.action = action
     self.packet = packet
-    self.packets = packets
+
   }
 }
 
@@ -44,15 +43,15 @@ public struct Packet: Identifiable, Equatable, Hashable {
   // MARK: - Public properties
   
   // these fields are NOT in the received packet but are in the Packet struct
-  public var id: UUID                             //  NOT in received packet
-  public var lastSeen: Date                       //  NOT in received packet
-  public var source: Source                       //  NOT in received packet
-  public var isDefault = false                    //  NOT in received packet
-  public var isPortForwardOn = false              //  NOT in received packet
-  public var isSelected = false                   //  NOT in received packet
-  public var guiClients = GuiClients().collection //  NOT in received packet
-  public var localInterfaceIP = ""                //  NOT in received packet
-  public var requiresHolePunch = false            //  NOT in received packet
+  public var id: UUID                                     //  NOT in received packet
+  public var lastSeen: Date                               //  NOT in received packet
+  public var source: Source                               //  NOT in received packet
+  public var isDefault = false                            //  NOT in received packet
+  public var isPortForwardOn = false                      //  NOT in received packet
+  public var isSelected = false                           //  NOT in received packet
+  public var guiClients = IdentifiedArrayOf<GuiClient>()  //  NOT in received packet
+  public var localInterfaceIP = ""                        //  NOT in received packet
+  public var requiresHolePunch = false                    //  NOT in received packet
 
   // PACKET TYPE                                     LAN   WAN
 
@@ -138,9 +137,9 @@ public struct Packet: Identifiable, Equatable, Hashable {
   }
 
   /// Parse the GuiClient CSV fields in a packet
-  public mutating func parseGuiClients() -> (additions: [GuiClient], deletions: [GuiClient]) {
+  public mutating func parseGuiClients() -> (additions: IdentifiedArrayOf<GuiClient>, deletions: IdentifiedArrayOf<GuiClient>) {
     
-    guard guiClientPrograms != "" && guiClientStations != "" && guiClientHandles != "" else { return ([GuiClient](), [GuiClient]()) }
+    guard guiClientPrograms != "" && guiClientStations != "" && guiClientHandles != "" else { return (IdentifiedArrayOf<GuiClient>(), IdentifiedArrayOf<GuiClient>()) }
     
     let prevGuiClients = guiClients
     
@@ -151,7 +150,7 @@ public struct Packet: Identifiable, Equatable, Hashable {
     let ips       = guiClientIps.components(separatedBy: ",")
     
 //    guard programs.count == handles.count && stations.count == handles.count && hosts.count == handles.count && ips.count == handles.count else { return guiClients}
-    guard programs.count == handles.count && stations.count == handles.count && ips.count == handles.count else { return ([GuiClient](), [GuiClient]()) }
+    guard programs.count == handles.count && stations.count == handles.count && ips.count == handles.count else { return (IdentifiedArrayOf<GuiClient>(), IdentifiedArrayOf<GuiClient>()) }
 
     for i in 0..<handles.count {
       // valid handle, non-blank other fields?
@@ -159,10 +158,10 @@ public struct Packet: Identifiable, Equatable, Hashable {
       if let handle = handles[i].handle, stations[i] != "", programs[i] != "" , ips[i] != "" {
 
         guiClients.append( GuiClient(clientHandle: handle,
-                                     station: stations[i],
-                                     program: programs[i],
-                                     host: hosts[i],
-                                     ip: ips[i])
+                                  station: stations[i],
+                                  program: programs[i],
+                                  host: hosts[i],
+                                  ip: ips[i])
         )
       }
     }
@@ -172,23 +171,23 @@ public struct Packet: Identifiable, Equatable, Hashable {
   /// Identify added/deleted GuiClients
   /// - Parameters:
   ///   - prevGuiClients:      previous array of GuiClient
-  private func identifyChanges(_ prevGuiClients: [GuiClient]) -> ([GuiClient], [GuiClient]) {
-    var additions = [GuiClient]()
-    var deletions = [GuiClient]()
+  private func identifyChanges(_ prevGuiClients: IdentifiedArrayOf<GuiClient>) -> (IdentifiedArrayOf<GuiClient>, IdentifiedArrayOf<GuiClient>) {
+    var additions = IdentifiedArrayOf<GuiClient>()
+    var deletions = IdentifiedArrayOf<GuiClient>()
 
     // for each GuiClient in the new packet
     for client in guiClients {
       // was it known?
-      if prevGuiClients.firstIndex(where: {$0.clientHandle == client.clientHandle} ) == nil {
-        // NO, add it
+      if prevGuiClients[id: client.id] == nil {
+        // NO, add to list of additions
         additions.append(client)
       }
     }
     // for each GuiClient currently known by the Radio
     for client in guiClients {
       // is it in the new packet?
-      if prevGuiClients.firstIndex(where: {$0.clientHandle == client.clientHandle} ) == nil {
-        // NO, add it
+      if prevGuiClients[id: client.id] == nil {
+        // NO, add to list of deletions
         deletions.append(client)
       }
     }

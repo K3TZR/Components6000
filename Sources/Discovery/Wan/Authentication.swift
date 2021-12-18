@@ -10,6 +10,7 @@ import SwiftUI
 
 import JWTDecode
 import Shared
+import SecureStorage
 
 final class Authentication {
   // ----------------------------------------------------------------------------

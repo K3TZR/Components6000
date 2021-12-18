@@ -88,7 +88,7 @@ public struct PickerEnvironment {
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
   packetReducer.forEach(
-    state: \PickerState.discovery.packets.collection,
+    state: \PickerState.discovery.packets,
     action: /PickerAction.packet(id:action:),
     environment: { _ in PacketEnvironment() }
       ),
@@ -115,7 +115,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       
     case let .packetChange(update):
       // process a DiscoveryPacket change
-      state.discovery.packets.collection = update.packets
+      state.discovery.packets[id: update.packet.id] = update.packet
 //      state.forceUpdate.toggle()
       return .none
       
@@ -140,7 +140,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // ----- Packet level actions -----
     case let .packet(id: id, action: .packetSelected):
       
-      if var packet = state.discovery.packets.collection[id: id] {
+      if var packet = state.discovery.packets[id: id] {
         packet.isSelected.toggle()
 
         if packet.isSelected {
@@ -148,7 +148,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
         } else {
           state.selectedPacket = nil
         }
-        state.discovery.packets.update(packet)
+        state.discovery.packets[id: id]?.isSelected = packet.isSelected
 //        state.forceUpdate.toggle()
         return Effect(value: .defaultSelected(state.selectedPacket))
 
@@ -158,7 +158,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
 
     case let .packet(id: id, action: .defaultButton):
       
-      if var packet = state.discovery.packets.collection[id: id] {
+      if var packet = state.discovery.packets[id: id] {
         packet.isDefault.toggle()
 
         if packet.isDefault {
@@ -166,7 +166,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
         } else {
           state.defaultPacket = nil
         }
-        state.discovery.packets.update(packet)
+        state.discovery.packets[id: id]?.isDefault = packet.isDefault
 //        state.forceUpdate.toggle()
         return Effect(value: .defaultSelected(state.defaultPacket))
 

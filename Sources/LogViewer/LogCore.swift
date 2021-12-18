@@ -18,16 +18,16 @@ public enum LogButton: Equatable {
 }
 
 public enum LogLevel: String, CaseIterable {
-    case debug    = "Debug"
-    case info     = "Info"
-    case warning  = "Warning"
-    case error    = "Error"
+  case debug    = "Debug"
+  case info     = "Info"
+  case warning  = "Warning"
+  case error    = "Error"
 }
 
 public enum LogFilter: String, CaseIterable {
-    case none
-    case includes
-    case excludes
+  case none
+  case includes
+  case excludes
 }
 
 public struct LogState: Equatable {
@@ -37,17 +37,27 @@ public struct LogState: Equatable {
   public var logLevel: LogLevel = .debug
   public var fontSize: CGFloat = 12
   
-  public init(fontSize: CGFloat) {
+  public init(fontSize: CGFloat = 12) {
     self.fontSize = fontSize
   }
 }
 
 public enum LogAction: Equatable {
-  case buttonTapped(LogButton)
-  case filterByTextChanged(String)
-  case filterByChanged(LogFilter)
-  case logLevelChanged(LogLevel)
-  case fontSizeChanged(CGFloat)
+  // buttons
+  case timestampsButton
+  case apiViewButton
+  case emailButton
+  case loadButton
+  case saveButton
+  case refreshButton
+  case clearButton
+  // textfield
+  case filterByText(String)
+  // pickers
+  case filterBy(LogFilter)
+  case logLevel(LogLevel)
+  // stepper
+  case fontSize(CGFloat)
 }
 
 public struct LogEnvironment {
@@ -60,56 +70,53 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
   
   switch action {
     
-  case let .buttonTapped(button):
-    switch button {
-    case .showTimestamps:
-      state.showTimestamps.toggle()
-      return .none
-      
-    case .apiView:
-      // TODO
-      print("-----> LogCore: NOT IMPLEMENTED \(action)")
-      return .none
-
-    case .email:
-      // TODO
-      print("-----> LogCore: NOT IMPLEMENTED \(action)")
-      return .none
-
-    case .load:
-      // TODO
-      print("-----> LogCore: NOT IMPLEMENTED \(action)")
-      return .none
-
-    case .save:
-      // TODO
-      print("-----> LogCore: NOT IMPLEMENTED \(action)")
-      return .none
-
-    case .refresh:
-      // TODO
-      print("-----> LogCore: NOT IMPLEMENTED \(action)")
-      return .none
-
-    case .clear:
-      // TODO
-      print("-----> LogCore: NOT IMPLEMENTED \(action)")
-      return .none
-    }
+  case .timestampsButton:
+    state.showTimestamps.toggle()
+    return .none
     
-  case let .filterByTextChanged(text):
+  case .apiViewButton:
+    // TODO
+    print("-----> LogCore: NOT IMPLEMENTED \(action)")
+    return .none
+    
+  case .emailButton:
+    // TODO
+    print("-----> LogCore: NOT IMPLEMENTED \(action)")
+    return .none
+    
+  case .loadButton:
+    // TODO
+    print("-----> LogCore: NOT IMPLEMENTED \(action)")
+    return .none
+    
+  case .saveButton:
+    // TODO
+    print("-----> LogCore: NOT IMPLEMENTED \(action)")
+    return .none
+    
+  case .refreshButton:
+    // TODO
+    print("-----> LogCore: NOT IMPLEMENTED \(action)")
+    return .none
+    
+  case .clearButton:
+    // TODO
+    print("-----> LogCore: NOT IMPLEMENTED \(action)")
+    return .none
+    
+  case let .filterByText(text):
     state.filterByText = text
     return .none
-
-  case let .filterByChanged(filter):
+    
+  case let .filterBy(filter):
     state.filterBy = filter
     return .none
-
-  case let .logLevelChanged(level):
+    
+  case let .logLevel(level):
     state.logLevel = level
     return .none
-
-  case let .fontSizeChanged(value):
+    
+  case let .fontSize(value):
     state.fontSize = value
     return .none
   }

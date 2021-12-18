@@ -51,12 +51,12 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // PUBLISH a Packet added
-    mockPacketPublisher.send( PacketChange(.added, packet: testPacket(), packets: [self.testPacket()] ))
+    mockPacketPublisher.send( PacketChange(.added, packet: testPacket() ))
     
     testScheduler.advance()
     // Receive the added Packet
-    store.receive( .packetChange( PacketChange(.added, packet: testPacket(), packets: [self.testPacket()] ))) {
-      $0.discovery.packets.collection = [self.testPacket()]
+    store.receive( .packetChange( PacketChange(.added, packet: testPacket()))) {
+      $0.discovery.packets = [self.testPacket()]
 //      $0.forceUpdate.toggle()
     }
     store.send(.cancelButton)
@@ -75,22 +75,22 @@ class PickerTests: XCTestCase {
 
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChange( PacketChange(.added, packet: testPacket(), packets: [testPacket()] ))) {
-      $0.discovery.packets.collection = [self.testPacket()]
+    store.send(.packetChange( PacketChange(.added, packet: testPacket() ))) {
+      $0.discovery.packets = [self.testPacket()]
     }
     
     testScheduler.advance()
     // update a Packet
     var updatedTestPacket = testPacket()
     updatedTestPacket.nickname = "Petes 6700"
-    store.send(.packetChange( PacketChange(.updated, packet: updatedTestPacket, packets: [updatedTestPacket] ))) {
-      $0.discovery.packets.collection = [updatedTestPacket]
+    store.send(.packetChange( PacketChange(.updated, packet: updatedTestPacket))) {
+      $0.discovery.packets = [updatedTestPacket]
     }
     
     testScheduler.advance()
     // delete a Packet
-    store.send(.packetChange( PacketChange(.deleted, packet: testPacket(), packets: [self.testPacket()] ))) {
-      $0.discovery.packets.collection = []
+    store.send(.packetChange( PacketChange(.deleted, packet: testPacket() ))) {
+      $0.discovery.packets = []
     }
     store.send(.cancelButton)
   }
@@ -110,14 +110,14 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChange( PacketChange(.added, packet: testPacket(), packets: [testPacket()] ))) {
-      $0.discovery.packets.collection = [self.testPacket()]
+    store.send(.packetChange( PacketChange(.added, packet: testPacket() ))) {
+      $0.discovery.packets = [self.testPacket()]
     }
     
     testScheduler.advance()
     // Tap the Packet to make it the Default
     store.send(.packet(id: self.testPacket().id, action: .defaultButton) ) {
-      $0.discovery.packets.collection[id: self.testPacket().id]?.isDefault = true
+      $0.discovery.packets[id: self.testPacket().id]?.isDefault = true
       $0.defaultPacket = self.testPacket().id
 //      $0.forceUpdate.toggle()
     }
@@ -131,7 +131,7 @@ class PickerTests: XCTestCase {
     testScheduler.advance()
     // Tap the Packet again to undo it's Default status
     store.send(.packet(id: self.testPacket().id, action: .defaultButton) ) {
-      $0.discovery.packets.collection[id: self.testPacket().id]?.isDefault = false
+      $0.discovery.packets[id: self.testPacket().id]?.isDefault = false
       $0.defaultPacket = nil
 //      $0.forceUpdate.toggle()
     }
@@ -165,13 +165,13 @@ class PickerTests: XCTestCase {
   }
   
   private func testPacketAdd() -> PacketChange {
-    return PacketChange(.added, packet: testPacket(), packets: [testPacket()])
+    return PacketChange( .added, packet: testPacket() )
   }
 
   private func testPacketUpdate() -> PacketChange {
     var updatedTestPacket = testPacket()
     updatedTestPacket.nickname = "Dougs 6700"
-    return PacketChange(.updated, packet: updatedTestPacket, packets: [updatedTestPacket])
+    return PacketChange( .updated, packet: updatedTestPacket )
   }
 
   var mockPacketPublisher = PassthroughSubject<PacketChange, Never>()

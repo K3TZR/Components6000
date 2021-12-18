@@ -17,6 +17,7 @@ let package = Package(
     .library(name: "LogViewer", targets: ["LogViewer"]),
     .library(name: "Commands", targets: ["Commands"]),
     .library(name: "LogProxy", targets: ["LogProxy"]),
+    .library(name: "SecureStorage", targets: ["SecureStorage"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
@@ -24,6 +25,11 @@ let package = Package(
     .package(url: "https://github.com/auth0/JWTDecode.swift", from: "2.6.0")
   ],
   targets: [
+    .target(
+      name: "SecureStorage",
+      dependencies: [
+        ]
+    ),
     .target(
       name: "LogProxy",
       dependencies: [
@@ -53,6 +59,7 @@ let package = Package(
       name: "Discovery",
       dependencies: [
         "Shared",
+        "SecureStorage",
         "LogProxy",
         .product(name: "JWTDecode", package: "JWTDecode.swift"),
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
@@ -83,6 +90,10 @@ let package = Package(
     .testTarget(
       name: "LogViewerTests",
       dependencies: ["LogViewer"]
+    ),
+    .testTarget(
+      name: "SecureStorageTests",
+      dependencies: ["SecureStorage"]
     ),
   ]
 )

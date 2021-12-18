@@ -28,7 +28,7 @@ public struct PickerView: View {
       VStack(alignment: .leading) {
         PickerHeader(pickType: viewStore.pickType)
         Divider()
-        if viewStore.discovery.packets.collection.count == 0 {
+        if viewStore.discovery.packets.count == 0 {
           Spacer()
           HStack {
             Spacer()
@@ -49,7 +49,7 @@ public struct PickerView: View {
             
             
             ForEachStore(
-              self.store.scope(state: \.discovery.packets.collection, action: PickerAction.packet(id:action:))
+              self.store.scope(state: \.discovery.packets, action: PickerAction.packet(id:action:))
             ) { packetStore in
               PacketView(store: packetStore)
             }

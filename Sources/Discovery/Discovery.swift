@@ -9,6 +9,7 @@ import Foundation
 import Combine
 import LogProxy
 import Shared
+import IdentifiedCollections
 
 public final class Discovery: Equatable, ObservableObject {
   public static func == (lhs: Discovery, rhs: Discovery) -> Bool {
@@ -18,7 +19,7 @@ public final class Discovery: Equatable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  public var packets = Packets()
+  public var packets = IdentifiedArrayOf<Packet>()
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
@@ -62,14 +63,10 @@ public final class Discovery: Equatable, ObservableObject {
   /// Process an incoming DiscoveryPacket
   /// - Parameter newPacket: the packet
   func processPacket(_ packet: Packet) {
-    var newPacket: Packet
-    var prevPacket: Packet
-
-    newPacket = packet
+    var newPacket = packet
     
     // is it a Packet that has been seen previously?
-    if let id = packets.isKnownRadio(newPacket) {
-      prevPacket = packets.collection[id: id]!
+    if let prevPacket = isKnownRadio(newPacket) {
       
       // YES, known packet, has it changed?
       if newPacket.isDifferent(from: prevPacket) {
@@ -80,8 +77,8 @@ public final class Discovery: Equatable, ObservableObject {
         let (additions, deletions) = newPacket.parseGuiClients()
 
         // update it and publish
-        packets.update(newPacket)
-        packetPublisher.send(PacketChange(.updated, packet: newPacket, packets: packets.collection))
+        packets[id: prevPacket.id] = newPacket
+        packetPublisher.send(PacketChange(.updated, packet: newPacket))
         for client in additions {
           clientPublisher.send(ClientChange(.add, client: client))
         }
@@ -101,10 +98,26 @@ public final class Discovery: Equatable, ObservableObject {
     _log(LogEntry("Discovery: packet added, \(newPacket.serial), \(newPacket.source.rawValue)", .debug, #function, #file, #line))
 
     // add it and publish
-    packets.add(newPacket)
-    packetPublisher.send(PacketChange(.added, packet: newPacket, packets: packets.collection))
+    packets.append(newPacket)
+    packetPublisher.send(PacketChange(.added, packet: newPacket))
     for client in newPacket.guiClients {
       clientPublisher.send(ClientChange(.add, client: client))
     }
+  }
+
+  // ----------------------------------------------------------------------------
+  // MARK: - Private methods
+  
+  /// Is the packet known (i.e. in the collection)
+  /// - Parameter newPacket:  the incoming packet
+  /// - Returns:              the id, if any, of the matching packet
+  private func isKnownRadio(_ newPacket: Packet) -> Packet? {
+    var matchingPacket: Packet?
+    
+    for packet in packets where packet.serial == newPacket.serial && packet.publicIp == newPacket.publicIp {
+      matchingPacket = packet
+      break
+    }
+    return matchingPacket
   }
 }

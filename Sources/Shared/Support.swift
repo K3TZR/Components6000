@@ -7,29 +7,6 @@
 
 import Foundation
 
-//public struct LogEntry {
-//  public init(_ message: String, _ logLevel: LogLevel, _ function: StaticString, _ file: StaticString, _ line: Int) {
-//    self.message = message
-//    self.logLevel = logLevel
-//    self.function = function
-//    self.file = file
-//    self.line = line
-//  }
-//  
-//  public var message: String
-//  public var logLevel: LogLevel
-//  public var function: StaticString
-//  public var file: StaticString
-//  public var line: Int
-//}
-//
-//public enum LogLevel: String, CaseIterable {
-//    case debug    = "Debug"
-//    case info     = "Info"
-//    case warning  = "Warning"
-//    case error    = "Error"
-//}
-
 // ----------------------------------------------------------------------------
 // MARK: - Aliases
 
