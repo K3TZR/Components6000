@@ -1,6 +1,6 @@
 //
 //  LanListener.swift
-//  TestDiscoveryPackage/Disc
+//  Components6000/Discovery/Lan
 //
 //  Created by Douglas Adams on 10/28/21
 //  Copyright © 2021 Douglas Adams. All rights reserved.
@@ -69,6 +69,7 @@ final class LanListener: NSObject, ObservableObject {
       .autoconnect()
       .sink { now in
         self.remove(condition: { $0.source == .local && abs($0.lastSeen.timeIntervalSince(now)) > timeout } )
+        
       }
       .store(in: &_cancellables)
   }
@@ -90,8 +91,9 @@ final class LanListener: NSObject, ObservableObject {
   /// - Parameter condition:  a closure defining the condition for removal
   private func remove(condition: (Packet) -> Bool) {
     for packet in _discovery!.packets where condition(packet) { 
+      _discovery!.packetPublisher.send(PacketChange(.deleted, packet: packet))
+//      print("\(Date())   vs   \(packet.lastSeen)")
       _discovery?.packets.remove(id: packet.id)
-      _discovery?.packetPublisher.send(PacketChange(.deleted, packet: packet))
     }
   }
 }

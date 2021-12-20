@@ -1,6 +1,6 @@
 //
 //  Packet.swift
-//  TestSmartlink/Shared
+//  Components6000/Shared
 //
 //  Created by Douglas Adams on 10/28/21
 //  Copyright © 2021 Douglas Adams. All rights reserved.
@@ -99,98 +99,36 @@ public struct Packet: Identifiable, Equatable, Hashable {
     return lhs.serial == rhs.serial && lhs.publicIp == rhs.publicIp
   }
   
-  public func isDifferent(from currentPacket: Packet) -> Bool {
+  public func isDifferent(from knownPacket: Packet) -> Bool {
     // status
-    guard self.status == currentPacket.status else { return true }
-//    guard self.availableClients == currentPacket.availableClients else { return true }
-//    guard self.availablePanadapters == currentPacket.availablePanadapters else { return true }
-//    guard self.availableSlices == currentPacket.availableSlices else { return true }
+    guard status == knownPacket.status else { return true }
+    //    guard self.availableClients == currentPacket.availableClients else { return true }
+    //    guard self.availablePanadapters == currentPacket.availablePanadapters else { return true }
+    //    guard self.availableSlices == currentPacket.availableSlices else { return true }
     // GuiClient
-    guard self.guiClientHandles == currentPacket.guiClientHandles else { return true }
-    guard self.guiClientPrograms == currentPacket.guiClientPrograms else { return true }
-    guard self.guiClientStations == currentPacket.guiClientStations else { return true }
-    guard self.guiClientHosts == currentPacket.guiClientHosts else { return true }
-    guard self.guiClientIps == currentPacket.guiClientIps else { return true }
+    guard self.guiClientHandles == knownPacket.guiClientHandles else { return true }
+    guard self.guiClientPrograms == knownPacket.guiClientPrograms else { return true }
+    guard self.guiClientStations == knownPacket.guiClientStations else { return true }
+    guard self.guiClientHosts == knownPacket.guiClientHosts else { return true }
+    guard self.guiClientIps == knownPacket.guiClientIps else { return true }
     // networking
-    guard self.port == currentPacket.port else { return true }
-    guard self.inUseHost == currentPacket.inUseHost else { return true }
-    guard self.inUseIp == currentPacket.inUseIp else { return true }
-    guard self.publicIp == currentPacket.publicIp else { return true }
-    guard self.publicTlsPort == currentPacket.publicTlsPort else { return true }
-    guard self.publicUdpPort == currentPacket.publicUdpPort else { return true }
-    guard self.publicUpnpTlsPort == currentPacket.publicUpnpTlsPort else { return true }
-    guard self.publicUpnpUdpPort == currentPacket.publicUpnpUdpPort else { return true }
-    guard self.publicTlsPort == currentPacket.publicTlsPort else { return true }
+    guard port == knownPacket.port else { return true }
+    guard inUseHost == knownPacket.inUseHost else { return true }
+    guard inUseIp == knownPacket.inUseIp else { return true }
+    guard publicIp == knownPacket.publicIp else { return true }
+    guard publicTlsPort == knownPacket.publicTlsPort else { return true }
+    guard publicUdpPort == knownPacket.publicUdpPort else { return true }
+    guard publicUpnpTlsPort == knownPacket.publicUpnpTlsPort else { return true }
+    guard publicUpnpUdpPort == knownPacket.publicUpnpUdpPort else { return true }
+    guard publicTlsPort == knownPacket.publicTlsPort else { return true }
     // user fields
-    guard self.callsign == currentPacket.callsign else { return true }
-    guard self.model == currentPacket.model else { return true }
-    guard self.nickname == currentPacket.nickname else { return true }
+    guard callsign == knownPacket.callsign else { return true }
+    guard model == knownPacket.model else { return true }
+    guard nickname == knownPacket.nickname else { return true }
     return false
   }
   
-//  public func isSamePacket(as currentPacket: DiscoveryPacket) -> Bool {
-//    return self.serialNumber == currentPacket.serialNumber && self.publicIp == currentPacket.publicIp
-//  }
-  
   public func hash(into hasher: inout Hasher) {
     hasher.combine(publicIp)
-  }
-
-  /// Parse the GuiClient CSV fields in a packet
-  public mutating func parseGuiClients() -> (additions: IdentifiedArrayOf<GuiClient>, deletions: IdentifiedArrayOf<GuiClient>) {
-    
-    guard guiClientPrograms != "" && guiClientStations != "" && guiClientHandles != "" else { return (IdentifiedArrayOf<GuiClient>(), IdentifiedArrayOf<GuiClient>()) }
-    
-    let prevGuiClients = guiClients
-    
-    let programs  = guiClientPrograms.components(separatedBy: ",")
-    let stations  = guiClientStations.components(separatedBy: ",")
-    let handles   = guiClientHandles.components(separatedBy: ",")
-    let hosts     = guiClientHosts.components(separatedBy: ",")
-    let ips       = guiClientIps.components(separatedBy: ",")
-    
-//    guard programs.count == handles.count && stations.count == handles.count && hosts.count == handles.count && ips.count == handles.count else { return guiClients}
-    guard programs.count == handles.count && stations.count == handles.count && ips.count == handles.count else { return (IdentifiedArrayOf<GuiClient>(), IdentifiedArrayOf<GuiClient>()) }
-
-    for i in 0..<handles.count {
-      // valid handle, non-blank other fields?
-//      if let handle = handles[i].handle, stations[i] != "", programs[i] != "" , hosts[i] != "", ips[i] != "" {
-      if let handle = handles[i].handle, stations[i] != "", programs[i] != "" , ips[i] != "" {
-
-        guiClients.append( GuiClient(clientHandle: handle,
-                                  station: stations[i],
-                                  program: programs[i],
-                                  host: hosts[i],
-                                  ip: ips[i])
-        )
-      }
-    }
-    return ( identifyChanges(prevGuiClients) )
-  }
-
-  /// Identify added/deleted GuiClients
-  /// - Parameters:
-  ///   - prevGuiClients:      previous array of GuiClient
-  private func identifyChanges(_ prevGuiClients: IdentifiedArrayOf<GuiClient>) -> (IdentifiedArrayOf<GuiClient>, IdentifiedArrayOf<GuiClient>) {
-    var additions = IdentifiedArrayOf<GuiClient>()
-    var deletions = IdentifiedArrayOf<GuiClient>()
-
-    // for each GuiClient in the new packet
-    for client in guiClients {
-      // was it known?
-      if prevGuiClients[id: client.id] == nil {
-        // NO, add to list of additions
-        additions.append(client)
-      }
-    }
-    // for each GuiClient currently known by the Radio
-    for client in guiClients {
-      // is it in the new packet?
-      if prevGuiClients[id: client.id] == nil {
-        // NO, add to list of deletions
-        deletions.append(client)
-      }
-    }
-    return (additions, deletions)
   }
 }

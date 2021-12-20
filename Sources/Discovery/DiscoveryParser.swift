@@ -1,6 +1,6 @@
 //
 //  DiscoveryParser.swift
-//  TestSmartlink
+//  Components6000/Discovery
 //
 //  Created by Douglas Adams on 12/10/21.
 //

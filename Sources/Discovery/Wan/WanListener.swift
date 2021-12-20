@@ -1,6 +1,6 @@
 //
 //  WanListener.swift
-//  TestSmartlink/Wan
+//  Components6000/Discovery/Wan
 //
 //  Created by Douglas Adams on 12/5/21.
 //
@@ -72,10 +72,10 @@ final class WanListener: NSObject, ObservableObject {
   private let _pingQ   = DispatchQueue(label: "WanListener.pingQ")
   private var _platform: String?
   private var _previousIdToken: IdToken?
-  private var _pwd: String?
+  private var _pwd: String? = "fleX!20Comm"
   private let _socketQ = DispatchQueue(label: "WanListener.socketQ")
   private var _timeout = 0.0                // seconds
-  private var _user: String?
+  private var _user: String? = "douglas.adams@me.com"
 
   let _log = LogProxy.sharedInstance.publish
 

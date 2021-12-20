@@ -1,6 +1,6 @@
 //
 //  ApiCore.swift
-//  TestDiscoveryPackage/ApiViewer
+//  Components6000/ApiViewer
 //
 //  Created by Douglas Adams on 11/24/21.
 //
@@ -31,7 +31,7 @@ public enum ApiButton {
 }
 
 public struct ApiState: Equatable {
-  public let kAppName = "TestDiscoveryApp"
+  public let kAppName = "Api6000"
   public let kPlatform = "macOS"
 
   public var clearNow = false

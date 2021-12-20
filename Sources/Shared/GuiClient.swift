@@ -1,6 +1,6 @@
 //
 //  GuiClient.swift
-//  TestDiscoveryPackage/Discovery
+//  Components6000/Discovery
 //
 //  Created by Douglas Adams on 10/28/21
 //  Copyright © 2021 Douglas Adams. All rights reserved.
@@ -10,9 +10,9 @@ import Foundation
 import Combine
 
 public enum ClientAction {
-  case add
-  case update
-  case delete
+  case added
+  case updated
+  case deleted
 }
 public struct ClientChange: Equatable {
   public var action: ClientAction

@@ -1,6 +1,6 @@
 //
 //  LogView.swift
-//  TestDiscoveryPackage/Log
+//  Components6000/LogViewer
 //
 //  Created by Douglas Adams on 10/10/20.
 //  Copyright © 2020-2021 Douglas Adams. All rights reserved.

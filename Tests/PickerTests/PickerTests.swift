@@ -1,6 +1,6 @@
 //
 //  PickerTests.swift
-//  TestDiscoveryPackage/PickerTests
+//  Components6000/PickerTests
 //
 //  Created by Douglas Adams on 11/14/21.
 //
@@ -17,14 +17,17 @@ import Discovery
 
 class PickerTests: XCTestCase {
   let testScheduler = DispatchQueue.test
-  
+
+  // ----------------------------------------------------------------------------
+  // MARK: - testButtons
+
   func testButtons() {
     let store = TestStore(
       initialState: .init(),
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        subscriptions: mockDiscoverySubscriptions
+        subscriptions: mockPacketSubscriptions
       )
     )
 
@@ -36,52 +39,145 @@ class PickerTests: XCTestCase {
     
     store.send(.cancelButton)
   }
-  
-  func testSubscription() {
+
+  // ----------------------------------------------------------------------------
+  // MARK: - testSubscription
+
+  func testPacketSubscription() {
     let store = TestStore(
       initialState: .init(),
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        subscriptions: mockDiscoverySubscriptions
+        subscriptions: mockPacketSubscriptions
       )
     )
-    // ON APPEAR
     store.send(.onAppear)
+    
+    var testPacket = Packet()
+    
+    testPacket.id = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+    testPacket.nickname = "Dougs 6500"
+    testPacket.status = "Available"
+    testPacket.serial = "1234-5678-9012-3456"
+    testPacket.publicIp = "10.0.1.200"
+    testPacket.guiClientHandles = "1,2"
+    testPacket.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
+    testPacket.guiClientStations = "Windows,iPad"
+    testPacket.guiClientHosts = ""
+    testPacket.guiClientIps = "192.168.1.200,192.168.1.201"
     
     testScheduler.advance()
     // PUBLISH a Packet added
-    mockPacketPublisher.send( PacketChange(.added, packet: testPacket() ))
+    mockPacketPublisher.send( PacketChange(.added, packet: testPacket ))
     
     testScheduler.advance()
     // Receive the added Packet
-    store.receive( .packetChange( PacketChange(.added, packet: testPacket()))) {
-      $0.discovery.packets = [self.testPacket()]
+    store.receive( .packetChange( PacketChange(.added, packet: testPacket ))) {
+      $0.discovery.packets = [testPacket]
 //      $0.forceUpdate.toggle()
     }
     store.send(.cancelButton)
   }
-  
-  func testPacketUpdates() {
+
+  private func testPacket() -> Packet {
+    var packet = Packet()
+    
+    packet.id = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+    packet.nickname = "Dougs 6500"
+    packet.status = "Available"
+    packet.serial = "1234-5678-9012-3456"
+    packet.publicIp = "10.0.1.200"
+    packet.guiClientHandles = "1,2"
+    packet.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
+    packet.guiClientStations = "Windows,iPad"
+    packet.guiClientHosts = ""
+    packet.guiClientIps = "192.168.1.200,192.168.1.201"
+
+    return packet
+  }
+
+  // ----------------------------------------------------------------------------
+  // MARK: - testIsKnownPacket
+
+  func testIsKnownPacket() {
     let store = TestStore(
       initialState: .init(),
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        subscriptions: mockDiscoverySubscriptions
+        subscriptions: mockPacketSubscriptions
       )
     )
     store.send(.onAppear)
 
+    var testPacket = Packet()
+    testPacket.id = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+    testPacket.nickname = "Dougs 6500"
+    testPacket.status = "Available"
+    testPacket.serial = "1234-5678-9012-3456"
+    testPacket.publicIp = "10.0.1.200"
+    testPacket.guiClientHandles = "1,2"
+    testPacket.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
+    testPacket.guiClientStations = "Windows,iPad"
+    testPacket.guiClientHosts = ""
+    testPacket.guiClientIps = "192.168.1.200,192.168.1.201"
+
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChange( PacketChange(.added, packet: testPacket() ))) {
-      $0.discovery.packets = [self.testPacket()]
+    store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
+      $0.discovery.packets = [testPacket]
+    }
+    
+    testScheduler.advance()
+    // send the same Packet
+    store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
+      $0.discovery.packets = [testPacket]
+    }
+
+    testScheduler.advance()
+    // delete a Packet
+    store.send(.packetChange( PacketChange(.deleted, packet: testPacket ))) {
+      $0.discovery.packets = []
+    }
+    store.send(.cancelButton)
+  }
+
+  // ----------------------------------------------------------------------------
+  // MARK: - testPacketChange
+
+  func testPacketChange() {
+    let store = TestStore(
+      initialState: .init(),
+      reducer: pickerReducer,
+      environment: PickerEnvironment(
+        queue: { self.testScheduler.eraseToAnyScheduler() },
+        subscriptions: mockPacketSubscriptions
+      )
+    )
+    store.send(.onAppear)
+
+    var testPacket = Packet()
+    testPacket.id = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+    testPacket.nickname = "Dougs 6500"
+    testPacket.status = "Available"
+    testPacket.serial = "1234-5678-9012-3456"
+    testPacket.publicIp = "10.0.1.200"
+    testPacket.guiClientHandles = "1,2"
+    testPacket.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
+    testPacket.guiClientStations = "Windows,iPad"
+    testPacket.guiClientHosts = ""
+    testPacket.guiClientIps = "192.168.1.200,192.168.1.201"
+
+    testScheduler.advance()
+    // add a Packet
+    store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
+      $0.discovery.packets = [testPacket]
     }
     
     testScheduler.advance()
     // update a Packet
-    var updatedTestPacket = testPacket()
+    var updatedTestPacket = testPacket
     updatedTestPacket.nickname = "Petes 6700"
     store.send(.packetChange( PacketChange(.updated, packet: updatedTestPacket))) {
       $0.discovery.packets = [updatedTestPacket]
@@ -89,20 +185,116 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // delete a Packet
-    store.send(.packetChange( PacketChange(.deleted, packet: testPacket() ))) {
+    store.send(.packetChange( PacketChange(.deleted, packet: testPacket ))) {
       $0.discovery.packets = []
     }
     store.send(.cancelButton)
   }
 
-  
+  // ----------------------------------------------------------------------------
+  // MARK: - testClientChange
+
+  func testClientChange() {
+    let store = TestStore(
+      initialState: .init(),
+      reducer: pickerReducer,
+      environment: PickerEnvironment(
+        queue: { self.testScheduler.eraseToAnyScheduler() },
+        subscriptions: mockClientSubscriptions
+      )
+    )
+    store.send(.onAppear)
+
+    var testPacket = Packet()
+    testPacket.id = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+    testPacket.nickname = "Dougs 6500"
+    testPacket.status = "Available"
+    testPacket.serial = "1234-5678-9012-3456"
+    testPacket.publicIp = "10.0.1.200"
+    testPacket.guiClientHandles = ""
+    testPacket.guiClientPrograms = ""
+    testPacket.guiClientStations = ""
+    testPacket.guiClientHosts = ""
+    testPacket.guiClientIps = ""
+
+    testScheduler.advance()
+    // add a Packet
+    store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
+      $0.discovery.packets = [testPacket]
+    }
+    
+    let testClient1 = GuiClient(clientHandle: 1,
+                                station: "Windows",
+                                program: "SmartSDR-Windows",
+                                clientId: nil,
+                                host: "",
+                                ip: "10.0.1.2",
+                                isLocalPtt: false,
+                                isThisClient: false)
+
+    testScheduler.advance()
+    // add a Client
+    store.send(.clientChange( ClientChange(.added, client: testClient1 ))) {
+      var updatedPacket = testPacket
+      updatedPacket.guiClientHandles = "1"
+      updatedPacket.guiClientPrograms = "SmartSDR-Windows"
+      updatedPacket.guiClientStations = "Windows"
+      updatedPacket.guiClientHosts = ""
+      updatedPacket.guiClientIps = "10.0.1.2"
+      $0.discovery.packets = [updatedPacket]
+    }
+    
+    let testClient2 = GuiClient(clientHandle: 2,
+                                station: "iPad",
+                                program: "SmartSDR-iOS",
+                                clientId: nil,
+                                host: "",
+                                ip: "10.0.1.20",
+                                isLocalPtt: false,
+                                isThisClient: false)
+    
+    testScheduler.advance()
+    // add a second Client
+    store.send(.clientChange( ClientChange(.added, client: testClient2 ))) {
+      var updatedPacket = testPacket
+      updatedPacket.guiClientHandles = "1,2"
+      updatedPacket.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
+      updatedPacket.guiClientStations = "Windows,iPad"
+      updatedPacket.guiClientHosts = ""
+      updatedPacket.guiClientIps = "10.0.1.2,10.0.1.20"
+      $0.discovery.packets = [updatedPacket]
+    }
+    
+    testScheduler.advance()
+    // remove the first Client
+    store.send(.clientChange( ClientChange(.deleted, client: testClient1 ))) {
+      var updatedPacket = testPacket
+      updatedPacket.guiClientHandles = "2"
+      updatedPacket.guiClientPrograms = "SmartSDR-iOS"
+      updatedPacket.guiClientStations = "iPad"
+      updatedPacket.guiClientHosts = ""
+      updatedPacket.guiClientIps = "10.0.1.20"
+      $0.discovery.packets = [updatedPacket]
+    }
+    
+    testScheduler.advance()
+    // delete the Packet
+    store.send(.packetChange( PacketChange(.deleted, packet: testPacket ))) {
+      $0.discovery.packets = []
+    }
+    store.send(.cancelButton)
+  }
+
+  // ----------------------------------------------------------------------------
+  // MARK: - testDefault
+
   func testDefault() {
     let store = TestStore(
       initialState: .init(),
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        subscriptions: mockDiscoverySubscriptions
+        subscriptions: mockPacketSubscriptions
       )
     )
     // ON APPEAR
@@ -146,38 +338,11 @@ class PickerTests: XCTestCase {
 
   // ----------------------------------------------------------------------------
   // MARK: - Test related
-  
-  private func testPacket() -> Packet {
-    var packet = Packet()
-    
-    packet.id = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
-    packet.nickname = "Dougs 6500"
-    packet.status = "Available"
-    packet.serial = "1234-5678-9012-3456"
-    packet.publicIp = "10.0.1.200"
-    packet.guiClientHandles = "1,2"
-    packet.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
-    packet.guiClientStations = "Windows,iPad"
-    packet.guiClientHosts = ""
-    packet.guiClientIps = "192.168.1.200,192.168.1.201"
-
-    return packet
-  }
-  
-  private func testPacketAdd() -> PacketChange {
-    return PacketChange( .added, packet: testPacket() )
-  }
-
-  private func testPacketUpdate() -> PacketChange {
-    var updatedTestPacket = testPacket()
-    updatedTestPacket.nickname = "Dougs 6700"
-    return PacketChange( .updated, packet: updatedTestPacket )
-  }
 
   var mockPacketPublisher = PassthroughSubject<PacketChange, Never>()
   var mockClientPublisher = PassthroughSubject<ClientChange, Never>()
 
-  public func mockDiscoverySubscriptions() -> Effect<PickerAction, Never> {
+  public func mockPacketSubscriptions() -> Effect<PickerAction, Never> {
     return
       mockPacketPublisher
         .receive(on: testScheduler)
@@ -185,4 +350,14 @@ class PickerTests: XCTestCase {
         .eraseToEffect()
         .cancellable(id: PacketSubscriptionId())
   }
+  
+  public func mockClientSubscriptions() -> Effect<PickerAction, Never> {
+    return
+      mockClientPublisher
+        .receive(on: testScheduler)
+        .map { update in .clientChange(update) }
+        .eraseToEffect()
+        .cancellable(id: ClientSubscriptionId())
+  }
+
 }

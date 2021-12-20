@@ -1,6 +1,6 @@
 //
 //  LogProxy.swift
-//  TestDiscoveryPackage/LogProxy
+//  Components6000/LogProxy
 //
 //  Created by Douglas Adams on 12/12/21.
 //

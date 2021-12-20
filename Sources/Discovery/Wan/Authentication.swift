@@ -1,6 +1,6 @@
 //
 //  Authentication.swift
-//  TestSmartlink/Wan
+//  Components6000/Discovery/Wan
 //
 //  Created by Douglas Adams on 12/5/21.
 //

@@ -80,6 +80,10 @@ let package = Package(
       ]
     ),
     .testTarget(
+      name: "DiscoveryTests",
+      dependencies: ["Discovery"]
+    ),
+    .testTarget(
       name: "PickerTests",
       dependencies: ["Picker"]
     ),

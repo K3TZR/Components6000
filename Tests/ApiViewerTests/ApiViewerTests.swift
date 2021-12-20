@@ -1,6 +1,6 @@
 //
 //  ApiViewerTests.swift
-//  TestDiscoveryPackage/ApiViewerTests
+//  Components6000/ApiViewerTests
 //
 //  Created by Douglas Adams on 11/14/21.
 //

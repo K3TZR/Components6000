@@ -1,6 +1,6 @@
 //
 //  LogCore.swift
-//  TestDiscoveryPackage/Log
+//  Components6000/LogViewer
 //
 //  Created by Douglas Adams on 11/30/21.
 //

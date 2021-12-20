@@ -1,6 +1,6 @@
 //
 //  ApiView.swift
-//  TestDiscoveryPackage/ApiViewer
+//  Components6000/ApiViewer
 //
 //  Created by Douglas Adams on 12/1/21.
 //

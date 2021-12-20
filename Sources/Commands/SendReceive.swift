@@ -1,6 +1,6 @@
 //
 //  SendReceive.swift
-//  TestDiscoveryPackage/Commands
+//  Components6000/Commands
 //
 //  Created by Douglas Adams on 12/4/21.
 //  Copyright © 2021 Douglas Adams. All rights reserved.
