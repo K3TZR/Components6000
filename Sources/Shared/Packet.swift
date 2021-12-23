@@ -9,7 +9,7 @@
 import Foundation
 import ComposableArchitecture
 
-public enum Source: String {
+public enum PacketSource: String {
   case local = "Local"
   case smartlink = "Smartlink"
 }
@@ -33,7 +33,7 @@ public struct PacketChange: Equatable {
 
 public struct Packet: Identifiable, Equatable, Hashable {
   
-  public init(source: Source = .local) {
+  public init(source: PacketSource = .local) {
     id = UUID()
     lastSeen = Date() // now
     self.source = source
@@ -45,13 +45,14 @@ public struct Packet: Identifiable, Equatable, Hashable {
   // these fields are NOT in the received packet but are in the Packet struct
   public var id: UUID                                     //  NOT in received packet
   public var lastSeen: Date                               //  NOT in received packet
-  public var source: Source                               //  NOT in received packet
+  public var source: PacketSource                               //  NOT in received packet
   public var isDefault = false                            //  NOT in received packet
   public var isPortForwardOn = false                      //  NOT in received packet
   public var isSelected = false                           //  NOT in received packet
   public var guiClients = IdentifiedArrayOf<GuiClient>()  //  NOT in received packet
   public var localInterfaceIP = ""                        //  NOT in received packet
   public var requiresHolePunch = false                    //  NOT in received packet
+  public var negotiatedHolePunchPort = 0                  //  NOT in received packet
 
   // PACKET TYPE                                     LAN   WAN
 

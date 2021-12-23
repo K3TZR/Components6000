@@ -1,5 +1,4 @@
 // swift-tools-version:5.5
-// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
@@ -17,12 +16,15 @@ let package = Package(
     .library(name: "LogViewer", targets: ["LogViewer"]),
     .library(name: "Commands", targets: ["Commands"]),
     .library(name: "LogProxy", targets: ["LogProxy"]),
+    .library(name: "XCGWrapper", targets: ["XCGWrapper"]),
     .library(name: "SecureStorage", targets: ["SecureStorage"]),
+    .library(name: "TcpManager", targets: ["TcpManager"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
     .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.28.1"),
-    .package(url: "https://github.com/auth0/JWTDecode.swift", from: "2.6.0")
+    .package(url: "https://github.com/auth0/JWTDecode.swift", from: "2.6.0"),
+    .package(url: "https://github.com/DaveWoodCom/XCGLogger.git", from: "7.0.1"),
   ],
   targets: [
     .target(
@@ -79,7 +81,20 @@ let package = Package(
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),
-    .testTarget(
+    .target(
+      name: "XCGWrapper",
+      dependencies: [
+        "LogProxy",
+        .product(name: "XCGLogger", package: "XCGLogger"),
+      ]
+    ),
+    .target(
+      name: "TcpManager",
+      dependencies: [
+        "Shared",
+        .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
+      ]
+    ),    .testTarget(
       name: "DiscoveryTests",
       dependencies: ["Discovery"]
     ),
@@ -98,6 +113,13 @@ let package = Package(
     .testTarget(
       name: "SecureStorageTests",
       dependencies: ["SecureStorage"]
+    ),
+    .testTarget(
+      name: "XCGWrapperTests",
+      dependencies: [
+        "XCGWrapper",
+        "LogProxy"
+      ]
     ),
   ]
 )

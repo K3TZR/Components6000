@@ -38,22 +38,20 @@ final public class LogProxy {
   
   public static var sharedInstance = LogProxy()
   public var logPublisher = PassthroughSubject<LogEntry, Never>()
+  public var publishLog = false
 
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
-  
-  private var _logCancellable: AnyCancellable?
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
-  private init() {
-    // "private" prevents others from calling init()
-    _logCancellable = logPublisher
-      .sink { logEntry in
-        print("\(logEntry.msg), level = \(logEntry.level.rawValue)")
-      }
-  }
+  // "private" prevents others from calling init()
+  private init() {}
+
+//    _logCancellable = logPublisher
+//      .sink { logEntry in
+//      }
   
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
@@ -62,7 +60,18 @@ final public class LogProxy {
   /// - Parameters:
   ///   - logEntry:        a LogEntry struct
   public func publish(_ logEntry: LogEntry ) {
-    // publish
-    logPublisher.send(logEntry)
+
+    #if DEBUG
+      // print to the console
+      print("\(logEntry.msg), level = \(logEntry.level.rawValue)")
+    #else
+    if publishLog {
+      // publish for use by a logging module
+      logPublisher.send(logEntry)
+    } else {
+      // print to the console
+      print("\(logEntry.msg), level = \(logEntry.level.rawValue)")
+    }
+    #endif
   }
 }

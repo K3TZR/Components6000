@@ -25,14 +25,12 @@ public final class Discovery: Equatable, ObservableObject {
   // MARK: - Public properties
   
   public var clientPublisher = PassthroughSubject<ClientChange, Never>()
-//  public var logPublisher = PassthroughSubject<LogEntry, Never>()
   public var packetPublisher = PassthroughSubject<PacketChange, Never>()
 
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
   private var _lanListener: LanListener?
-//  private var _logCancellable: AnyCancellable?
   private var _wanListener: WanListener?
   
   let _log = LogProxy.sharedInstance.publish
@@ -42,12 +40,7 @@ public final class Discovery: Equatable, ObservableObject {
   
   public static var sharedInstance = Discovery()
 
-  private init() {
-//    _logCancellable = logPublisher
-//      .sink { logEntry in
-//        print("Discovery: \(logEntry.message), level = \(logEntry.logLevel.rawValue)")
-//      }
-  }
+  private init() {}
 
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
