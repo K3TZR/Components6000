@@ -105,9 +105,15 @@ public class Vita {
     // map the packet to the VitaHeader struct
     let vitaHeader = (data as NSData).bytes.bindMemory(to: VitaHeader.self, capacity: 1)
     
+    // ensure the packet has our OUI
+    guard CFSwapInt32BigToHost(vitaHeader.pointee.oui) == Vita.kFlexOui else { return nil }
+
     // capture Packet Type
     guard let pt = PacketTypes(rawValue: (vitaHeader.pointee.packetDesc & kPacketTypeMask) >> 4) else {return nil}
     vita.packetType = pt
+    
+    // ensure its one of the supported types
+    guard vita.packetType == .ifDataWithStream || vita.packetType == .extDataWithStream else { return nil }
     
     // capture ClassId & TrailerId present
     vita.classIdPresent = (vitaHeader.pointee.packetDesc & kClassIdPresentMask) == kClassIdPresentMask

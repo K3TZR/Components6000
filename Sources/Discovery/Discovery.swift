@@ -46,7 +46,15 @@ public final class Discovery: Equatable, ObservableObject {
   // MARK: - Public methods
   
   public func startListeners(smartlinkEmail: String, appName: String, platform: String) throws {
+    try startLanListener()
+    try startWanListener(smartlinkEmail: smartlinkEmail, appName: appName, platform: platform)
+  }
+
+  public func startLanListener() throws {
     _lanListener = try LanListener(discovery: self)
+  }
+
+  public func startWanListener(smartlinkEmail: String, appName: String, platform: String) throws {
     _wanListener = try WanListener(discovery: self, smartlinkEmail: smartlinkEmail, appName: appName, platform: platform)
   }
 

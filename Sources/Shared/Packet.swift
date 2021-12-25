@@ -9,7 +9,7 @@
 import Foundation
 import ComposableArchitecture
 
-public enum PacketSource: String {
+public enum PacketSource: String, Equatable {
   case local = "Local"
   case smartlink = "Smartlink"
 }
@@ -45,7 +45,7 @@ public struct Packet: Identifiable, Equatable, Hashable {
   // these fields are NOT in the received packet but are in the Packet struct
   public var id: UUID                                     //  NOT in received packet
   public var lastSeen: Date                               //  NOT in received packet
-  public var source: PacketSource                               //  NOT in received packet
+  public var source: PacketSource                         //  NOT in received packet
   public var isDefault = false                            //  NOT in received packet
   public var isPortForwardOn = false                      //  NOT in received packet
   public var isSelected = false                           //  NOT in received packet

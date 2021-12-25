@@ -1,9 +1,8 @@
 //
 //  TcpManager.swift
-//  Components6000/TcpManager
+//  Components6000/Commands
 //
-//  Created by Douglas Adams on 12/22/21.
-//  Copyright © 2018 Douglas Adams & Mario Illgen. All rights reserved.
+//  Created by Douglas Adams on 12/24/21.
 //
 
 import Foundation
@@ -19,9 +18,9 @@ public struct TcpStatus {
   var error: Error?
 }
 
-///  TcpManager Class implementation
-///      manages a TCP connection to the Radio
-final class TcpManager: NSObject {
+///  Command Manager Class implementation
+///      manages all Tcp communication with a Radio
+final class Command: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
@@ -33,11 +32,11 @@ final class TcpManager: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
-  private let _receiveQ = DispatchQueue(label: "TcpManager.receiveQ")
-  private let _sendQ = DispatchQueue(label: "TcpManager.sendQ")
-  private var _socket: GCDAsyncSocket!
-  private var _timeout = 0.0   // seconds
-  private var _packetSource: PacketSource?
+  let _receiveQ = DispatchQueue(label: "TcpManager.receiveQ")
+  let _sendQ = DispatchQueue(label: "TcpManager.sendQ")
+  var _socket: GCDAsyncSocket!
+  var _timeout = 0.0   // seconds
+  var _packetSource: PacketSource?
   
   @Atomic(0) var sequenceNumber: Int
   
@@ -110,54 +109,15 @@ final class TcpManager: NSObject {
     _socket.disconnect()
   }
   
-  /// Send a Command to the Radio (hardware)
-  /// - Parameters:
-  ///   - cmd:            a Command string
-  ///   - diagnostic:     whether to add "D" suffix
-  /// - Returns:          the Sequence Number of the Command
-  public func send(_ cmd: String, diagnostic: Bool = false) -> UInt {
-    var lastSequenceNumber : Int = 0
-    var command = ""
-    
-    _sendQ.sync {
-      // assemble the command
-      //            command =  "C" + "\(diagnostic ? "D" : "")" + "\(self._seqNum)|" + cmd + "\n"
-      command =  "C" + "\(diagnostic ? "D" : "")" + "\(self.sequenceNumber)|" + cmd + "\n"
-      
-      // send it, no timeout, tag = segNum
-      //            self._tcpSocket.write(command.data(using: String.Encoding.utf8, allowLossyConversion: false)!, withTimeout: -1, tag: Int(self._seqNum))
-      self._socket.write(command.data(using: String.Encoding.utf8, allowLossyConversion: false)!, withTimeout: -1, tag: Int(self.sequenceNumber))
-      
-      //            lastSeqNum = _seqNum
-      lastSequenceNumber = sequenceNumber
-      
-      // increment the Sequence Number
-      //            _seqNum += 1
-      $sequenceNumber.mutate { $0 += 1}
-    }
-//    self._delegate?.didSend(command)
-    
-    // return the Sequence Number of the last command
-    return UInt(lastSequenceNumber)
-  }
-
-  // ----------------------------------------------------------------------------
-  // MARK: - Private methods
-
-  /// Read the next data block (with an indefinite timeout)
-//  private func readNext() {
-//    _tcpSocket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
-//  }
 }
 
 // ----------------------------------------------------------------------------
 // MARK: - GCDAsyncSocketDelegate extension
 
-extension TcpManager: GCDAsyncSocketDelegate {
+extension Command: GCDAsyncSocketDelegate {
   // All execute on the tcpReceiveQ
   
   func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
-//    _delegate?.didDisconnect(reason: (err == nil) ? "User Initiated" : err!.localizedDescription)
     statusPublisher.send(
       TcpStatus(isConnected: false,
                 host: "",
@@ -185,33 +145,6 @@ extension TcpManager: GCDAsyncSocketDelegate {
                   error: nil)
       )
     }
-  }
-  
-  func socket(_ sock: GCDAsyncSocket, didRead data: Data, withTag tag: Int) {
-    // pass the bytes read to the delegate
-    if let text = String(data: data, encoding: .ascii) {
-      receivedDataPublisher.send(text)
-    }
-    // trigger the next read
-    _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
-  }
-  
-  public func socketDidSecure(_ sock: GCDAsyncSocket) {
-    // now we're connected
-    statusPublisher.send(
-      TcpStatus(isConnected: true,
-                host: sock.connectedHost ?? "",
-                port: sock.connectedPort,
-                error: nil)
-    )
-  }
-  
-  public func socket(_ sock: GCDAsyncSocket, didReceive trust: SecTrust, completionHandler: @escaping (Bool) -> Void) {
-//    // should not happen but...
-//    guard _isWan else { completionHandler(false) ; return }
-    
-    // there are no validations for the radio connection
-    completionHandler(true)
   }
 }
 

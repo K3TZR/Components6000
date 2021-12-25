@@ -20,6 +20,90 @@ class DiscoveryTests: XCTestCase {
   // ----------------------------------------------------------------------------
   // MARK: - testPackets
 
+  func testLocalLiveRadio() {
+    var cancellable: AnyCancellable?
+    var updates = [PacketChange]()
+
+    cancellable = discovery.packetPublisher
+      .sink { update in
+        print("-----> DiscoveryTests: PacketSubscription received \(update.action), id = \(update.packet.id)")
+        updates.append(update)
+      }
+
+    var livePacket = Packet()
+
+    livePacket.source = .local
+    livePacket.callsign = "K3TZR"
+    livePacket.model = "FLEX-6500"
+    livePacket.nickname = "DougsFlex"
+    livePacket.serial = "1715-4055-6500-9722"
+    livePacket.status = "Available"
+    
+    do {
+      try discovery.startLanListener()
+    } catch {
+      XCTFail("Failed to start LanListener")
+    }
+    
+    sleep(2)
+
+    let result = [
+      PacketChange( .added, packet: livePacket )
+    ]
+
+    XCTAssert( livePacket.source == result[0].packet.source, "Source mismatch" )
+    XCTAssert( livePacket.serial == result[0].packet.serial, "Serial mismatch" )
+    XCTAssert( livePacket.nickname == result[0].packet.nickname, "Nickname mismatch" )
+    XCTAssert( livePacket.model == result[0].packet.model, "Model mismatch" )
+    XCTAssert( livePacket.callsign == result[0].packet.callsign, "Callsign mismatch" )
+    XCTAssert( livePacket.status == result[0].packet.status, "Status mismatch" )
+
+    cancellable?.cancel()
+    discovery.packets = IdentifiedArrayOf<Packet>()
+  }
+  
+  func testSmartlinkLiveRadio() {
+    var cancellable: AnyCancellable?
+    var updates = [PacketChange]()
+
+    cancellable = discovery.packetPublisher
+      .sink { update in
+        print("-----> DiscoveryTests: PacketSubscription received \(update.action), id = \(update.packet.id)")
+        updates.append(update)
+      }
+
+    var livePacket = Packet()
+
+    livePacket.source = .smartlink
+    livePacket.callsign = "K3TZR"
+    livePacket.model = "FLEX-6500"
+    livePacket.nickname = "DougsFlex"
+    livePacket.serial = "1715-4055-6500-9722"
+    livePacket.status = "Available"
+
+    do {
+      try discovery.startWanListener(smartlinkEmail: "douglas.adams@me.com", appName: "DiscoveryTests", platform: "macOS")
+    } catch {
+      XCTFail("Failed to start LanListener")
+    }
+    
+    sleep(2)
+
+    let result = [
+      PacketChange( .added, packet: livePacket )
+    ]
+
+    XCTAssert( livePacket.source == result[0].packet.source, "Source mismatch" )
+    XCTAssert( livePacket.serial == result[0].packet.serial, "Serial mismatch" )
+    XCTAssert( livePacket.nickname == result[0].packet.nickname, "Nickname mismatch" )
+    XCTAssert( livePacket.model == result[0].packet.model, "Model mismatch" )
+    XCTAssert( livePacket.callsign == result[0].packet.callsign, "Callsign mismatch" )
+    XCTAssert( livePacket.status == result[0].packet.status, "Status mismatch" )
+    
+    cancellable?.cancel()
+    discovery.packets = IdentifiedArrayOf<Packet>()
+  }
+  
   func testPackets() {
     let discovery = Discovery.sharedInstance
     var cancellable: AnyCancellable?

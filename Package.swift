@@ -15,10 +15,10 @@ let package = Package(
     .library(name: "ApiViewer", targets: ["ApiViewer"]),
     .library(name: "LogViewer", targets: ["LogViewer"]),
     .library(name: "Commands", targets: ["Commands"]),
+    .library(name: "Streams", targets: ["Streams"]),
     .library(name: "LogProxy", targets: ["LogProxy"]),
     .library(name: "XCGWrapper", targets: ["XCGWrapper"]),
     .library(name: "SecureStorage", targets: ["SecureStorage"]),
-    .library(name: "TcpManager", targets: ["TcpManager"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
@@ -75,13 +75,6 @@ let package = Package(
       ]
     ),
     .target(
-      name: "Commands",
-      dependencies: [
-        "Shared",
-        .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
-      ]
-    ),
-    .target(
       name: "XCGWrapper",
       dependencies: [
         "LogProxy",
@@ -89,12 +82,22 @@ let package = Package(
       ]
     ),
     .target(
-      name: "TcpManager",
+      name: "Commands",
       dependencies: [
         "Shared",
+        "LogProxy",
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
-    ),    .testTarget(
+    ),
+    .target(
+      name: "Streams",
+      dependencies: [
+        "Shared",
+        "LogProxy",
+        .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
+      ]
+    ),
+    .testTarget(
       name: "DiscoveryTests",
       dependencies: ["Discovery"]
     ),
@@ -119,6 +122,13 @@ let package = Package(
       dependencies: [
         "XCGWrapper",
         "LogProxy"
+      ]
+    ),
+    .testTarget(
+      name: "CommandsTests",
+      dependencies: [
+        "Commands",
+        "LogProxy",
       ]
     ),
   ]
