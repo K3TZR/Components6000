@@ -13,17 +13,17 @@ import SecureStorage
 class SecureStorageTests: XCTestCase {
   let account = "somebody@someplace.com"
   
-  let tokenStore = TokenStore(service: "TestSecureStorage.testTokens")
+  let secureStore = SecureStore(service: "SecureStorageTests.testKeys")
   
   func testStorage() {
 
-    XCTAssert( tokenStore.set(account: account, data: "a key value") == true )
+    XCTAssert( secureStore.set(account: account, data: "a key value") == true )
                    
-    XCTAssert( tokenStore.get(account: account) == "a key value")
+    XCTAssert( secureStore.get(account: account) == "a key value")
     
-    XCTAssert( tokenStore.delete(account: account) == true )
+    XCTAssert( secureStore.delete(account: account) == true )
     
-    XCTAssert( tokenStore.get(account: account) == nil)
+    XCTAssert( secureStore.get(account: account) == nil)
 
   }
 }

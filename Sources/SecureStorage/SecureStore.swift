@@ -1,5 +1,5 @@
 //
-//  TokenStore.swift
+//  SecureStore.swift
 //  Components6000/SecureStorage
 //
 //  Created by Douglas Adams on 9/5/20.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-final public class TokenStore {
+final public class SecureStore {
     // ----------------------------------------------------------------------------
     // MARK: - Private properties
 

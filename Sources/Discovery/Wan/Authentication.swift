@@ -16,8 +16,8 @@ final class Authentication {
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
+  private let _secureStore: SecureStore
   private var _previousIdToken: IdToken?
-  private let _tokenStore: TokenStore
   private var _smartlinkEmail: String?
   private var _smartlinkImage: Image?
   
@@ -56,7 +56,7 @@ final class Authentication {
   
   init() {
     let appName = (Bundle.main.infoDictionary!["CFBundleName"] as! String)
-    _tokenStore = TokenStore(service: appName + kServiceName)
+    _secureStore = SecureStore(service: appName + kServiceName)
   }
   
   // ----------------------------------------------------------------------------
@@ -65,7 +65,7 @@ final class Authentication {
   func forceNewLogin(for smartlinkEmail: String) {
     _previousIdToken = nil
     // remove the Refresh Token from the KeyChain
-    _ = _tokenStore.delete(account: smartlinkEmail)
+    _ = _secureStore.delete(account: smartlinkEmail)
   }
   
   /// Obtain an Id Token from previous credentials
@@ -80,7 +80,7 @@ final class Authentication {
       updateClaims(from: previousToken)
       return previousToken
       
-    } else if smartlinkEmail != nil, let refreshToken = _tokenStore.get(account: smartlinkEmail) {
+    } else if smartlinkEmail != nil, let refreshToken = _secureStore.get(account: smartlinkEmail) {
       // NO, can we get an ID Token using the Refresh Token?
       if let idToken = requestIdToken(from: refreshToken, smartlinkEmail: smartlinkEmail!), isValid(idToken) {
         // YES
@@ -88,7 +88,7 @@ final class Authentication {
         
       } else {
         // NO, the Keychain entry is no longer valid, delete it
-        _ = _tokenStore.delete(account: smartlinkEmail)
+        _ = _secureStore.delete(account: smartlinkEmail)
       }
     }
     // unable to obtain an ID Token
@@ -116,7 +116,7 @@ final class Authentication {
         // save the email & picture
         updateClaims(from: result[0])
         // save the Refresh Token
-        _ = _tokenStore.set(account: _smartlinkEmail, data: refreshToken)
+        _ = _secureStore.set(account: _smartlinkEmail, data: refreshToken)
         // save Id Token
         _previousIdToken = result[0]
         return result[0]
@@ -145,7 +145,7 @@ final class Authentication {
         // save the email & picture
         updateClaims(from: result[0])
         // save the Refresh Token
-        _ = _tokenStore.set(account: smartlinkEmail, data: refreshToken)
+        _ = _secureStore.set(account: smartlinkEmail, data: refreshToken)
         // save Id Token
         _previousIdToken = result[0]
         return result[0]

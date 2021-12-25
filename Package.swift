@@ -119,17 +119,11 @@ let package = Package(
     ),
     .testTarget(
       name: "XCGWrapperTests",
-      dependencies: [
-        "XCGWrapper",
-        "LogProxy"
-      ]
+      dependencies: ["XCGWrapper"]
     ),
     .testTarget(
       name: "CommandsTests",
-      dependencies: [
-        "Commands",
-        "LogProxy",
-      ]
+      dependencies: ["Commands"]
     ),
   ]
 )
