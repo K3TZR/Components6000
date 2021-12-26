@@ -41,7 +41,7 @@ final class Stream: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
-  /// Initialize a UdpManager
+  /// Initialize a Stream Manager
   /// - Parameters:
   ///   - receivePort:            a port number
   init(receivePort: UInt16 = 4991) {

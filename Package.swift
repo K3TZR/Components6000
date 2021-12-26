@@ -123,7 +123,7 @@ let package = Package(
     ),
     .testTarget(
       name: "CommandsTests",
-      dependencies: ["Commands"]
+      dependencies: ["Commands", "Discovery"]
     ),
   ]
 )

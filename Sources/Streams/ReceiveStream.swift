@@ -12,7 +12,6 @@ import LogProxy
 import Shared
 
 extension Stream: GCDAsyncUdpSocketDelegate {
-  // All execute on the receiveQ
   
   func udpSocket(_ sock: GCDAsyncUdpSocket, didReceive data: Data, fromAddress address: Data, withFilterContext filterContext: Any?) {
     _processQ.async { [weak self] in
