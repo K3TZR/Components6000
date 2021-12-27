@@ -72,7 +72,7 @@ final class WanListener: NSObject, ObservableObject {
   private let _pingQ   = DispatchQueue(label: "WanListener.pingQ")
   private var _platform: String?
   private var _previousIdToken: IdToken?
-  private var _pwd: String? = "fleX!20Comm"
+  private var _pwd: String?
   private let _socketQ = DispatchQueue(label: "WanListener.socketQ")
   private var _timeout = 0.0                // seconds
   private var _user: String? = "douglas.adams@me.com"

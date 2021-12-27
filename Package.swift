@@ -29,13 +29,11 @@ let package = Package(
   targets: [
     .target(
       name: "SecureStorage",
-      dependencies: [
-        ]
+      dependencies: []
     ),
     .target(
       name: "LogProxy",
-      dependencies: [
-        ]
+      dependencies: []
     ),
     .target(
       name: "ApiViewer",
@@ -79,6 +77,7 @@ let package = Package(
       dependencies: [
         "LogProxy",
         .product(name: "XCGLogger", package: "XCGLogger"),
+        .product(name: "ObjcExceptionBridging", package: "XCGLogger"),
       ]
     ),
     .target(

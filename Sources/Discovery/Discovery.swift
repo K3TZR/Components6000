@@ -68,17 +68,17 @@ public final class Discovery: Equatable, ObservableObject {
     
     // is it a Packet that has been seen previously?
     if let knownPacketId = isKnownRadio(newPacket) {
-      // YES, known packet, maintain the id from the known packet, update the timestamp
-      newPacket.id = knownPacketId
-      newPacket.lastSeen = Date()
-      
-      // has it changed?
+      // YES, has it changed?
       if newPacket.isDifferent(from: packets[id: knownPacketId]!) {
         // YES, parse the GuiClient fields, identify additions
         newPacket = parseGuiClients(newPacket)
         identifyAdditions(in: newPacket, from: packets[id: knownPacketId]!)
         identifyDeletions(in: newPacket, from: packets[id: knownPacketId]!)
 
+        // maintain the id from the known packet, update the timestamp
+        // update the known packet
+        newPacket.id = knownPacketId
+        newPacket.lastSeen = Date()
         // update the known packet
         packets[id: knownPacketId] = newPacket
 
@@ -89,7 +89,8 @@ public final class Discovery: Equatable, ObservableObject {
         return
       
       } else {
-        // NO changes
+        // NO, update the timestamp
+        packets[id: knownPacketId]!.lastSeen = Date()
         return
       }
     }

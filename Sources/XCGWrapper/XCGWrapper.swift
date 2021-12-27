@@ -8,26 +8,31 @@
 import Foundation
 import Combine
 import XCGLogger
+import ObjcExceptionBridging
 
 import LogProxy
 
-public final class XCGWrapper {
+public final class XCGWrapper: Equatable {
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
   var log: XCGLogger {
-    get { _objectQ.sync { _log } }
-    set { _objectQ.sync(flags: .barrier) {_log = newValue }}}
+    get { _logQ.sync { _log } }
+    set { _logQ.sync(flags: .barrier) {_log = newValue }}}
   
   private var _logCancellable: AnyCancellable?
   
   private var _defaultLogUrl: URL!
   private var _defaultFolder: String!
   private var _log: XCGLogger!
-  private var _objectQ = DispatchQueue(label: "XCGWrapper.objectQ", attributes: [.concurrent])
+  private var _logQ = DispatchQueue(label: "XCGWrapper.logQ", attributes: [.concurrent])
 
   private let kMaxLogFiles: UInt8  = 10
   private let kMaxTime: TimeInterval = 60 * 60 // 1 Hour
+
+  public static func == (lhs: XCGWrapper, rhs: XCGWrapper) -> Bool {
+    lhs === rhs
+  }
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization

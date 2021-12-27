@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-public enum MessageLevel: String {
+public enum LogLevel: String {
     case debug
     case verbose
     case info
@@ -18,12 +18,12 @@ public enum MessageLevel: String {
 
 public struct LogEntry {
   public var msg: String
-  public var level: MessageLevel
+  public var level: LogLevel
   public var function: StaticString
   public var file: StaticString
   public var line: Int
   
-  public init(_ msg: String, _ level: MessageLevel, _ function: StaticString, _ file: StaticString, _ line: Int ) {
+  public init(_ msg: String, _ level: LogLevel, _ function: StaticString, _ file: StaticString, _ line: Int ) {
     self.msg = msg
     self.level = level
     self.function = function
@@ -38,20 +38,13 @@ final public class LogProxy {
   
   public static var sharedInstance = LogProxy()
   public var logPublisher = PassthroughSubject<LogEntry, Never>()
-  public var publishLog = false
-
-  // ----------------------------------------------------------------------------
-  // MARK: - Private properties
+  public var publishLog = true
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
   // "private" prevents others from calling init()
   private init() {}
-
-//    _logCancellable = logPublisher
-//      .sink { logEntry in
-//      }
   
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
@@ -60,11 +53,7 @@ final public class LogProxy {
   /// - Parameters:
   ///   - logEntry:        a LogEntry struct
   public func publish(_ logEntry: LogEntry ) {
-
-    #if DEBUG
-      // print to the console
-      print("\(logEntry.msg), level = \(logEntry.level.rawValue)")
-    #else
+    
     if publishLog {
       // publish for use by a logging module
       logPublisher.send(logEntry)
@@ -72,6 +61,5 @@ final public class LogProxy {
       // print to the console
       print("\(logEntry.msg), level = \(logEntry.level.rawValue)")
     }
-    #endif
   }
 }

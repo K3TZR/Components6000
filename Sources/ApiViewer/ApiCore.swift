@@ -10,6 +10,7 @@ import Dispatch
 
 import Picker
 import Discovery
+import LogProxy
 import Shared
 
 public enum ApiButton {
@@ -29,6 +30,8 @@ public enum ApiButton {
   case clearOnSend
   case send
 }
+
+//private var xcgWrapper: XCGWrapper?
 
 public struct ApiState: Equatable {
   public let kAppName = "Api6000"
@@ -134,6 +137,13 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
     case .onAppear:
+//      if xcgWrapper == nil {
+//        let logProxy = LogProxy.sharedInstance
+//        logProxy.publishLog = true
+//        xcgWrapper = XCGWrapper(logPublisher: LogProxy.sharedInstance.logPublisher,
+//                                appName: "Api6000",
+//                                domain: "net.k3tzr")
+//      }
       state.discovery = Discovery.sharedInstance
       do {
         try state.discovery?.startListeners(smartlinkEmail: state.smartlinkEmail,
@@ -186,4 +196,4 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     }
   }
 )
-  .debug("API ")
+//  .debug("API ")
