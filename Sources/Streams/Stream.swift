@@ -8,18 +8,37 @@
 
 import Foundation
 import CocoaAsyncSocket
+import Combine
 
 import LogProxy
 import Shared
+
+public struct UdpStatus: Identifiable, Equatable {
+  public static func == (lhs: UdpStatus, rhs: UdpStatus) -> Bool {
+    lhs.id == rhs.id
+  }
+  
+  public var id = UUID()
+  var isBound = false
+  var host = ""
+  var port: UInt16 = 0
+  var error: Error?
+}
 
 ///  Stream Manager Class implementation
 ///      manages all Udp communication with a Radio
 final class Stream: NSObject {
   // ----------------------------------------------------------------------------
+  // MARK: - Public properties
+  
+  public var streamPublisher = PassthroughSubject<String, Never>()
+  public var statusPublisher = PassthroughSubject<UdpStatus, Never>()
+
+ // ----------------------------------------------------------------------------
   // MARK: - Internal properties
   
   var _isRegistered = false
-  var _sendIP = ""
+  var _sendIp = ""
   var _sendPort: UInt16 = 4991 // default port number
   let _log = LogProxy.sharedInstance.publish
   let _processQ = DispatchQueue(label: "Stream.processQ", qos: .userInteractive)
@@ -53,6 +72,8 @@ final class Stream: NSObject {
     _socket = GCDAsyncUdpSocket(delegate: self, delegateQueue: _receiveQ)
     _socket.setIPv4Enabled(true)
     _socket.setIPv6Enabled(false)
+
+    _log(LogEntry("Stream: UDP socket initialized", .debug, #function, #file, #line))
   }
   
   // ----------------------------------------------------------------------------
@@ -104,16 +125,13 @@ final class Stream: NSObject {
     if success {
       // YES, save the actual port & ip in use
       _receivePort = portToUse
-      _sendIP = packet.publicIp
+      _sendIp = packet.publicIp
       _isBound = true
-      
-      // change the state
-//      _delegate?.didBind(receivePort: receivePort, sendPort: sendPort)
-        // TODO: publish?
       
       // a UDP bind has been established
       beginReceiving()
     }
+    statusPublisher.send(UdpStatus(isBound: success, host: _sendIp, port: _receivePort, error: nil))
     return success
   }
   
@@ -125,7 +143,7 @@ final class Stream: NSObject {
       
     } catch let error {
       // read error
-      _log(LogEntry("Stream: receiving error, \(error.localizedDescription)", .error, #function, #file, #line))
+      statusPublisher.send(UdpStatus(isBound: true, host: _sendIp, port: _receivePort, error: error))
     }
   }
   
@@ -142,29 +160,31 @@ final class Stream: NSObject {
     // TODO: publish ???
   }
   
-  /// Register UDP client handle
-  /// - Parameters:
-  ///   - clientHandle:       our client handle
-  func register(clientHandle: Handle?) {
-    guard clientHandle != nil else {
-      // should not happen
-      _log(LogEntry("Stream: No client handle in register UDP", .error, #function, #file, #line))
-      return
-    }
-    // register & keep open the router (on a background queue)
-    _registerQ.async { [unowned self] in
-      while self._socket != nil && !self._isRegistered && self._isBound {
-        
-        self._log(LogEntry("Stream: register wan, handle=" + clientHandle!.hex, .debug, #function, #file, #line))
-        
-        // send a Registration command
-        let cmd = "client udp_register handle=" + clientHandle!.hex
-        self.sendData(cmd.data(using: String.Encoding.ascii, allowLossyConversion: false)!)
-        
-        // pause
-        usleep(self.kRegistrationDelay)
-      }
-      self._log(LogEntry("Stream: register wan exited, Registration=\(self._isRegistered)", .debug, #function, #file, #line))
-    }
-  }
+// TODO: Should this be somewhere else????
+  
+//  /// Register UDP client handle
+//  /// - Parameters:
+//  ///   - clientHandle:       our client handle
+//  func register(clientHandle: Handle?) {
+//    guard clientHandle != nil else {
+//      // should not happen
+//      _log(LogEntry("Stream: No client handle in register UDP", .error, #function, #file, #line))
+//      return
+//    }
+//    // register & keep open the router (on a background queue)
+//    _registerQ.async { [unowned self] in
+//      while self._socket != nil && !self._isRegistered && self._isBound {
+//
+//        self._log(LogEntry("Stream: register wan, handle=" + clientHandle!.hex, .debug, #function, #file, #line))
+//
+//        // send a Registration command
+//        let cmd = "client udp_register handle=" + clientHandle!.hex
+//        self.sendData(cmd.data(using: String.Encoding.ascii, allowLossyConversion: false)!)
+//
+//        // pause
+//        usleep(self.kRegistrationDelay)
+//      }
+//      self._log(LogEntry("Stream: register wan exited, Registration=\(self._isRegistered)", .debug, #function, #file, #line))
+//    }
+//  }
 }

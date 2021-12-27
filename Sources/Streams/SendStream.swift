@@ -14,6 +14,6 @@ extension Stream {
   /// - Parameters:
   ///   - data:               a Data
   func sendData(_ data: Data) {
-    _socket.send(data, toHost: _sendIP, port: _sendPort, withTimeout: -1, tag: 0)
+    _socket.send(data, toHost: _sendIp, port: _sendPort, withTimeout: -1, tag: 0)
   }
 }
