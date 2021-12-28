@@ -20,7 +20,8 @@ public final class Discovery: Equatable, ObservableObject {
   // MARK: - Published properties
   
   public var packets = IdentifiedArrayOf<Packet>()
-  
+  public var stations = IdentifiedArrayOf<Packet>()
+
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
@@ -76,7 +77,6 @@ public final class Discovery: Equatable, ObservableObject {
         identifyDeletions(in: newPacket, from: packets[id: knownPacketId]!)
 
         // maintain the id from the known packet, update the timestamp
-        // update the known packet
         newPacket.id = knownPacketId
         newPacket.lastSeen = Date()
         // update the known packet
@@ -91,6 +91,7 @@ public final class Discovery: Equatable, ObservableObject {
       } else {
         // NO, update the timestamp
         packets[id: knownPacketId]!.lastSeen = Date()
+
         return
       }
     }
@@ -102,9 +103,8 @@ public final class Discovery: Equatable, ObservableObject {
     // add it and publish
     packets.append(newPacket)
     packetPublisher.send(PacketChange(.added, packet: newPacket))
-    for client in newPacket.guiClients {
-      clientPublisher.send(ClientChange(.added, client: client))
-    }
+
+    identifyAdditions(in: newPacket)
   }
 
   // ----------------------------------------------------------------------------
@@ -138,12 +138,20 @@ public final class Discovery: Equatable, ObservableObject {
     return updatedPacket
   }
   
-  private func identifyAdditions(in newPacket: Packet, from oldPacket: Packet) {
+  private func identifyAdditions(in newPacket: Packet, from oldPacket: Packet? = nil) {
     
     for guiClient in newPacket.guiClients {
-      if oldPacket.guiClients[id: guiClient.id] == nil {
+      if oldPacket == nil || oldPacket?.guiClients[id: guiClient.id] == nil {
         clientPublisher.send(ClientChange(.added, client: guiClient))
         _log(LogEntry("Discovery: guiClient added, \(guiClient.station)", .debug, #function, #file, #line))
+        
+        let newStation = Packet(source: newPacket.source)
+        var packetCopy = newPacket
+        packetCopy.id = newStation.id
+        stations[id: newStation.id] = packetCopy
+
+        stations[id: newStation.id]?.guiClientStations = guiClient.station
+        stations[id: newStation.id]?.guiClients = [guiClient]
       }
     }
   }
@@ -154,6 +162,10 @@ public final class Discovery: Equatable, ObservableObject {
       if newPacket.guiClients[id: guiClient.id] == nil {
         clientPublisher.send(ClientChange(.deleted, client: guiClient))
         _log(LogEntry("Discovery: guiClient deleted, \(guiClient.station)", .debug, #function, #file, #line))
+        
+        for station in stations where station.guiClientStations == guiClient.station {
+          stations.remove(station)
+        }
       }
     }
   }

@@ -179,4 +179,4 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     }
   }
 )
-  .debug("PICKER ")
+//  .debug("PICKER ")

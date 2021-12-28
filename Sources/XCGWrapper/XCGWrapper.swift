@@ -37,12 +37,18 @@ public final class XCGWrapper: Equatable {
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
-  public init(logPublisher: PassthroughSubject<LogEntry, Never>, appName: String, domain: String, logLevel: XCGLogger.Level = .verbose) {
+  public init(logLevel: XCGLogger.Level = .verbose) {
+    
+    let bundleIdentifier = Bundle.main.bundleIdentifier ?? "net.k3tzr.XCGWrapper"
+    let separator = bundleIdentifier.lastIndex(of: ".")!
+    let appName = String(bundleIdentifier.suffix(from: bundleIdentifier.index(separator, offsetBy: 1)))
+    let domain = String(bundleIdentifier.prefix(upTo: separator))
+    
     _log = XCGLogger(identifier: appName, includeDefaultDestinations: false)
     
     let defaultLogName = appName + ".log"
-    _defaultFolder = URL.appSupport.path + "/" + domain + "." + appName + "/Logs"
-    
+    _defaultFolder = URL.appSupport.path + "/" + bundleIdentifier + "/Logs"
+
 #if DEBUG
     // for DEBUG only
     // Create a destination for the system console log (via NSLog)
@@ -97,7 +103,7 @@ public final class XCGWrapper: Equatable {
       
       _defaultLogUrl = URL(fileURLWithPath: _defaultFolder + "/" + defaultLogName)
 
-      _logCancellable = logPublisher
+      _logCancellable = LogProxy.sharedInstance.logPublisher
         .sink { [self] entry in
           // Log Handler to support XCGLogger
           switch entry.level {

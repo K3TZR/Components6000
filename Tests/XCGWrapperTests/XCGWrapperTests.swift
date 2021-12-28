@@ -18,17 +18,17 @@ import XCGWrapper
 class XCGWrapperTests: XCTestCase {
 //  let logProxy = LogProxy.sharedInstance
   let fileManager = FileManager.default
-  let domain = "net.k3tzr"
-  let appName = "XCGWrapperTests"
-  
-  func testFolderCreation() {
-    let logProxy = LogProxy.sharedInstance
+//  let domain = "net.k3tzr"
+//  let appName = "XCGWrapperTests"
+  let domain = "com.apple.dt.xctest"
+  let appName = "tool"
 
+  func testFolderCreation() {
     // remove any existing folder
     let logFolderUrl = URL.appSupport.appendingPathComponent( domain + "." + appName + "/Logs" )
     try? fileManager.removeItem(at: logFolderUrl)
 
-    let wrapper = XCGWrapper(logPublisher: logProxy.logPublisher, appName: appName, domain: domain)
+    let wrapper = XCGWrapper()
 
     // remove the folder
     try? fileManager.removeItem(at: logFolderUrl)
@@ -42,7 +42,7 @@ class XCGWrapperTests: XCTestCase {
     let logFolderUrl = URL.appSupport.appendingPathComponent( domain + "." + appName + "/Logs" )
     try? fileManager.removeItem(at: logFolderUrl)
 
-    let wrapper = XCGWrapper(logPublisher: logProxy.logPublisher, appName: appName, domain: domain)
+    let wrapper = XCGWrapper()
 
     var logEntry = LogEntry("XCGWrapperTests: debug message", .debug, #function, #file, #line)
     logProxy.logPublisher.send(logEntry)
@@ -93,7 +93,7 @@ class XCGWrapperTests: XCTestCase {
     let logFolderUrl = URL.appSupport.appendingPathComponent( domain + "." + appName + "/Logs" )
     try? fileManager.removeItem(at: logFolderUrl)
 
-    let wrapper = XCGWrapper(logPublisher: logProxy.logPublisher, appName: appName, domain: domain, logLevel: .warning)
+    let wrapper = XCGWrapper( logLevel: .warning )
 
     var logEntry = LogEntry("XCGWrapperTests: debug message", .debug, #function, #file, #line)
     logProxy.logPublisher.send(logEntry)

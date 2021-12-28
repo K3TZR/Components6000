@@ -74,13 +74,13 @@ class CommandsTests: XCTestCase {
 
     sleep(1)
 
-    XCTAssert( status[0].isConnected == testTcpStatus.isConnected, "TCP status isConnected incorrect")
-    XCTAssert( status[0].host == testTcpStatus.host, "TCP status Host incorrect")
-    XCTAssert( status[0].port == testTcpStatus.port, "TCP status Port incorrect")
-    XCTAssert( status[0].error == nil, "TCP status Error incorrect")
+    XCTAssert( status[0].isConnected == testTcpStatus.isConnected, "TCP connection status error, \(status[0].isConnected) != \(testTcpStatus.isConnected)" )
+    XCTAssert( status[0].host == testTcpStatus.host, "TCP host error, \(status[0].host) != \(testTcpStatus.host)" )
+    XCTAssert( status[0].port == testTcpStatus.port, "TCP port error, \(status[0].port) != \(testTcpStatus.port)" )
+    XCTAssert( status[0].error == nil, "TCP error, \(status[0].error) != nil" )
 
     // fix the testMessages handle value
-    let handle = messages[1].dropFirst().dropLast()
+    let handle = String(messages[1].dropFirst().dropLast())
     testMessages[1] = String(testMessages[1].dropFirst(9))
     testMessages[1] = "H\(handle)" + testMessages[1]
     for i in 3...11 {
@@ -89,7 +89,7 @@ class CommandsTests: XCTestCase {
     }
 
     for (i, message) in messages.enumerated() {
-      XCTAssert(message == testMessages[i], "Received message error, \(message) != \(testMessages[i])")
+      XCTAssert(message == testMessages[i], "Received message error, \(message) != \(testMessages[i])" )
     }
     
     command.disconnect()

@@ -166,7 +166,6 @@ class DiscoveryTests: XCTestCase {
     
     cancellable = discovery.clientPublisher
       .sink { update in
-//        print("-----> DiscoveryTests: testGuiClients, \(update.action), station = \(update.client.station)")
         updates.append(update)
       }
 
@@ -186,7 +185,8 @@ class DiscoveryTests: XCTestCase {
     // process a Packet
     discovery.processPacket( testPacket )
 
-    XCTAssert( discovery.packets == [testPacket] )
+    XCTAssert( discovery.packets == [testPacket], "Packets array incorrect" )
+    XCTAssert( discovery.stations.count == 0, "Stations count \(discovery.stations.count) != 0" )
 
     // add a Client
     let testClient1 = GuiClient(clientHandle: 1,
@@ -205,7 +205,8 @@ class DiscoveryTests: XCTestCase {
     testPacket.guiClientIps = "192.168.1.200"
     discovery.processPacket(testPacket)
     
-    XCTAssert( discovery.packets == [testPacket] )
+    XCTAssert( discovery.packets == [testPacket], "Packets array incorrect" )
+    XCTAssert( discovery.stations.count == 1, "Stations count \(discovery.stations.count) != 1" )
 
     // add a second Client
     let testClient2 = GuiClient(clientHandle: 2,
@@ -224,7 +225,8 @@ class DiscoveryTests: XCTestCase {
     testPacket.guiClientIps = "192.168.1.200,192.168.1.201"
     discovery.processPacket(testPacket)
     
-    XCTAssert( discovery.packets == [testPacket] )
+    XCTAssert( discovery.packets == [testPacket], "Packets array incorrect" )
+    XCTAssert( discovery.stations.count == 2, "Stations count \(discovery.stations.count) != 2" )
 
     // delete a client
     testPacket.guiClientHandles = "2"
@@ -234,7 +236,7 @@ class DiscoveryTests: XCTestCase {
     testPacket.guiClientIps = "192.168.1.201"
     discovery.processPacket(testPacket)
     
-    XCTAssert( discovery.packets == [testPacket] )
+    XCTAssert( discovery.packets == [testPacket], "Packets array incorrect" )
 
     let result =
     [
@@ -243,12 +245,9 @@ class DiscoveryTests: XCTestCase {
       ClientChange( .deleted, client: testClient1 )
     ]
 
-    XCTAssert( updates == result )
-    
-    for update in updates {
-      print("-----> ", update.action, update.client.station)
-    }
-    
+    XCTAssert( updates == result, "ClientChange not as expected" )
+    XCTAssert( discovery.stations.count == 1, "Stations count \(discovery.stations.count) != 1" )
+
     cancellable?.cancel()
     discovery.packets = IdentifiedArrayOf<Packet>()
   }

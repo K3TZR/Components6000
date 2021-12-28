@@ -121,4 +121,4 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     return .none
   }
 }
-  .debug("LOG ")
+//  .debug("LOG ")

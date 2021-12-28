@@ -103,7 +103,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         break
      case .startStop:
         if state.pickerState == nil {
-          state.pickerState = PickerState(pickType: .radio)
+          state.pickerState = PickerState(pickType: state.isGui ? .radio : .station)
         } else {
           state.pickerState = nil
         }

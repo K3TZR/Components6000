@@ -38,16 +38,6 @@ public struct PickerView: View {
           Spacer()
         } else {
           List {
-
-            
-            
-//            ForEachStore(
-//              self.store.scope(state: \.todos, AppAction.todo(id:action:))
-//            ) { todoStore in
-//              TodoView(store: todoStore)
-//            }
-            
-            
             ForEachStore(
               self.store.scope(state: \.discovery.packets, action: PickerAction.packet(id:action:))
             ) { packetStore in
@@ -62,9 +52,6 @@ public struct PickerView: View {
       .onAppear {
         viewStore.send(.onAppear)
       }
-//      .onDisappear {
-//        viewStore.send(.onDisappear)
-//      }
     }
   }
 }
@@ -136,14 +123,16 @@ struct PickerView_Previews: PreviewProvider {
 
     PickerView(
       store: Store(
-        initialState: PickerState(testStatus: true),
+        initialState: PickerState(pickType: .radio,
+                                  testStatus: true),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
     )
     PickerView(
       store: Store(
-        initialState: PickerState(pickType: .radio, testStatus: true),
+        initialState: PickerState(pickType: .station,
+                                  testStatus: false),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
