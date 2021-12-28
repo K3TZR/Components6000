@@ -75,7 +75,7 @@ final class WanListener: NSObject, ObservableObject {
   private var _pwd: String?
   private let _socketQ = DispatchQueue(label: "WanListener.socketQ")
   private var _timeout = 0.0                // seconds
-  private var _user: String? = "douglas.adams@me.com"
+  private var _user: String?
 
   let _log = LogProxy.sharedInstance.publish
 

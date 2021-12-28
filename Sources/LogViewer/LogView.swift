@@ -9,6 +9,9 @@
 import ComposableArchitecture
 import SwiftUI
 
+// ----------------------------------------------------------------------------
+// MARK: - View(s)
+
 /// A View to display the contents of the app's log
 ///
 public struct LogView: View {
@@ -143,6 +146,8 @@ struct LogFooter: View {
     }
   }
 }
+// ----------------------------------------------------------------------------
+// MARK: - Preview(s)
 
 //public struct LogViewer_Previews: PreviewProvider {
 //

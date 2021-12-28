@@ -11,6 +11,9 @@ import ComposableArchitecture
 import Picker
 import Shared
 
+// ----------------------------------------------------------------------------
+// MARK: - View(s)
+
 public struct ApiView: View {
   let store: Store<ApiState, ApiAction>
   
@@ -190,6 +193,8 @@ struct BottomButtonsView: View {
     }
   }
 }
+// ----------------------------------------------------------------------------
+// MARK: - Preview(s)
 
 struct TopButtonsView_Previews: PreviewProvider {
   static var previews: some View {
