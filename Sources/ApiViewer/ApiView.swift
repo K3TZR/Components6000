@@ -8,6 +8,7 @@
 import SwiftUI
 import ComposableArchitecture
 
+import Login
 import Picker
 import Shared
 
@@ -51,6 +52,17 @@ public struct ApiView: View {
           IfLetStore(
             store.scope(state: \.pickerState, action: ApiAction.pickerAction),
             then: PickerView.init(store:)
+          )
+        }
+      )
+      .sheet(
+        isPresented: viewStore.binding(
+          get: { $0.loginState != nil },
+          send: ApiAction.loginClosed),
+        content: {
+          IfLetStore(
+            store.scope(state: \.loginState, action: ApiAction.loginAction),
+            then: LoginView.init(store:)
           )
         }
       )

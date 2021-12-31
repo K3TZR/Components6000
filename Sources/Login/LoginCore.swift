@@ -13,12 +13,17 @@ public struct LoginResult: Equatable {
     self.email = email
     self.pwd = pwd
   }
-  var email = ""
-  var pwd = ""
+  public var email = ""
+  public var pwd = ""
 }
 
 public struct LoginState: Equatable {
-  var heading = "Smartlink Login"
+  
+  public init(heading: String = "Smartlink Login") {
+    self.heading = heading
+  }
+  
+  var heading: String
 }
 
 public enum LoginAction: Equatable {

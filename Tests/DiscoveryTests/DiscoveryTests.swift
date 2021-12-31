@@ -39,10 +39,14 @@ class DiscoveryTests: XCTestCase {
     
     do {
       try discovery.startLanListener()
+    } catch LanListenerError.kSocketError {
+      XCTFail("Failed to start Lan Listener, Failed to open a socket")
+    } catch LanListenerError.kReceivingError {
+      XCTFail("Failed to start Lan Listener, Failed to start receiving")
     } catch {
-      XCTFail("Failed to start LanListener")
+      XCTFail("Failed to start Lan Listener, unknown error")
     }
-    
+
     sleep(2)
 
     var result = [
@@ -59,12 +63,26 @@ class DiscoveryTests: XCTestCase {
       XCTAssert( update.packet.status == result[0].packet.status, "Local Status mismatch, \(update.packet.status ) != \(result[0].packet.status)" )
     }
 
+//    do {
+//      try discovery.startWanListener(smartlinkEmail: "douglas.adams@me.com")
+//    } catch WanListenerError.kFailedToObtainIdToken {
+//      XCTFail("Failed to start Wan Listener, Failed To Obtain IdToken")
+//    } catch WanListenerError.kFailedToConnect {
+//      XCTFail("Failed to start Wan Listener, Failed To Connect")
+//    } catch {
+//      XCTFail("Failed to start Wan Listener, unknown error")
+//    }
+
     do {
-      try discovery.startWanListener(smartlinkEmail: "douglas.adams@me.com", appName: "DiscoveryTests", platform: "macOS")
+      try discovery.startWanListener(using: "douglas.adams@me.com", pwd: "fleX!20Comm")
+    } catch WanListenerError.kFailedToObtainIdToken {
+      XCTFail("Failed to start Wan Listener, Failed to Obtain IdToken")
+    } catch WanListenerError.kFailedToConnect {
+      XCTFail("Failed to start Wan Listener, Failed to Connect")
     } catch {
-      XCTFail("Failed to start WanListener")
+      XCTFail("Failed to start Wan Listener, unknown error")
     }
-    
+
     sleep(2)
 
     result = [

@@ -31,8 +31,8 @@ public final class Discovery: Equatable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
-  private var _lanListener: LanListener?
-  private var _wanListener: WanListener?
+  private var _lanListener: LanListener!
+  private var _wanListener: WanListener!
   
   let _log = LogProxy.sharedInstance.publish
 
@@ -41,22 +41,29 @@ public final class Discovery: Equatable, ObservableObject {
   
   public static var sharedInstance = Discovery()
 
-  private init() {}
+  private init() {
+    _lanListener = LanListener(self)
+    _wanListener = WanListener(self)
+  }
 
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
   
-  public func startListeners(smartlinkEmail: String, appName: String, platform: String) throws {
-    try startLanListener()
-    try startWanListener(smartlinkEmail: smartlinkEmail, appName: appName, platform: platform)
-  }
+//  public func startListeners(smartlinkEmail: String) throws {
+//    try startLanListener()
+//    try startWanListener(smartlinkEmail: smartlinkEmail)
+//  }
 
   public func startLanListener() throws {
-    _lanListener = try LanListener(discovery: self)
+    try _lanListener.start()
   }
 
-  public func startWanListener(smartlinkEmail: String, appName: String, platform: String) throws {
-    _wanListener = try WanListener(discovery: self, smartlinkEmail: smartlinkEmail, appName: appName, platform: platform)
+  public func startWanListener(smartlinkEmail: String) throws {
+    try _wanListener.start(using: smartlinkEmail )
+  }
+
+  public func startWanListener(using user: String, pwd: String) throws {
+    try _wanListener.start(using: user, pwd: pwd )
   }
 
   // ----------------------------------------------------------------------------

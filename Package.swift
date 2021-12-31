@@ -45,6 +45,7 @@ let package = Package(
     .target(
       name: "ApiViewer",
       dependencies: [
+        "Login",
         "Picker",
         "Discovery",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -67,6 +68,7 @@ let package = Package(
       dependencies: [
         "Shared",
         "SecureStorage",
+        "Login",
         "LogProxy",
         .product(name: "JWTDecode", package: "JWTDecode.swift"),
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),

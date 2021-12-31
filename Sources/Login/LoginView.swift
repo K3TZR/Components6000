@@ -8,6 +8,8 @@
 import ComposableArchitecture
 import SwiftUI
 
+import Login
+
 // ----------------------------------------------------------------------------
 // MARK: - View(s)
 
@@ -61,7 +63,7 @@ struct LoginView_Previews: PreviewProvider {
   static var previews: some View {
     LoginView(
       store: Store(
-        initialState: LoginState(heading: "Smartlink Login"),
+        initialState: LoginState(),
         reducer: loginReducer,
         environment: LoginEnvironment()
       )

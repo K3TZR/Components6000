@@ -15,6 +15,7 @@ import LogProxy
 
 public enum LanListenerError: Error {
   case kSocketError
+  case kReceivingError
 }
 
 /// Listener implementation
@@ -26,7 +27,7 @@ final class LanListener: NSObject, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public private(set) var isConnected: Bool = false
+  @Published public private(set) var isListening: Bool = false
 
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
@@ -45,35 +46,40 @@ final class LanListener: NSObject, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
-  init(discovery: Discovery, port: UInt16 = 4992, checkInterval: TimeInterval = 1.0, timeout: TimeInterval = 10.0) throws {
+  init(_ discovery: Discovery, port: UInt16 = 4992) {
     super.init()
     _discovery = discovery
 
     // create a Udp socket and set options
-    let _udpSocket = GCDAsyncUdpSocket( delegate: self, delegateQueue: _udpQ )
+    _udpSocket = GCDAsyncUdpSocket( delegate: self, delegateQueue: _udpQ )
     _udpSocket.setPreferIPv4()
     _udpSocket.setIPv6Enabled(false)
     
-    do {
-      try _udpSocket.enableReusePort(true)
-      try _udpSocket.bind(toPort: port)
-      try _udpSocket.beginReceiving()
-      DispatchQueue.main.async { self.isConnected = true }
-      _log(LogEntry("Discovery: UDP Socket created", .debug, #function, #file, #line))
-
-    } catch {
-      throw LanListenerError.kSocketError
-    }
-    // setup a timer to watch for Radio timeouts
-    Timer.publish(every: checkInterval, on: .main, in: .default)
-      .autoconnect()
-      .sink { now in
-        self.remove(condition: { $0.source == .local && abs($0.lastSeen.timeIntervalSince(now)) > timeout } )
-        
-      }
-      .store(in: &_cancellables)
+    try! _udpSocket.enableReusePort(true)
+    try! _udpSocket.bind(toPort: port)
+    _log(LogEntry("Discovery: UDP Socket initialized", .debug, #function, #file, #line))
   }
 
+  func start(checkInterval: TimeInterval = 1.0, timeout: TimeInterval = 10.0) throws {
+    do {
+      try _udpSocket.beginReceiving()
+      DispatchQueue.main.async { self.isListening = true }
+      _log(LogEntry("Discovery: Listening for broadcasts", .debug, #function, #file, #line))
+      
+      // setup a timer to watch for Radio timeouts
+      Timer.publish(every: checkInterval, on: .main, in: .default)
+        .autoconnect()
+        .sink { now in
+          self.remove(condition: { $0.source == .local && abs($0.lastSeen.timeIntervalSince(now)) > timeout } )
+          
+        }
+        .store(in: &_cancellables)
+
+    } catch {
+      throw LanListenerError.kReceivingError
+    }
+  }
+  
   // ----------------------------------------------------------------------------
   // MARK: - Internal methods
   
@@ -81,7 +87,7 @@ final class LanListener: NSObject, ObservableObject {
   func stop() {
     _cancellables = Set<AnyCancellable>()
     _udpSocket?.close()
-    DispatchQueue.main.async { self.isConnected = false }
+    DispatchQueue.main.async { self.isListening = false }
   }
   
   // ----------------------------------------------------------------------------

@@ -8,13 +8,14 @@
 import Foundation
 import CocoaAsyncSocket
 import Combine
+
+import Login
 import Shared
 import LogProxy
 
 public enum WanListenerError: Error {
-  case kIdTokenError
-  case kConnectError
-  case kLoginError
+  case kFailedToObtainIdToken
+  case kFailedToConnect
 }
 
 public struct SmartlinkTestResult {
@@ -48,7 +49,7 @@ final class WanListener: NSObject, ObservableObject {
   
   @Published public var callsign: String?
   @Published public var handle: Handle?
-  @Published public private(set) var isConnected: Bool = false
+  @Published public private(set) var isListening: Bool = false
   @Published public var publicIp: String?
   @Published public var serial: String?
   @Published public var testResult: SmartlinkTestResult?
@@ -69,7 +70,7 @@ final class WanListener: NSObject, ObservableObject {
   private var _currentHost: String?
   private var _currentPort: UInt16 = 0
   private var _idToken: IdToken? = nil
-  private let _pingQ   = DispatchQueue(label: "WanListener.pingQ")
+  private let _pingQ = DispatchQueue(label: "WanListener.pingQ")
   private var _platform: String?
   private var _previousIdToken: IdToken?
   private var _pwd: String?
@@ -78,11 +79,16 @@ final class WanListener: NSObject, ObservableObject {
   private var _user: String?
 
   let _log = LogProxy.sharedInstance.publish
+  
+  private let kSmartlinkHost = "smartlink.flexradio.com"
+  private let kSmartlinkPort: UInt16 = 443
+  private let kAppName = "Components6000.Discovery"
+  private let kPlatform = "macOS"
 
   // ------------------------------------------------------------------------------
   // MARK: - Initialization
   
-  convenience init(discovery: Discovery, smartlinkEmail: String, appName: String, platform: String, timeout: Double = 5.0) throws {
+  convenience init(_ discovery: Discovery, timeout: Double = 5.0) {
     self.init()
 
     _timeout = timeout
@@ -92,53 +98,50 @@ final class WanListener: NSObject, ObservableObject {
     _tcpSocket = GCDAsyncSocket(delegate: self, delegateQueue: _socketQ)
     _tcpSocket.isIPv4PreferredOverIPv6 = true
     _tcpSocket.isIPv6Enabled = false
-  
-    _appName = appName
-    _platform = platform
 
-    // obtain an ID Token
-    if let idToken = _authentication.getValidIdToken(from: _previousIdToken, or: smartlinkEmail) {
-      _previousIdToken = idToken
-      // use the ID Token to connect to the Smartlink service
-      try start(idToken: idToken)
-      
-    } else {
-      // show Login View to obtain User / Pwd
-      let user = _user
-      let pwd = _pwd
-            
-      if let user = user, let pwd = pwd {
-        
-        if let idToken = _authentication.requestTokens(for: user, pwd: pwd) {
-          _previousIdToken = idToken
-          // use the ID Token to connect to the Smartlink service
-          try start(idToken: idToken)
-        }
-      } else {
-        
-        // TODO: Alert, user and pwd required
-        throw WanListenerError.kLoginError
-      }
-    }
+    _log(LogEntry("Discovery: TCP Socket initialized", .debug, #function, #file, #line))
   }
 
   // ------------------------------------------------------------------------------
   // MARK: - Internal methods
   
-  /// Initiate a connection to the Smartlink server
+  /// Start listening given a Smartlink email
   /// - Parameters:
-  ///   - idToken:        an ID Token
-  func start(idToken: IdToken) throws {
-    _idToken = idToken
-    
-    // try to connect
-    do {
-      try _tcpSocket.connect(toHost: "smartlink.flexradio.com", onPort: 443, withTimeout: _timeout)
-      DispatchQueue.main.async { self.isConnected = true }
-      _log(LogEntry("Discovery: TCP Socket connection initiated", .debug, #function, #file, #line))
+  ///   - smartlinkEmail:     an email address associated with the Smartlink account
+  func start(using smartlinkEmail: String) throws {
+    // obtain an ID Token
+    if let idToken = _authentication.getValidIdToken(from: _previousIdToken, or: smartlinkEmail) {
+      _previousIdToken = idToken
+      _log(LogEntry("Discovery: IdToken obtained from previous credentials", .debug, #function, #file, #line))
+      // use the ID Token to connect to the Smartlink service
+      do {
+        try connectToSmartlink(using: idToken)
+      } catch {
+        throw WanListenerError.kFailedToConnect
+      }
 
-    } catch _ {
-      throw WanListenerError.kConnectError
+    } else {
+      throw WanListenerError.kFailedToObtainIdToken
+    }
+  }
+  
+  /// Start listening given a User / Pwd
+  /// - Parameters:
+  ///   - user:           a Smartlink User name
+  ///   - pwd:            the User's Smartlink password
+  func start(using user: String, pwd: String) throws {
+    if let idToken = _authentication.requestTokens(for: user, pwd: pwd) {
+      _previousIdToken = idToken
+      _log(LogEntry("Discovery: IdToken obtained from login credentials", .debug, #function, #file, #line))
+      // use the ID Token to connect to the Smartlink service
+      do {
+        try connectToSmartlink(using: idToken)
+      } catch {
+        throw WanListenerError.kFailedToConnect
+      }
+      
+    } else {
+      throw WanListenerError.kFailedToObtainIdToken
     }
   }
   
@@ -146,12 +149,29 @@ final class WanListener: NSObject, ObservableObject {
   func stop() {
     _cancellables.removeAll()
     _tcpSocket.disconnect()
-    DispatchQueue.main.async { self.isConnected = false }
+    DispatchQueue.main.async { self.isListening = false }
   }
 
   // ------------------------------------------------------------------------------
   // MARK: - Private methods
   
+  /// Initiate a connection to the Smartlink server
+  /// - Parameters:
+  ///   - idToken:        an ID Token
+  ///   - timeout:        timeout (seconds)
+  private func connectToSmartlink(using idToken: IdToken) throws {
+    _idToken = idToken    // used later by socketDidSecure
+    
+    // try to connect
+    do {
+      try _tcpSocket.connect(toHost: kSmartlinkHost, onPort: kSmartlinkPort, withTimeout: _timeout)
+      _log(LogEntry("Discovery: TCP Socket connection initiated", .debug, #function, #file, #line))
+
+    } catch _ {
+      throw WanListenerError.kFailedToConnect
+    }
+  }
+
   /// Ping the SmartLink server
   private func startPinging() {
     // setup a timer to watch for Radio timeouts
@@ -199,12 +219,12 @@ extension WanListener: GCDAsyncSocketDelegate {
 
     // initiate a secure (TLS) connection to the Smartlink server
     var tlsSettings = [String : NSObject]()
-    tlsSettings[kCFStreamSSLPeerName as String] = "smartlink.flexradio.com" as NSObject
+    tlsSettings[kCFStreamSSLPeerName as String] = kSmartlinkHost as NSObject
     _tcpSocket.startTLS(tlsSettings)
 
     _log(LogEntry("Discovery: TLS Socket connection initiated", .debug, #function, #file, #line))
 
-    DispatchQueue.main.async { self.isConnected = true }
+    DispatchQueue.main.async { self.isListening = true }
   }
   
   public func socketDidSecure(_ sock: GCDAsyncSocket) {
@@ -214,9 +234,10 @@ extension WanListener: GCDAsyncSocketDelegate {
     startPinging()
     
     // register the Application / token pair with the SmartLink server
-    sendTlsCommand("application register appName=\(_appName ?? "nil") platform=\(_platform ?? "nil") token=\(_idToken!)", timeout: _timeout, tag: 1)
+    sendTlsCommand("application register appName=\(kAppName) platform=\(kPlatform) token=\(_idToken!)", timeout: _timeout, tag: 1)
     
     // start reading
+    DispatchQueue.main.async { self.isListening = true }
     _tcpSocket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
   }
   
@@ -237,7 +258,7 @@ extension WanListener: GCDAsyncSocketDelegate {
                   err == nil ? .debug : .warning,
                   #function, #file, #line))
 
-    DispatchQueue.main.async { self.isConnected = false }
+    DispatchQueue.main.async { self.isListening = false }
     _currentHost = ""
     _currentPort = 0
   }
