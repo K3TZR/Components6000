@@ -46,10 +46,12 @@ public struct SmartlinkTestResult {
 final class WanListener: NSObject, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
-  
+
+  public private(set) var isListening: Bool = false
+
   @Published public var callsign: String?
   @Published public var handle: Handle?
-  @Published public private(set) var isListening: Bool = false
+//  @Published public private(set) var isListening: Bool = false
   @Published public var publicIp: String?
   @Published public var serial: String?
   @Published public var testResult: SmartlinkTestResult?
@@ -99,7 +101,7 @@ final class WanListener: NSObject, ObservableObject {
     _tcpSocket.isIPv4PreferredOverIPv6 = true
     _tcpSocket.isIPv6Enabled = false
 
-    _log(LogEntry("Discovery: TCP Socket initialized", .debug, #function, #file, #line))
+    _log(LogEntry("Discovery: Wan Listener TCP Socket initialized", .debug, #function, #file, #line))
   }
 
   // ------------------------------------------------------------------------------
@@ -108,11 +110,12 @@ final class WanListener: NSObject, ObservableObject {
   /// Start listening given a Smartlink email
   /// - Parameters:
   ///   - smartlinkEmail:     an email address associated with the Smartlink account
-  func start(using smartlinkEmail: String) throws {
+  func start(using smartlinkEmail: String?, force: Bool) throws {
+    guard force == false else { throw WanListenerError.kFailedToObtainIdToken }
     // obtain an ID Token
     if let idToken = _authentication.getValidIdToken(from: _previousIdToken, or: smartlinkEmail) {
       _previousIdToken = idToken
-      _log(LogEntry("Discovery: IdToken obtained from previous credentials", .debug, #function, #file, #line))
+      _log(LogEntry("Discovery: Wan Listener IdToken obtained from previous credentials", .debug, #function, #file, #line))
       // use the ID Token to connect to the Smartlink service
       do {
         try connectToSmartlink(using: idToken)
@@ -127,12 +130,11 @@ final class WanListener: NSObject, ObservableObject {
   
   /// Start listening given a User / Pwd
   /// - Parameters:
-  ///   - user:           a Smartlink User name
-  ///   - pwd:            the User's Smartlink password
-  func start(using user: String, pwd: String) throws {
-    if let idToken = _authentication.requestTokens(for: user, pwd: pwd) {
+  ///   - loginResult:           a struct with email & pwd
+  func start(using loginResult: LoginResult) throws {
+    if let idToken = _authentication.requestTokens(using: loginResult) {
       _previousIdToken = idToken
-      _log(LogEntry("Discovery: IdToken obtained from login credentials", .debug, #function, #file, #line))
+      _log(LogEntry("Discovery: Wan Listener IdToken obtained from login credentials", .debug, #function, #file, #line))
       // use the ID Token to connect to the Smartlink service
       do {
         try connectToSmartlink(using: idToken)
@@ -165,7 +167,8 @@ final class WanListener: NSObject, ObservableObject {
     // try to connect
     do {
       try _tcpSocket.connect(toHost: kSmartlinkHost, onPort: kSmartlinkPort, withTimeout: _timeout)
-      _log(LogEntry("Discovery: TCP Socket connection initiated", .debug, #function, #file, #line))
+      _log(LogEntry("Discovery: Wan Listener TCP Socket connection initiated", .debug, #function, #file, #line))
+      DispatchQueue.main.async { self.isListening = true }
 
     } catch _ {
       throw WanListenerError.kFailedToConnect
@@ -182,7 +185,7 @@ final class WanListener: NSObject, ObservableObject {
         self.sendTlsCommand("ping from client", timeout: -1)
       }
       .store(in: &_cancellables)
-    _log(LogEntry("Discovery: Started pinging", .debug, #function, #file, #line))
+    _log(LogEntry("Discovery: Wan Listener started pinging smartlink server", .debug, #function, #file, #line))
 
   }
   
@@ -215,20 +218,20 @@ extension WanListener: GCDAsyncSocketDelegate {
     _currentHost = host
     _currentPort = port
     
-    _log(LogEntry("Discovery: TCP Socket connection established", .debug, #function, #file, #line))
+    _log(LogEntry("Discovery: Wan Listener TCP Socket connection established", .debug, #function, #file, #line))
 
     // initiate a secure (TLS) connection to the Smartlink server
     var tlsSettings = [String : NSObject]()
     tlsSettings[kCFStreamSSLPeerName as String] = kSmartlinkHost as NSObject
     _tcpSocket.startTLS(tlsSettings)
 
-    _log(LogEntry("Discovery: TLS Socket connection initiated", .debug, #function, #file, #line))
+    _log(LogEntry("Discovery: Wan Listener TLS Socket connection initiated", .debug, #function, #file, #line))
 
     DispatchQueue.main.async { self.isListening = true }
   }
   
   public func socketDidSecure(_ sock: GCDAsyncSocket) {
-    _log(LogEntry("Discovery: TLS Socket did secure", .debug, #function, #file, #line))
+    _log(LogEntry("Discovery: Wan Listener TLS Socket did secure", .debug, #function, #file, #line))
 
     // start pinging SmartLink server
     startPinging()
@@ -238,6 +241,7 @@ extension WanListener: GCDAsyncSocketDelegate {
     
     // start reading
     DispatchQueue.main.async { self.isListening = true }
+    _log(LogEntry("Discovery: Wan Listener is listening", .debug, #function, #file, #line))
     _tcpSocket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
   }
   
@@ -254,7 +258,7 @@ extension WanListener: GCDAsyncSocketDelegate {
   public func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
     // Disconnected from the Smartlink server
     let error = (err == nil ? "" : " with error: " + err!.localizedDescription)
-    _log(LogEntry("Discovery: TCP socket disconnected \(error) from: Host=\(_currentHost ?? "nil") Port=\(_currentPort)",
+    _log(LogEntry("Discovery: Wan Listener TCP socket disconnected \(error) from: Host=\(_currentHost ?? "nil") Port=\(_currentPort)",
                   err == nil ? .debug : .warning,
                   #function, #file, #line))
 

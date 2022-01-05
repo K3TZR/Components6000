@@ -10,6 +10,7 @@ import Combine
 import LogProxy
 import Shared
 import IdentifiedCollections
+import Login
 
 public final class Discovery: Equatable, ObservableObject {
   public static func == (lhs: Discovery, rhs: Discovery) -> Bool {
@@ -32,8 +33,10 @@ public final class Discovery: Equatable, ObservableObject {
   // MARK: - Private properties
   
   private var _lanListener: LanListener!
+  private var _lanListenerStarted = false
   private var _wanListener: WanListener!
-  
+  private var _wanListenerStarted = false
+
   let _log = LogProxy.sharedInstance.publish
 
   // ----------------------------------------------------------------------------
@@ -49,21 +52,19 @@ public final class Discovery: Equatable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
   
-//  public func startListeners(smartlinkEmail: String) throws {
-//    try startLanListener()
-//    try startWanListener(smartlinkEmail: smartlinkEmail)
-//  }
-
   public func startLanListener() throws {
+    guard _lanListener.isListening == false else { return }
     try _lanListener.start()
   }
 
-  public func startWanListener(smartlinkEmail: String) throws {
-    try _wanListener.start(using: smartlinkEmail )
+  public func startWanListener(smartlinkEmail: String?, force: Bool = false) throws {
+    guard _wanListener.isListening == false else { return }
+    try _wanListener.start(using: smartlinkEmail, force: force)
   }
 
-  public func startWanListener(using user: String, pwd: String) throws {
-    try _wanListener.start(using: user, pwd: pwd )
+  public func startWanListener(using loginResult: LoginResult) throws {
+    guard _wanListener.isListening == false else { return }
+    try _wanListener.start(using: loginResult )
   }
 
   // ----------------------------------------------------------------------------

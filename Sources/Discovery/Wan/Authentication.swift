@@ -11,15 +11,19 @@ import SwiftUI
 import JWTDecode
 import Shared
 import SecureStorage
+import Login
 
 final class Authentication {
   // ----------------------------------------------------------------------------
+  // MARK: - Internal properties
+
+  let _secureStore: SecureStore
+  var _previousIdToken: IdToken?
+  var _smartlinkEmail: String?
+  var _smartlinkImage: Image?
+
+  // ----------------------------------------------------------------------------
   // MARK: - Private properties
-  
-  private let _secureStore: SecureStore
-  private var _previousIdToken: IdToken?
-  private var _smartlinkEmail: String?
-  private var _smartlinkImage: Image?
   
   private let kDomain             = "https://frtest.auth0.com/"
   private let kClientId           = "4Y9fEIIsVYyQo5u6jr7yBWc4lV5ugC2m"
@@ -100,14 +104,14 @@ final class Authentication {
   ///   - user:       User name
   ///   - pwd:        User password
   /// - Returns:      an Id Token (if any)
-  func requestTokens(for user: String, pwd: String) -> IdToken? {
+  func requestTokens(using loginResult: LoginResult) -> IdToken? {
     // build the request
     var request = URLRequest(url: URL(string: kAuth0Authenticate)!)
     request.httpMethod = kHttpPost
     request.addValue(kApplicationJson, forHTTPHeaderField: kHttpHeaderField)
     
     // add the body data & perform the request
-    if let data = createTokensBodyData(for: user, pwd: pwd) {
+    if let data = createTokensBodyData(using: loginResult) {
       request.httpBody = data
       let result = performRequest(request, for: [kKeyIdToken, kKeyRefreshToken])
       
@@ -200,16 +204,16 @@ final class Authentication {
   
   /// Create the Body Data for obtaining an Id Token given a User Id / Password
   /// - Returns:                    the Data (if created)
-  private func createTokensBodyData(for user: String, pwd: String) -> Data? {
+  private func createTokensBodyData(using loginResult: LoginResult) -> Data? {
     var dict = [String : String]()
     
     dict[kKeyClientId]      = kClientId
     dict[kKeyConnection]    = kConnection
     dict[kKeyDevice]        = kDevice
     dict[kKeyGrantType]     = kGrantType
-    dict[kKeyPassword]      = pwd
+    dict[kKeyPassword]      = loginResult.pwd
     dict[kKeyScope]         = kScope
-    dict[kKeyUserName]      = user
+    dict[kKeyUserName]      = loginResult.email
     
     return serialize(dict)
   }

@@ -42,7 +42,7 @@ public struct ApiView: View {
         BottomButtonsView(store: store)
       }
       .toolbar {
-        Button("Log View") { viewStore.send(.buttonTapped(.logView)) }
+        Button("Log View") { viewStore.send(.logViewButton) }
       }
       .sheet(
         isPresented: viewStore.binding(
@@ -50,7 +50,9 @@ public struct ApiView: View {
           send: ApiAction.sheetClosed),
         content: {
           IfLetStore(
-            store.scope(state: \.pickerState, action: ApiAction.pickerAction),
+            store.scope(state: \.pickerState,
+                        action: ApiAction.pickerAction
+                       ),
             then: PickerView.init(store:)
           )
         }
@@ -61,7 +63,9 @@ public struct ApiView: View {
           send: ApiAction.loginClosed),
         content: {
           IfLetStore(
-            store.scope(state: \.loginState, action: ApiAction.loginAction),
+            store.scope(state: \.loginState,
+                        action: ApiAction.loginAction
+                       ),
             then: LoginView.init(store:)
           )
         }
@@ -81,31 +85,40 @@ struct TopButtonsView: View {
     WithViewStore(self.store) { viewStore in
       HStack(spacing: 30) {
         Button(viewStore.connectedPacket == nil ? "Start" : "Stop") {
-          viewStore.send(.buttonTapped(.startStop))
+          viewStore.send(.startStopButton)
         }
         .keyboardShortcut(viewStore.connectedPacket == nil ? .defaultAction : .cancelAction)
         .help("Using the Default connection type")
         
         HStack(spacing: 20) {
-          Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .buttonTapped(.isGui)))
-          Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .buttonTapped(.showTimes)))
-          Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .buttonTapped(.showPings)))
-          Toggle("Replies", isOn: viewStore.binding(get: \.showReplies, send: .buttonTapped(.showReplies)))
-          Toggle("Buttons", isOn: viewStore.binding(get: \.showButtons, send: .buttonTapped(.showButtons)))
+          Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .isGuiButton))
+          Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .showTimesButton))
+          Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .showPingsButton))
+          Toggle("Replies", isOn: viewStore.binding(get: \.showReplies, send: .showRepliesButton))
+          Toggle("WanLogin", isOn: viewStore.binding(get: \.wanLogin, send: .wanLogin)).disabled(viewStore.connectionMode == .local)
         }
         
         Spacer()
+        Picker("", selection: viewStore.binding(
+          get: \.connectionMode,
+          send: { .modePicker($0) }
+        )) {
+          Text("Local").tag(ConnectionMode.local)
+          Text("Smartlink").tag(ConnectionMode.smartlink)
+          Text("Both").tag(ConnectionMode.both)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .frame(width: 200)
+
         HStack(spacing: 10) {
-          Text("SmartLink")
-          Button(smartlinkIsLoggedIn ? "Logout" : "Login") { viewStore.send(.buttonTapped(.smartlinkLogin)) }
           
-          Button("Status") { viewStore.send(.buttonTapped(.status)) }
+          Button("Status") { viewStore.send(.statusButton) }
         }.disabled(viewStore.connectedPacket != nil)
         
         Spacer()
-        Button("Clear Default") { viewStore.send(.buttonTapped(.clearDefault)) }
+        Button("Clear Default") { viewStore.send(.clearDefaultButton) }
       }
-      .onAppear(perform: { viewStore.send(.onAppear) })
       .alert(
         item: viewStore.binding(
           get: { $0.discoveryAlert },
@@ -113,7 +126,7 @@ struct TopButtonsView: View {
         ),
         content: { Alert(title: Text($0.title)) }
       )
-
+      .onAppear(perform: {viewStore.send(.onAppear)})
     }
   }
 }
@@ -133,7 +146,7 @@ struct SendView: View {
     WithViewStore(self.store) { viewStore in
       HStack(spacing: 25) {
         Group {
-          Button("Send") { viewStore.send(.buttonTapped(.send)) }
+          Button("Send") { viewStore.send(.sendButton) }
           .keyboardShortcut(.defaultAction)
           
           HStack(spacing: 0) {
@@ -149,7 +162,7 @@ struct SendView: View {
         .disabled(viewStore.connectedPacket == nil)
         
         Spacer()
-        Toggle("Clear on Send", isOn: viewStore.binding(get: \.clearOnSend, send: .buttonTapped(.clearOnSend)))
+        Toggle("Clear on Send", isOn: viewStore.binding(get: \.clearOnSend, send: .clearOnSendButton))
       }
     }
   }
@@ -162,7 +175,7 @@ struct ObjectsView: View {
     WithViewStore(self.store) { viewStore in
       Text("----- Objects go here -----")
         .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
-        .frame(minWidth: 950, minHeight: 100, idealHeight: 200, maxHeight: 300, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 100, idealHeight: 200, maxHeight: 300, alignment: .leading)
     }
   }
 }
@@ -175,7 +188,7 @@ struct MessagesView: View {
     WithViewStore(self.store) { viewStore in
       Text("----- Messages go here -----")
         .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
-        .frame(minWidth: 950, minHeight: 100, idealHeight: 200, maxHeight: 300, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 100, idealHeight: 200, maxHeight: 300, alignment: .leading)
     }
   }
 }
@@ -197,9 +210,9 @@ struct BottomButtonsView: View {
         Text(String(format: "%2.0f", viewStore.fontSize)).frame(alignment: .leading)
         Spacer()
         HStack(spacing: 40) {
-          Toggle("Clear on Connect", isOn: viewStore.binding(get: \.clearOnConnect, send: .buttonTapped(.clearOnConnect)))
-          Toggle("Clear on Disconnect", isOn: viewStore.binding(get: \.clearOnDisconnect, send: .buttonTapped(.clearOnDisconnect)))
-          Button("Clear Now") { viewStore.send(.buttonTapped(.clearNow))}
+          Toggle("Clear on Connect", isOn: viewStore.binding(get: \.clearOnConnect, send: .clearOnConnectButton))
+          Toggle("Clear on Disconnect", isOn: viewStore.binding(get: \.clearOnDisconnect, send: .clearOnDisconnectButton))
+          Button("Clear Now") { viewStore.send(.clearNowButton)}
         }
       }
     }
@@ -212,7 +225,7 @@ struct TopButtonsView_Previews: PreviewProvider {
   static var previews: some View {
     TopButtonsView(
       store: Store(
-        initialState: ApiState(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
+        initialState: ApiState(),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
@@ -224,7 +237,7 @@ struct SendView_Previews: PreviewProvider {
   static var previews: some View {
     SendView(
       store: Store(
-        initialState: ApiState(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
+        initialState: ApiState(),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
@@ -236,7 +249,7 @@ struct ObjectsView_Previews: PreviewProvider {
   static var previews: some View {
     ObjectsView(
       store: Store(
-        initialState: ApiState(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
+        initialState: ApiState(),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
@@ -248,7 +261,7 @@ struct MessagesView_Previews: PreviewProvider {
   static var previews: some View {
     MessagesView(
       store: Store(
-        initialState: ApiState(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
+        initialState: ApiState(),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
@@ -260,7 +273,7 @@ struct BottomButtonsView_Previews: PreviewProvider {
   static var previews: some View {
     BottomButtonsView(
       store: Store(
-        initialState: ApiState(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
+        initialState: ApiState(),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
