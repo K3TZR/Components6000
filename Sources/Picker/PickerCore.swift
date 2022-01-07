@@ -53,7 +53,7 @@ public struct PickerState: Equatable {
 public enum PickerAction: Equatable {
   case onAppear
   
-  // UI actions
+  // UI controls
   case cancelButton
   case connectButton(Packet?)
   case testButton(Packet?)
@@ -95,21 +95,22 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // MARK: - UI actions
 
     case .cancelButton:
+      // FIXME: probably should not do this here
+      // stop listening for Discovery broadcasts (long-running Effect)
       return .cancel(ids: PacketSubscriptionId(), ClientSubscriptionId())
 
-    case .connectButton:
-      // TODO
-      print("-----> PickerCore: NOT IMPLEMENTED \(action)")
+    case .connectButton(_):
+      // handled downstream
       return .none
 
     case .onAppear:
+      // FIXME: probably should not do this here
       // start listening for Discovery broadcasts (long-running Effect)
       return environment.subscriptions()
       
-    case .testButton:
-        // TODO
-        print("-----> PickerCore: NOT IMPLEMENTED \(action)")
-        return .none
+    case .testButton(_):
+      // handled downstream
+      return .none
       
       // ----------------------------------------------------------------------------
       // MARK: - Effect actions

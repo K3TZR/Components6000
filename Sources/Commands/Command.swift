@@ -9,7 +9,6 @@ import Foundation
 import CocoaAsyncSocket
 import Combine
 
-import LogProxy
 import Shared
 
 public struct TcpStatus: Identifiable, Equatable {
@@ -26,11 +25,11 @@ public struct TcpStatus: Identifiable, Equatable {
 
 ///  Command Manager Class implementation
 ///      manages all Tcp communication with a Radio
-final class Command: NSObject {
+final public class Command: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  public var receivedDataPublisher = PassthroughSubject<String, Never>()
+  public var commandPublisher = PassthroughSubject<String, Never>()
   public var statusPublisher = PassthroughSubject<TcpStatus, Never>()
 
   public private(set) var interfaceIpAddress = "0.0.0.0"
@@ -53,7 +52,7 @@ final class Command: NSObject {
   /// Initialize a Command Manager
   /// - Parameters:
   ///   - timeout:        connection timeout (seconds)
-  init(timeout: Double = 0.5) {
+  public init(timeout: Double = 0.5) {
     _timeout = timeout
     super.init()
     
@@ -63,7 +62,6 @@ final class Command: NSObject {
     _socket.isIPv6Enabled = false
     
     _log(LogEntry("Command: TCP socket initialized", .debug, #function, #file, #line))
-
   }
   
   // ----------------------------------------------------------------------------
@@ -159,7 +157,7 @@ extension Command: GCDAsyncSocketDelegate {
 
     // publish the received data
     if let text = String(data: data, encoding: .ascii) {
-      receivedDataPublisher.send(text)
+      commandPublisher.send(text)
     }
     // trigger the next read
     _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)

@@ -10,7 +10,6 @@ import Foundation
 import CocoaAsyncSocket
 import Combine
 
-import LogProxy
 import Shared
 
 extension Command {

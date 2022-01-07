@@ -49,6 +49,7 @@ let package = Package(
         "Login",
         "Picker",
         "Discovery",
+        "Commands",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),

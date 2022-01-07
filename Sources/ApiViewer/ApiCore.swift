@@ -11,12 +11,20 @@ import Dispatch
 import Login
 import Picker
 import Discovery
+import Commands
 import Shared
+
+struct CommandSubscriptionId: Hashable {}
 
 public enum ConnectionMode: String {
   case local
   case smartlink
   case both
+}
+
+public struct CommandMessage: Equatable, Identifiable {
+  public var id = UUID()
+  var text: String
 }
 
 public struct ApiState: Equatable {
@@ -35,13 +43,16 @@ public struct ApiState: Equatable {
 
   // normal state
   public var clearNow = false
+  public var command = Command()
   public var commandToSend = ""
   public var connectedPacket: Packet? = nil
   public var defaultPacket: UUID? = nil
   public var discovery: Discovery? = nil
   public var alert: AlertView?
   public var loginState: LoginState? = nil
+  public var commandMessages = IdentifiedArrayOf<CommandMessage>()
   public var pickerState: PickerState? = nil
+  public var update = false
     
   public init() {
     clearOnConnect = UserDefaults.standard.bool(forKey: "clearOnConnect")
@@ -60,6 +71,7 @@ public struct ApiState: Equatable {
 
 public enum ApiAction: Equatable {
   case alertDismissed
+  case commandAction(CommandMessage)
   case loginAction(LoginAction)
   case loginClosed
   case onAppear
@@ -67,22 +79,15 @@ public enum ApiAction: Equatable {
   case sheetClosed
 
   // UI controls
+  case button(WritableKeyPath<ApiState, Bool>)
   case clearDefaultButton
   case clearNowButton
-  case clearOnConnectButton
-  case clearOnDisconnectButton
-  case clearOnSendButton
   case commandTextfield(String)
   case fontSizeStepper(CGFloat)
-  case isGuiButton
   case logViewButton
   case modePicker(ConnectionMode)
   case sendButton
-  case showPingsButton
-  case showRepliesButton
-  case showTimesButton
   case startStopButton
-  case wanLoginButton
 
 }
 
@@ -112,26 +117,19 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // ----------------------------------------------------------------------------
       // MARK: - UI actions
 
+    case let .button(keyPath):
+      state[keyPath: keyPath].toggle()
+      if keyPath == \.wanLogin { state.alert = AlertView(title: "Takes effect when App restarted") }
+      return .none
+
     case .clearDefaultButton:
       state.defaultPacket = nil
       return .none
 
     case .clearNowButton:
-      print("-----> ApiCore: \(action) NOT IMPLEMENTED")
+      state.commandMessages.removeAll()
       return .none
 
-    case .clearOnConnectButton:
-      state.clearOnConnect.toggle()
-      return .none
-
-    case .clearOnDisconnectButton:
-      state.clearOnDisconnect.toggle()
-      return .none
-
-    case .clearOnSendButton:
-      state.clearOnSend.toggle()
-      return .none
-      
     case let .commandTextfield(value):
       state.commandToSend = value
       return .none
@@ -140,10 +138,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.fontSize = size
       return .none
       
-    case .isGuiButton:
-      state.isGui.toggle()
-      return .none
-
     case .logViewButton:
       // handled by Root
       return .none
@@ -153,8 +147,8 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
 
     case .onAppear:
-      startListening(&state)
-      return .none
+      listenForPackets(&state)
+      return listenForCommands(state.command)
       
     case .sendButton:
       print("-----> ApiCore: \(action) NOT IMPLEMENTED")
@@ -164,18 +158,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.pickerState = nil
       return .none
       
-    case .showPingsButton:
-      state.showPings.toggle()
-      return .none
-
-    case .showRepliesButton:
-      state.showReplies.toggle()
-      return .none
-
-    case .showTimesButton:
-      state.showTimes.toggle()
-      return .none
-
     case .startStopButton:
       if state.pickerState == nil {
         state.pickerState = PickerState(pickType: state.isGui ? .radio : .station)
@@ -183,25 +165,22 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         state.pickerState = nil
       }
       return .none
-    
-    case .wanLoginButton:
-      state.wanLogin.toggle()
-      state.alert = AlertView(title: "Takes effect when App restarted")
-      return .none
-      
-//    case let .pickerAction(.defaultSelected(id)):
-//      state.defaultPacket = id
-//      return .none
       
       // ----------------------------------------------------------------------------
-      // MARK: - Upstream actions (Picker)
+      // MARK: - Picker actions
 
     case .pickerAction(.cancelButton):
       state.pickerState = nil
+      if state.clearOnDisconnect { state.commandMessages.removeAll() }
       return .none
       
     case let .pickerAction(.connectButton(packet)):
-      print("-----> ApiCore: Connect, packet = \(packet!.nickname)")
+      state.pickerState = nil
+      if !state.command.connect(packet!) {
+        state.alert = AlertView(title: "Failed to connect to \(packet!.nickname)")
+      } else {
+        if state.clearOnConnect { state.commandMessages.removeAll() }
+      }
       return .none
       
     case let .pickerAction(.connectResultReceived(index)):
@@ -217,7 +196,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
       // ----------------------------------------------------------------------------
-      // MARK: - Upstream actions (Login)
+      // MARK: - Login actions
 
     case .loginAction(.cancelButton):
       print("-----> Login: Cancel button")
@@ -225,7 +204,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
     case let .loginAction(.loginButton(result)):
-      startWanListener(&state, loginResult: result)
+      listenForWanPackets(&state, loginResult: result)
       return .none
       
     case .loginClosed:
@@ -239,12 +218,23 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .alertDismissed:
       state.alert = nil
       return .none
+
+      // ----------------------------------------------------------------------------
+      // MARK: - Command actions
+
+    case let .commandAction(message):
+
+      print("-----> commandAction received")
+
+      state.commandMessages.append(message)
+      state.update.toggle()
+      return .none
     }
   }
 )
 //  .debug("API ")
 
-private func startListening(_ state: inout ApiState) {
+private func listenForPackets(_ state: inout ApiState) {
   if state.discovery == nil { state.discovery = Discovery.sharedInstance }
   if state.connectionMode == .local || state.connectionMode == .both {
     do {
@@ -273,7 +263,7 @@ private func startListening(_ state: inout ApiState) {
   }
 }
 
-private func startWanListener(_ state: inout ApiState, loginResult: LoginResult) {
+private func listenForWanPackets(_ state: inout ApiState, loginResult: LoginResult) {
   state.smartlinkEmail = loginResult.email
   state.loginState = nil
   do {

@@ -90,11 +90,11 @@ struct TopButtonsView: View {
         .keyboardShortcut(viewStore.connectedPacket == nil ? .defaultAction : .cancelAction)
         
         HStack(spacing: 20) {
-          Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .isGuiButton))
-          Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .showTimesButton))
-          Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .showPingsButton))
-          Toggle("Replies", isOn: viewStore.binding(get: \.showReplies, send: .showRepliesButton))
-          Toggle("WanLogin", isOn: viewStore.binding(get: \.wanLogin, send: .wanLoginButton)).disabled(viewStore.connectionMode == .local)
+          Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .button(\.isGui)))
+          Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .button(\.showTimes)))
+          Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .button(\.showPings)))
+          Toggle("Replies", isOn: viewStore.binding(get: \.showReplies, send: .button(\.showReplies)))
+          Toggle("WanLogin", isOn: viewStore.binding(get: \.wanLogin, send: .button(\.wanLogin))).disabled(viewStore.connectionMode == .local)
         }
         
         Spacer()
@@ -156,7 +156,7 @@ struct SendView: View {
         .disabled(viewStore.connectedPacket == nil)
         
         Spacer()
-        Toggle("Clear on Send", isOn: viewStore.binding(get: \.clearOnSend, send: .clearOnSendButton))
+        Toggle("Clear on Send", isOn: viewStore.binding(get: \.clearOnSend, send: .button(\.clearOnSend)))
       }
     }
   }
@@ -180,9 +180,13 @@ struct MessagesView: View {
   var body: some View {
     
     WithViewStore(self.store) { viewStore in
-      Text("----- Messages go here -----")
-        .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
-        .frame(maxWidth: .infinity, minHeight: 100, alignment: .leading)
+      List {
+        ForEach(viewStore.commandMessages) { message in
+          Text(message.text)
+        }
+      }
+      .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
+      .frame(maxWidth: .infinity, minHeight: 100, alignment: .leading)
     }
   }
 }
@@ -204,8 +208,8 @@ struct BottomButtonsView: View {
         Text(String(format: "%2.0f", viewStore.fontSize)).frame(alignment: .leading)
         Spacer()
         HStack(spacing: 40) {
-          Toggle("Clear on Connect", isOn: viewStore.binding(get: \.clearOnConnect, send: .clearOnConnectButton))
-          Toggle("Clear on Disconnect", isOn: viewStore.binding(get: \.clearOnDisconnect, send: .clearOnDisconnectButton))
+          Toggle("Clear on Connect", isOn: viewStore.binding(get: \.clearOnConnect, send: .button(\.clearOnConnect)))
+          Toggle("Clear on Disconnect", isOn: viewStore.binding(get: \.clearOnDisconnect, send: .button(\.clearOnDisconnect)))
           Button("Clear Now") { viewStore.send(.clearNowButton)}
         }
       }
