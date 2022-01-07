@@ -16,18 +16,23 @@ let package = Package(
     .library(name: "LogViewer", targets: ["LogViewer"]),
     .library(name: "Commands", targets: ["Commands"]),
     .library(name: "Streams", targets: ["Streams"]),
-    .library(name: "LogProxy", targets: ["LogProxy"]),
     .library(name: "XCGWrapper", targets: ["XCGWrapper"]),
     .library(name: "SecureStorage", targets: ["SecureStorage"]),
     .library(name: "Login", targets: ["Login"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
-    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.28.1"),
+    .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.32.0"),
     .package(url: "https://github.com/auth0/JWTDecode.swift", from: "2.6.0"),
     .package(url: "https://github.com/DaveWoodCom/XCGLogger.git", from: "7.0.1"),
   ],
   targets: [
+    .target(
+      name: "Shared",
+      dependencies: [
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
     .target(
       name: "Login",
       dependencies: [
@@ -36,10 +41,6 @@ let package = Package(
     ),
     .target(
       name: "SecureStorage",
-      dependencies: []
-    ),
-    .target(
-      name: "LogProxy",
       dependencies: []
     ),
     .target(
@@ -54,12 +55,7 @@ let package = Package(
     .target(
       name: "LogViewer",
       dependencies: [
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-      ]
-    ),
-    .target(
-      name: "Shared",
-      dependencies: [
+        "Shared",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -69,7 +65,6 @@ let package = Package(
         "Shared",
         "SecureStorage",
         "Login",
-        "LogProxy",
         .product(name: "JWTDecode", package: "JWTDecode.swift"),
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
@@ -84,7 +79,6 @@ let package = Package(
     .target(
       name: "XCGWrapper",
       dependencies: [
-        "LogProxy",
         .product(name: "XCGLogger", package: "XCGLogger"),
         .product(name: "ObjcExceptionBridging", package: "XCGLogger"),
       ]
@@ -93,7 +87,6 @@ let package = Package(
       name: "Commands",
       dependencies: [
         "Shared",
-        "LogProxy",
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),
@@ -101,7 +94,6 @@ let package = Package(
       name: "Streams",
       dependencies: [
         "Shared",
-        "LogProxy",
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),

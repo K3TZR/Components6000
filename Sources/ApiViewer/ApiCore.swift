@@ -11,7 +11,6 @@ import Dispatch
 import Login
 import Picker
 import Discovery
-import LogProxy
 import Shared
 
 public enum ConnectionMode: String {
@@ -40,7 +39,7 @@ public struct ApiState: Equatable {
   public var connectedPacket: Packet? = nil
   public var defaultPacket: UUID? = nil
   public var discovery: Discovery? = nil
-  public var discoveryAlert: DiscoveryAlert?
+  public var alert: AlertView?
   public var loginState: LoginState? = nil
   public var pickerState: PickerState? = nil
     
@@ -60,30 +59,30 @@ public struct ApiState: Equatable {
 }
 
 public enum ApiAction: Equatable {
-  case commandToSendChanged(String)
-  case discoveryAlertDismissed
-  case fontSizeChanged(CGFloat)
+  case alertDismissed
   case loginAction(LoginAction)
   case loginClosed
+  case onAppear
   case pickerAction(PickerAction)
   case sheetClosed
-  case onAppear
-  // Buttons
-  case logViewButton
-  case startStopButton
-  case isGuiButton
-  case showTimesButton
-  case showPingsButton
-  case showRepliesButton
-  case wanLogin
+
+  // UI controls
   case clearDefaultButton
-  case statusButton
   case clearNowButton
   case clearOnConnectButton
   case clearOnDisconnectButton
   case clearOnSendButton
-  case sendButton
+  case commandTextfield(String)
+  case fontSizeStepper(CGFloat)
+  case isGuiButton
+  case logViewButton
   case modePicker(ConnectionMode)
+  case sendButton
+  case showPingsButton
+  case showRepliesButton
+  case showTimesButton
+  case startStopButton
+  case wanLoginButton
 
 }
 
@@ -110,47 +109,14 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
   Reducer { state, action, environment in
     switch action {
       
-    case .onAppear:
-      startListening(&state)
-      return .none
-      
-    case .logViewButton:
-      // handled by Root
-      return .none
-    
-    case .startStopButton:
-      if state.pickerState == nil {
-        state.pickerState = PickerState(pickType: state.isGui ? .radio : .station)
-      } else {
-        state.pickerState = nil
-      }
-      return .none
-    
-    case .isGuiButton:
-      state.isGui.toggle()
-      return .none
-
-    case .showTimesButton:
-      state.showTimes.toggle()
-      return .none
-
-    case .showPingsButton:
-      state.showPings.toggle()
-      return .none
-
-    case .showRepliesButton:
-      state.showReplies.toggle()
-      return .none
-
-    case .wanLogin:
-      state.wanLogin.toggle()
-      return .none
+      // ----------------------------------------------------------------------------
+      // MARK: - UI actions
 
     case .clearDefaultButton:
       state.defaultPacket = nil
       return .none
 
-    case .statusButton:
+    case .clearNowButton:
       print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
 
@@ -162,58 +128,97 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.clearOnDisconnect.toggle()
       return .none
 
-    case .clearNowButton:
-      print("-----> ApiCore: \(action) NOT IMPLEMENTED")
-      return .none
-
-    case .sendButton:
-      print("-----> ApiCore: \(action) NOT IMPLEMENTED")
-      return .none
-
     case .clearOnSendButton:
       state.clearOnSend.toggle()
       return .none
       
+    case let .commandTextfield(value):
+      state.commandToSend = value
+      return .none
+      
+    case let .fontSizeStepper(size):
+      state.fontSize = size
+      return .none
+      
+    case .isGuiButton:
+      state.isGui.toggle()
+      return .none
+
+    case .logViewButton:
+      // handled by Root
+      return .none
+    
+    case let .modePicker(mode):
+      state.connectionMode = mode
+      return .none
+
+    case .onAppear:
+      startListening(&state)
+      return .none
+      
+    case .sendButton:
+      print("-----> ApiCore: \(action) NOT IMPLEMENTED")
+      return .none
+
     case .sheetClosed:
       state.pickerState = nil
       return .none
       
-    case let .fontSizeChanged(size):
-      state.fontSize = size
+    case .showPingsButton:
+      state.showPings.toggle()
+      return .none
+
+    case .showRepliesButton:
+      state.showReplies.toggle()
+      return .none
+
+    case .showTimesButton:
+      state.showTimes.toggle()
+      return .none
+
+    case .startStopButton:
+      if state.pickerState == nil {
+        state.pickerState = PickerState(pickType: state.isGui ? .radio : .station)
+      } else {
+        state.pickerState = nil
+      }
+      return .none
+    
+    case .wanLoginButton:
+      state.wanLogin.toggle()
+      state.alert = AlertView(title: "Takes effect when App restarted")
       return .none
       
-    case let .commandToSendChanged(value):
-      state.commandToSend = value
-      return .none
+//    case let .pickerAction(.defaultSelected(id)):
+//      state.defaultPacket = id
+//      return .none
       
-    case let .pickerAction(.defaultSelected(id)):
-      state.defaultPacket = id
-      return .none
-      
+      // ----------------------------------------------------------------------------
+      // MARK: - Upstream actions (Picker)
+
     case .pickerAction(.cancelButton):
       state.pickerState = nil
+      return .none
+      
+    case let .pickerAction(.connectButton(packet)):
+      print("-----> ApiCore: Connect, packet = \(packet!.nickname)")
       return .none
       
     case let .pickerAction(.connectResultReceived(index)):
       print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
       
-    case .pickerAction(.testButton):
-      print("-----> ApiCore: \(action) NOT IMPLEMENTED")
-      return .none
-      
-    case .pickerAction(.connectButton):
-      print("-----> ApiCore: \(action) NOT IMPLEMENTED")
+    case let .pickerAction(.testButton(packet)):
+      print("-----> ApiCore: Test, packet = \(packet!.nickname)")
       return .none
       
     case .pickerAction(_):
       // IGNORE ALL OTHERS
       return .none
       
-    case .discoveryAlertDismissed:
-      state.discoveryAlert = nil
-      return .none
-      
+      // ----------------------------------------------------------------------------
+      // MARK: - Upstream actions (Login)
+
     case .loginAction(.cancelButton):
       print("-----> Login: Cancel button")
       state.loginState = nil
@@ -227,9 +232,12 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.loginState = nil
       print("-----> ApiViewer: Login closed")
       return .none
-    
-    case let .modePicker(mode):
-      state.connectionMode = mode
+      
+      // ----------------------------------------------------------------------------
+      // MARK: - Alert actions
+      
+    case .alertDismissed:
+      state.alert = nil
       return .none
     }
   }
@@ -243,11 +251,11 @@ private func startListening(_ state: inout ApiState) {
       try state.discovery?.startLanListener()
       
     } catch LanListenerError.kSocketError {
-      state.discoveryAlert = DiscoveryAlert(title: "Discovery: Lan Listener, Failed to open a socket")
+      state.alert = AlertView(title: "Discovery: Lan Listener, Failed to open a socket")
     } catch LanListenerError.kReceivingError {
-      state.discoveryAlert = DiscoveryAlert(title: "Discovery: Lan Listener, Failed to start receiving")
+      state.alert = AlertView(title: "Discovery: Lan Listener, Failed to start receiving")
     } catch {
-      state.discoveryAlert = DiscoveryAlert(title: "Discovery: Lan Listener, unknown error")
+      state.alert = AlertView(title: "Discovery: Lan Listener, unknown error")
     }
   }
   if state.connectionMode == .smartlink || state.connectionMode == .both {
@@ -258,9 +266,9 @@ private func startListening(_ state: inout ApiState) {
       state.loginState = LoginState(email: state.smartlinkEmail)
       
     } catch WanListenerError.kFailedToConnect {
-      state.discoveryAlert = DiscoveryAlert(title: "Discovery: Wan Listener, Failed to Connect")
+      state.alert = AlertView(title: "Discovery: Wan Listener, Failed to Connect")
     } catch {
-      state.discoveryAlert = DiscoveryAlert(title: "Discovery: Wan Listener, unknown error")
+      state.alert = AlertView(title: "Discovery: Wan Listener, unknown error")
     }
   }
 }
@@ -272,10 +280,10 @@ private func startWanListener(_ state: inout ApiState, loginResult: LoginResult)
     try state.discovery?.startWanListener(using: loginResult)
     
   } catch WanListenerError.kFailedToObtainIdToken {
-    state.discoveryAlert = DiscoveryAlert(title: "Discovery: Wan Listener, Failed to Obtain IdToken")
+    state.alert = AlertView(title: "Discovery: Wan Listener, Failed to Obtain IdToken")
   } catch WanListenerError.kFailedToConnect {
-    state.discoveryAlert = DiscoveryAlert(title: "Discovery: Wan Listener, Failed to Connect")
+    state.alert = AlertView(title: "Discovery: Wan Listener, Failed to Connect")
   } catch {
-    state.discoveryAlert = DiscoveryAlert(title: "Discovery: Wan Listener, unknown error")
+    state.alert = AlertView(title: "Discovery: Wan Listener, unknown error")
   }
 }

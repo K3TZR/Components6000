@@ -7,7 +7,6 @@
 
 import Foundation
 import Combine
-import LogProxy
 import Shared
 import IdentifiedCollections
 import Login

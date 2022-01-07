@@ -88,14 +88,13 @@ struct TopButtonsView: View {
           viewStore.send(.startStopButton)
         }
         .keyboardShortcut(viewStore.connectedPacket == nil ? .defaultAction : .cancelAction)
-        .help("Using the Default connection type")
         
         HStack(spacing: 20) {
           Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .isGuiButton))
           Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .showTimesButton))
           Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .showPingsButton))
           Toggle("Replies", isOn: viewStore.binding(get: \.showReplies, send: .showRepliesButton))
-          Toggle("WanLogin", isOn: viewStore.binding(get: \.wanLogin, send: .wanLogin)).disabled(viewStore.connectionMode == .local)
+          Toggle("WanLogin", isOn: viewStore.binding(get: \.wanLogin, send: .wanLoginButton)).disabled(viewStore.connectionMode == .local)
         }
         
         Spacer()
@@ -111,18 +110,13 @@ struct TopButtonsView: View {
         .labelsHidden()
         .frame(width: 200)
 
-        HStack(spacing: 10) {
-          
-          Button("Status") { viewStore.send(.statusButton) }
-        }.disabled(viewStore.connectedPacket != nil)
-        
         Spacer()
         Button("Clear Default") { viewStore.send(.clearDefaultButton) }
       }
       .alert(
         item: viewStore.binding(
-          get: { $0.discoveryAlert },
-          send: .discoveryAlertDismissed
+          get: { $0.alert },
+          send: .alertDismissed
         ),
         content: { Alert(title: Text($0.title)) }
       )
@@ -131,7 +125,7 @@ struct TopButtonsView: View {
   }
 }
 
-public struct DiscoveryAlert: Equatable, Identifiable {
+public struct AlertView: Equatable, Identifiable {
   public var title: String
   public var id: String { self.title }
 }
@@ -150,13 +144,13 @@ struct SendView: View {
           .keyboardShortcut(.defaultAction)
           
           HStack(spacing: 0) {
-            Button("X") { viewStore.send(.commandToSendChanged("")) }
+            Button("X") { viewStore.send(.commandTextfield("")) }
             .frame(width: 17, height: 17)
             .cornerRadius(20)
             .disabled(viewStore.connectedPacket == nil)
             TextField("Command to send", text: viewStore.binding(
               get: \.commandToSend,
-              send: { value in .commandToSendChanged(value) } ))
+              send: { value in .commandTextfield(value) } ))
           }
         }
         .disabled(viewStore.connectedPacket == nil)
@@ -175,7 +169,7 @@ struct ObjectsView: View {
     WithViewStore(self.store) { viewStore in
       Text("----- Objects go here -----")
         .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
-        .frame(maxWidth: .infinity, minHeight: 100, idealHeight: 200, maxHeight: 300, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 100, alignment: .leading)
     }
   }
 }
@@ -188,7 +182,7 @@ struct MessagesView: View {
     WithViewStore(self.store) { viewStore in
       Text("----- Messages go here -----")
         .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
-        .frame(maxWidth: .infinity, minHeight: 100, idealHeight: 200, maxHeight: 300, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 100, alignment: .leading)
     }
   }
 }
@@ -205,7 +199,7 @@ struct BottomButtonsView: View {
         Stepper("Font Size",
                 value: viewStore.binding(
                   get: \.fontSize,
-                  send: { value in .fontSizeChanged(value) }),
+                  send: { value in .fontSizeStepper(value) }),
                 in: 8...14)
         Text(String(format: "%2.0f", viewStore.fontSize)).frame(alignment: .leading)
         Spacer()
@@ -218,6 +212,7 @@ struct BottomButtonsView: View {
     }
   }
 }
+
 // ----------------------------------------------------------------------------
 // MARK: - Preview(s)
 

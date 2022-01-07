@@ -32,7 +32,7 @@ struct PacketView: View {
           Text(viewStore.status)
           Text(viewStore.guiClientStations)
         }.onTapGesture {
-          viewStore.send(.packetSelected)
+          viewStore.send(.selected)
         }
         .font(.title3)
         .frame(width: 140, alignment: .leading)

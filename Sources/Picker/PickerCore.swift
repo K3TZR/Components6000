@@ -28,48 +28,44 @@ public enum PickerButton: Equatable {
 
 public struct PickerState: Equatable {
   public init(pickType: PickType = .radio,
-              selectedPacket: UUID? = nil,
-              defaultPacket: UUID? = nil,
-              connectedPacket: UUID? = nil,
-              forceUpdate: Bool = false,
+              selectedPacket: Packet? = nil,
+              defaultPacket: Packet? = nil,
+//              connectedPacket: Packet? = nil,
               testStatus: Bool = false,
               discovery: Discovery = Discovery.sharedInstance)
   {
+//    self.connectedPacket = connectedPacket
+    self.defaultPacket = defaultPacket
+    self.discovery = discovery
     self.pickType = pickType
     self.selectedPacket = selectedPacket
-    self.defaultPacket = defaultPacket
-    self.connectedPacket = connectedPacket
-    self.forceUpdate = forceUpdate
     self.testStatus = testStatus
-    self.discovery = discovery
   }
   
-  public var pickType: PickType
-  public var selectedPacket: UUID?
-  public var defaultPacket: UUID?
-  public var connectedPacket: UUID?
-  public var forceUpdate = false
-  public var testStatus = false
+//  public var connectedPacket: Packet?
+  public var defaultPacket: Packet?
   public var discovery: Discovery
+  public var pickType: PickType
+  public var selectedPacket: Packet?
+  public var testStatus = false
 }
 
 public enum PickerAction: Equatable {
   case onAppear
   
-  // buttons
+  // UI actions
   case cancelButton
-  case connectButton
-  case testButton
+  case connectButton(Packet?)
+  case testButton(Packet?)
 
-  // effects
-  case testResultReceived(Bool)
-  case connectResultReceived(Int?)
-  
-  // subscriptions
-  case packetChange(PacketChange)
+  // effect related
   case clientChange(ClientChange)
+  case connectResultReceived(Int?)
+  case packetChange(PacketChange)
+  case testResultReceived(Bool)
+  
+  // upstream actions
   case packet(id: UUID, action: PacketAction)
-  case defaultSelected(UUID?)
 }
 
 public struct PickerEnvironment {
@@ -94,12 +90,10 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       ),
   Reducer { state, action, environment in
     switch action {
-
-      // ----- Picker level actions -----
-    case .onAppear:
-      // start listening for Discovery broadcasts (long-running Effect)
-      return environment.subscriptions()
       
+      // ----------------------------------------------------------------------------
+      // MARK: - UI actions
+
     case .cancelButton:
       return .cancel(ids: PacketSubscriptionId(), ClientSubscriptionId())
 
@@ -108,20 +102,29 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       print("-----> PickerCore: NOT IMPLEMENTED \(action)")
       return .none
 
+    case .onAppear:
+      // start listening for Discovery broadcasts (long-running Effect)
+      return environment.subscriptions()
+      
     case .testButton:
         // TODO
         print("-----> PickerCore: NOT IMPLEMENTED \(action)")
         return .none
       
+      // ----------------------------------------------------------------------------
+      // MARK: - Effect actions
+
+    case let .clientChange(update):
+      // process a GuiClient change
+      return .none
+      
+    case let .connectResultReceived(result):
+      // TODO
+      return .none
+      
     case let .packetChange(update):
       // process a DiscoveryPacket change
       state.discovery.packets[id: update.packet.id] = update.packet
-//      state.forceUpdate.toggle()
-      return .none
-      
-    case let .clientChange(update):
-      // process a GuiClient change
-//      state.forceUpdate.toggle()
       return .none
       
     case let .testResultReceived(result):
@@ -129,32 +132,8 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       state.testStatus = result
       return .none
       
-    case let .defaultSelected(id):
-      return .none
-
-    case let .connectResultReceived(result):
-      // TODO
-      return .none
-
-      
-      // ----- Packet level actions -----
-    case let .packet(id: id, action: .packetSelected):
-      
-      if var packet = state.discovery.packets[id: id] {
-        packet.isSelected.toggle()
-
-        if packet.isSelected {
-          state.selectedPacket = packet.id
-        } else {
-          state.selectedPacket = nil
-        }
-        state.discovery.packets[id: id]?.isSelected = packet.isSelected
-//        state.forceUpdate.toggle()
-        return Effect(value: .defaultSelected(state.selectedPacket))
-
-      } else {
-        return .none
-      }
+      // ----------------------------------------------------------------------------
+      // MARK: - Upstream actions (Packet)
 
     case let .packet(id: id, action: .defaultButton):
       
@@ -162,20 +141,33 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
         packet.isDefault.toggle()
 
         if packet.isDefault {
-          state.defaultPacket = packet.id
+          state.defaultPacket = packet
         } else {
           state.defaultPacket = nil
         }
         state.discovery.packets[id: id]?.isDefault = packet.isDefault
-//        state.forceUpdate.toggle()
-        return Effect(value: .defaultSelected(state.defaultPacket))
+        return .none
 
       } else {
         return .none
       }
       
-    case let .packet(id: id, action: action):
-      return .none    
+    case let .packet(id: id, action: .selected):
+      
+      if var packet = state.discovery.packets[id: id] {
+        packet.isSelected.toggle()
+
+        if packet.isSelected {
+          state.selectedPacket = packet
+        } else {
+          state.selectedPacket = nil
+        }
+        state.discovery.packets[id: id]?.isSelected = packet.isSelected
+        return .none
+
+      } else {
+        return .none
+      }
     }
   }
 )

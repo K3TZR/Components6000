@@ -94,7 +94,7 @@ struct PickerFooter: View {
     WithViewStore(store) { viewStore in
       
       HStack(){
-        Button("Test") {viewStore.send(.testButton)}
+        Button("Test") {viewStore.send(.testButton(viewStore.selectedPacket))}
         .disabled(viewStore.selectedPacket == nil)
         Circle()
           .fill(viewStore.testStatus ? Color.green : Color.red)
@@ -105,7 +105,7 @@ struct PickerFooter: View {
         .keyboardShortcut(.cancelAction)
         
         Spacer()
-        Button("Connect") {viewStore.send(.connectButton)}
+        Button("Connect") {viewStore.send(.connectButton(viewStore.selectedPacket))}
         .keyboardShortcut(.defaultAction)
         .disabled(viewStore.selectedPacket == nil)
       }
