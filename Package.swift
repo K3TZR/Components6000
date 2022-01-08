@@ -80,6 +80,7 @@ let package = Package(
     .target(
       name: "XCGWrapper",
       dependencies: [
+        "Shared",
         .product(name: "XCGLogger", package: "XCGLogger"),
         .product(name: "ObjcExceptionBridging", package: "XCGLogger"),
       ]

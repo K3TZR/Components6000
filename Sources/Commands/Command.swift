@@ -29,7 +29,7 @@ final public class Command: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  public var commandPublisher = PassthroughSubject<String, Never>()
+  public var commandPublisher = PassthroughSubject<Substring, Never>()
   public var statusPublisher = PassthroughSubject<TcpStatus, Never>()
 
   public private(set) var interfaceIpAddress = "0.0.0.0"
@@ -156,7 +156,7 @@ extension Command: GCDAsyncSocketDelegate {
     _log(LogEntry("-----> Command: socket did receive -> \(String(data: data, encoding: .ascii) ?? "")", .debug, #function, #file, #line))
 
     // publish the received data
-    if let text = String(data: data, encoding: .ascii) {
+    if let text = String(data: data, encoding: .ascii)?.dropLast() {
       commandPublisher.send(text)
     }
     // trigger the next read

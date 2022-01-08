@@ -7,6 +7,7 @@
 
 import ComposableArchitecture
 import Dispatch
+import SwiftUI
 
 import Login
 import Picker
@@ -24,7 +25,8 @@ public enum ConnectionMode: String {
 
 public struct CommandMessage: Equatable, Identifiable {
   public var id = UUID()
-  var text: String
+  var text: Substring
+  var color: Color
 }
 
 public struct ApiState: Equatable {
