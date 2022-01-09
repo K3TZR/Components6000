@@ -16,8 +16,8 @@ public enum PacketSource: String, Equatable {
 
 public enum PacketAction {
   case added
-  case updated
   case deleted
+  case updated
 }
 
 public struct PacketChange: Equatable {
@@ -27,7 +27,6 @@ public struct PacketChange: Equatable {
   public init(_ action: PacketAction, packet: Packet) {
     self.action = action
     self.packet = packet
-
   }
 }
 
@@ -48,7 +47,7 @@ public struct Packet: Identifiable, Equatable, Hashable {
   public var source: PacketSource                         //  NOT in received packet
   public var isDefault = false                            //  NOT in received packet
   public var isPortForwardOn = false                      //  NOT in received packet
-  public var isSelected = false                           //  NOT in received packet
+//  public var isSelected = false                           //  NOT in received packet
   public var guiClients = IdentifiedArrayOf<GuiClient>()  //  NOT in received packet
   public var localInterfaceIP = ""                        //  NOT in received packet
   public var requiresHolePunch = false                    //  NOT in received packet

@@ -152,10 +152,7 @@ final public class Command: NSObject {
 extension Command: GCDAsyncSocketDelegate {
   
   public func socket(_ sock: GCDAsyncSocket, didRead data: Data, withTag tag: Int) {
-    // TODO: REMOVE THIS LOG
-    _log(LogEntry("-----> Command: socket did receive -> \(String(data: data, encoding: .ascii) ?? "")", .debug, #function, #file, #line))
-
-    // publish the received data
+    // publish the received data, remove the EOL
     if let text = String(data: data, encoding: .ascii)?.dropLast() {
       commandPublisher.send(text)
     }

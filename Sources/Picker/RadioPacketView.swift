@@ -1,5 +1,5 @@
 //
-//  SwiftUIView.swift
+//  RadioPacketView.swift
 //  Components6000/Picker
 //
 //  Created by Douglas Adams on 11/22/21.
@@ -13,8 +13,10 @@ import Shared
 // ----------------------------------------------------------------------------
 // MARK: - View(s)
 
-struct PacketView: View {
-  let store: Store<Packet, PacketAction>
+struct RadioPacketView: View {
+  let store: Store<Packet, RadioPacketAction>
+
+  @State var isSelected = false
 
   var body: some View {
     WithViewStore(self.store) { viewStore in
@@ -31,13 +33,11 @@ struct PacketView: View {
           Text(viewStore.nickname)
           Text(viewStore.status)
           Text(viewStore.guiClientStations)
-        }.onTapGesture {
-          viewStore.send(.selected)
-        }
+        }.onTapGesture { isSelected.toggle() ; viewStore.send(.selection(isSelected))}
         .font(.title3)
         .frame(width: 140, alignment: .leading)
       }
-      .foregroundColor(viewStore.isSelected ? Color(.red) : Color(.white))
+      .foregroundColor(isSelected ? Color(.red) : Color(.white))
     }
   }
 }
@@ -45,12 +45,12 @@ struct PacketView: View {
 // ----------------------------------------------------------------------------
 // MARK: - Preview(s)
 
-struct PacketView_Previews: PreviewProvider {
+struct RadioPacketView_Previews: PreviewProvider {
     static var previews: some View {
-      PacketView(store: Store(
+      RadioPacketView(store: Store(
         initialState: testPacket1(),
-        reducer: packetReducer,
-        environment: PacketEnvironment() )
+        reducer: radioPacketReducer,
+        environment: RadioPacketEnvironment() )
       )
     }
 }

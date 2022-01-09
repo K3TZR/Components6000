@@ -17,6 +17,23 @@ import Shared
 
 struct CommandSubscriptionId: Hashable {}
 
+public struct DefaultConnection: Codable, Equatable {
+
+  public static func == (lhs: DefaultConnection, rhs: DefaultConnection) -> Bool {
+    guard lhs.source == rhs.source else { return false }
+    guard lhs.publicIp == rhs.publicIp else { return false }
+    return true
+  }
+
+  var source: String
+  var publicIp: String
+
+  enum CodingKeys: String, CodingKey {
+    case source
+    case publicIp
+  }
+}
+
 public enum ConnectionMode: String {
   case local
   case smartlink
@@ -31,24 +48,24 @@ public struct CommandMessage: Equatable, Identifiable {
 
 public struct ApiState: Equatable {
   // State held in User Defaults
-  public var clearOnConnect: Bool { didSet { UserDefaults.standard.set(clearOnConnect, forKey: "clearOnConnect")} }
-  public var clearOnDisconnect: Bool { didSet { UserDefaults.standard.set(clearOnDisconnect, forKey: "clearOnDisconnect")} }
-  public var clearOnSend: Bool { didSet { UserDefaults.standard.set(clearOnSend, forKey: "clearOnSend")} }
-  public var connectionMode: ConnectionMode { didSet { UserDefaults.standard.set(connectionMode.rawValue, forKey: "connectionMode")} }
-  public var fontSize: CGFloat { didSet { UserDefaults.standard.set(fontSize, forKey: "fontSize")} }
-  public var isGui: Bool { didSet { UserDefaults.standard.set(isGui, forKey: "isGui")} }
-  public var wanLogin: Bool { didSet { UserDefaults.standard.set(wanLogin, forKey: "wanLogin")} }
-  public var showTimes: Bool { didSet { UserDefaults.standard.set(showTimes, forKey: "showTimes")} }
-  public var showPings: Bool { didSet { UserDefaults.standard.set(showPings, forKey: "showPings")} }
-  public var showReplies: Bool { didSet { UserDefaults.standard.set(showReplies, forKey: "showReplies")} }
-  public var smartlinkEmail: String { didSet { UserDefaults.standard.set(smartlinkEmail, forKey: "smartlinkEmail")} }
+  public var clearOnConnect: Bool { didSet { UserDefaults.standard.set(clearOnConnect, forKey: "clearOnConnect") } }
+  public var clearOnDisconnect: Bool { didSet { UserDefaults.standard.set(clearOnDisconnect, forKey: "clearOnDisconnect") } }
+  public var clearOnSend: Bool { didSet { UserDefaults.standard.set(clearOnSend, forKey: "clearOnSend") } }
+  public var connectionMode: ConnectionMode { didSet { UserDefaults.standard.set(connectionMode.rawValue, forKey: "connectionMode") } }
+  public var defaultConnection: DefaultConnection? { didSet { setDefaultConnection(defaultConnection) } }
+  public var fontSize: CGFloat { didSet { UserDefaults.standard.set(fontSize, forKey: "fontSize") } }
+  public var isGui: Bool { didSet { UserDefaults.standard.set(isGui, forKey: "isGui") } }
+  public var wanLogin: Bool { didSet { UserDefaults.standard.set(wanLogin, forKey: "wanLogin") } }
+  public var showTimes: Bool { didSet { UserDefaults.standard.set(showTimes, forKey: "showTimes") } }
+  public var showPings: Bool { didSet { UserDefaults.standard.set(showPings, forKey: "showPings") } }
+  public var showReplies: Bool { didSet { UserDefaults.standard.set(showReplies, forKey: "showReplies") } }
+  public var smartlinkEmail: String { didSet { UserDefaults.standard.set(smartlinkEmail, forKey: "smartlinkEmail") } }
 
   // normal state
   public var clearNow = false
   public var command = Command()
   public var commandToSend = ""
   public var connectedPacket: Packet? = nil
-  public var defaultPacket: UUID? = nil
   public var discovery: Discovery? = nil
   public var alert: AlertView?
   public var loginState: LoginState? = nil
@@ -61,6 +78,7 @@ public struct ApiState: Equatable {
     clearOnDisconnect = UserDefaults.standard.bool(forKey: "clearOnDisconnect")
     clearOnSend = UserDefaults.standard.bool(forKey: "clearOnSend")
     connectionMode = ConnectionMode(rawValue: UserDefaults.standard.string(forKey: "connectionMode") ?? "both") ?? .both
+    defaultConnection = getDefaultConnection()
     fontSize = UserDefaults.standard.double(forKey: "fontSize") == 0 ? 12 : UserDefaults.standard.double(forKey: "fontSize")
     isGui = UserDefaults.standard.bool(forKey: "isGui")
     wanLogin = UserDefaults.standard.bool(forKey: "wanLogin")
@@ -125,7 +143,12 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
 
     case .clearDefaultButton:
-      state.defaultPacket = nil
+      state.defaultConnection = nil
+      if let discovery = state.discovery {
+        for packet in discovery.packets {
+          discovery.packets[id: packet.id]?.isDefault = false
+        }
+      }
       return .none
 
     case .clearNowButton:
@@ -153,7 +176,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return listenForCommands(state.command)
       
     case .sendButton:
-      print("-----> ApiCore: \(action) NOT IMPLEMENTED")
+      _ = state.command.send(state.commandToSend)
       return .none
 
     case .sheetClosed:
@@ -161,10 +184,31 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
     case .startStopButton:
-      if state.pickerState == nil {
-        state.pickerState = PickerState(pickType: state.isGui ? .radio : .station)
+      if state.connectedPacket == nil {
+        // NOT connected, attempt a connection
+        if let packet = identifyDefault(state.defaultConnection, state.discovery!) {
+          // using the default
+          if state.command.connect(packet) {
+            // default connected
+            state.connectedPacket = packet
+            if state.clearOnConnect { state.commandMessages.removeAll() }
+          } else {
+            // default failed to open
+            state.connectedPacket = nil
+            state.alert = AlertView(title: "Failed to connect to \(packet.nickname) (default)")
+            // open the Picker
+            state.pickerState = PickerState(pickType: state.isGui ? .radio : .station)
+          }
+        } else {
+          // no default, open the Picker
+          state.pickerState = PickerState(pickType: state.isGui ? .radio : .station)
+        }
+
       } else {
-        state.pickerState = nil
+        // CONNECTED, disconnect
+        state.command.disconnect()
+        state.connectedPacket = nil
+        if state.clearOnDisconnect { state.commandMessages.removeAll() }
       }
       return .none
       
@@ -178,10 +222,12 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case let .pickerAction(.connectButton(packet)):
       state.pickerState = nil
-      if !state.command.connect(packet!) {
-        state.alert = AlertView(title: "Failed to connect to \(packet!.nickname)")
-      } else {
+      if state.command.connect(packet!) {
+        state.connectedPacket = packet
         if state.clearOnConnect { state.commandMessages.removeAll() }
+      } else {
+        state.connectedPacket = nil
+        state.alert = AlertView(title: "Failed to connect to \(packet!.nickname)")
       }
       return .none
       
@@ -193,6 +239,18 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       print("-----> ApiCore: Test, packet = \(packet!.nickname)")
       return .none
       
+    case let .pickerAction(.defaultChanged(packet)):
+      if packet.isDefault {
+        // save the dafault
+        state.defaultConnection = DefaultConnection(source: packet.source.rawValue, publicIp: packet.publicIp)
+        // close the picker and connect
+        return Effect(value: .pickerAction(.connectButton(packet)))
+
+      } else {
+        state.defaultConnection = nil
+        return .none
+      }
+
     case .pickerAction(_):
       // IGNORE ALL OTHERS
       return .none
@@ -277,5 +335,38 @@ private func listenForWanPackets(_ state: inout ApiState, loginResult: LoginResu
     state.alert = AlertView(title: "Discovery: Wan Listener, Failed to Connect")
   } catch {
     state.alert = AlertView(title: "Discovery: Wan Listener, unknown error")
+  }
+}
+
+private func identifyDefault(_ conn: DefaultConnection?, _ discovery: Discovery) -> Packet? {
+  guard conn != nil else { return nil }
+  for packet in discovery.packets where conn!.source == packet.source.rawValue && conn!.publicIp == packet.publicIp {
+    return packet
+  }
+  return nil
+}
+
+private func getDefaultConnection() -> DefaultConnection? {
+  if let defaultData = UserDefaults.standard.object(forKey: "defaultConnection") as? Data {
+    let decoder = JSONDecoder()
+    if let defaultConnection = try? decoder.decode(DefaultConnection.self, from: defaultData) {
+      return defaultConnection
+    } else {
+      return nil
+    }
+  }
+  return nil
+}
+
+private func setDefaultConnection(_ conn: DefaultConnection?) {
+  if conn == nil {
+    UserDefaults.standard.removeObject(forKey: "defaultConnection")
+  } else {
+    let encoder = JSONEncoder()
+    if let encoded = try? encoder.encode(conn) {
+      UserDefaults.standard.set(encoded, forKey: "defaultConnection")
+    } else {
+      UserDefaults.standard.removeObject(forKey: "defaultConnection")
+    }
   }
 }

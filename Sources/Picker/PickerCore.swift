@@ -16,8 +16,8 @@ struct PacketSubscriptionId: Hashable {}
 struct ClientSubscriptionId: Hashable {}
 
 public enum PickType: String, Equatable {
-  case station = "STATION"
-  case radio = "RADIO"
+  case station = "Station"
+  case radio = "Radio"
 }
 
 public enum PickerButton: Equatable {
@@ -30,11 +30,9 @@ public struct PickerState: Equatable {
   public init(pickType: PickType = .radio,
               selectedPacket: Packet? = nil,
               defaultPacket: Packet? = nil,
-//              connectedPacket: Packet? = nil,
               testStatus: Bool = false,
               discovery: Discovery = Discovery.sharedInstance)
   {
-//    self.connectedPacket = connectedPacket
     self.defaultPacket = defaultPacket
     self.discovery = discovery
     self.pickType = pickType
@@ -63,9 +61,11 @@ public enum PickerAction: Equatable {
   case connectResultReceived(Int?)
   case packetChange(PacketChange)
   case testResultReceived(Bool)
+  case defaultChanged(Packet)
   
   // upstream actions
-  case packet(id: UUID, action: PacketAction)
+  case radio(id: UUID, action: RadioPacketAction)
+  case station(id: UUID, action: StationPacketAction)
 }
 
 public struct PickerEnvironment {
@@ -83,10 +83,15 @@ public struct PickerEnvironment {
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
-  packetReducer.forEach(
+  radioPacketReducer.forEach(
     state: \PickerState.discovery.packets,
-    action: /PickerAction.packet(id:action:),
-    environment: { _ in PacketEnvironment() }
+    action: /PickerAction.radio(id:action:),
+    environment: { _ in RadioPacketEnvironment() }
+      ),
+  stationPacketReducer.forEach(
+    state: \PickerState.discovery.stations,
+    action: /PickerAction.station(id:action:),
+    environment: { _ in StationPacketEnvironment() }
       ),
   Reducer { state, action, environment in
     switch action {
@@ -112,6 +117,10 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // handled downstream
       return .none
       
+    case .defaultChanged(_):
+      // handled downstream
+      return .none
+
       // ----------------------------------------------------------------------------
       // MARK: - Effect actions
 
@@ -134,41 +143,44 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .none
       
       // ----------------------------------------------------------------------------
-      // MARK: - Upstream actions (Packet)
+      // MARK: - Radio actions
 
-    case let .packet(id: id, action: .defaultButton):
-      
-      if var packet = state.discovery.packets[id: id] {
-        packet.isDefault.toggle()
-
-        if packet.isDefault {
-          state.defaultPacket = packet
-        } else {
-          state.defaultPacket = nil
+    case let .radio(id: id, action: .defaultButton):
+        let thisPacket = state.discovery.packets[id: id]!
+        if thisPacket.isDefault {
+          for packet in state.discovery.packets where packet.id != thisPacket.id {
+            state.discovery.packets[id: packet.id]!.isDefault = false
+          }
         }
-        state.discovery.packets[id: id]?.isDefault = packet.isDefault
-        return .none
+      return Effect(value: .defaultChanged(thisPacket))
 
+    case let .radio(id: id, action: .selection(value)):
+      if value {
+        state.selectedPacket = state.discovery.packets[id: id]
       } else {
-        return .none
+        state.selectedPacket = nil
       }
-      
-    case let .packet(id: id, action: .selected):
-      
-      if var packet = state.discovery.packets[id: id] {
-        packet.isSelected.toggle()
+      return .none
 
-        if packet.isSelected {
-          state.selectedPacket = packet
-        } else {
-          state.selectedPacket = nil
+      // ----------------------------------------------------------------------------
+      // MARK: - Station actions
+
+    case let .station(id: id, action: .defaultButton):
+      let thisPacket = state.discovery.stations[id: id]!
+      if thisPacket.isDefault {
+        for packet in state.discovery.stations where packet.id != thisPacket.id {
+          state.discovery.stations[id: packet.id]!.isDefault = false
         }
-        state.discovery.packets[id: id]?.isSelected = packet.isSelected
-        return .none
-
-      } else {
-        return .none
       }
+      return Effect(value: .defaultChanged(thisPacket))
+
+    case let .station(id: id, action: .selection(value)):
+      if value {
+          state.selectedPacket = state.discovery.stations[id: id]
+      } else {
+        state.selectedPacket = nil
+      }
+      return .none
     }
   }
 )

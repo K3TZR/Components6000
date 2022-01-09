@@ -30,8 +30,8 @@ public struct GuiClient: Equatable, Identifiable {
 
   public var id: Handle { clientHandle }
 
-  public var clientId: GuiClientId?
   public var clientHandle: Handle = 0
+  public var clientId: GuiClientId?
   public var host = ""
   public var ip = ""
   public var isLocalPtt = false
@@ -47,13 +47,13 @@ public struct GuiClient: Equatable, Identifiable {
               isLocalPtt: Bool = false, isThisClient: Bool = false) {
     
     self.clientHandle = clientHandle
-    self.station = station
-    self.program = program
     self.clientId = clientId
     self.host = host
     self.ip = ip
     self.isLocalPtt = isLocalPtt
     self.isThisClient = isThisClient
+    self.program = program
+    self.station = station
   }
 
   public static func == (lhs: GuiClient, rhs: GuiClient) -> Bool {

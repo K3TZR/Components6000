@@ -26,27 +26,41 @@ public struct PickerView: View {
     
     WithViewStore(store) { viewStore in
       VStack(alignment: .leading) {
-        PickerHeader(pickType: viewStore.pickType)
+        PickerHeaderView(pickType: viewStore.pickType)
         Divider()
-        if viewStore.discovery.packets.count == 0 {
+        if (viewStore.pickType == .radio && viewStore.discovery.packets.count == 0) || (viewStore.pickType == .station && viewStore.discovery.stations.count == 0) {
           Spacer()
           HStack {
             Spacer()
-            Text("----------  NO  \(viewStore.pickType.rawValue)S  FOUND  ----------").foregroundColor(.red)
+            Text("----------  NO  \(viewStore.pickType.rawValue)s  FOUND  ----------").foregroundColor(.red)
             Spacer()
           }
           Spacer()
         } else {
           List {
+            if viewStore.pickType == .radio {
             ForEachStore(
-              self.store.scope(state: \.discovery.packets, action: PickerAction.packet(id:action:))
+              self.store.scope(
+                state: \.discovery.packets,
+                action: PickerAction.radio(id:action:)
+              )
             ) { packetStore in
-              PacketView(store: packetStore)
+                RadioPacketView(store: packetStore)
+            }
+            } else {
+              ForEachStore(
+                self.store.scope(
+                  state: \.discovery.stations,
+                  action: PickerAction.station(id:action:)
+                )
+              ) { packetStore in
+                StationPacketView(store: packetStore)
+              }
             }
           }
         }
         Divider()
-        PickerFooter(store: store)
+        PickerFooterView(store: store)
       }
       .frame(minWidth: 650, minHeight: 200, idealHeight: 300, maxHeight: 400)
       .onAppear {
@@ -56,104 +70,38 @@ public struct PickerView: View {
   }
 }
 
-struct PickerHeader: View {
-  let pickType: PickType
-  
-  var body: some View {
-    VStack {
-      Text("Select a \(pickType.rawValue)")
-        .font(.title)
-        .padding(.bottom, 10)
-      
-      HStack(spacing: 0) {
-        Group {
-          Text("Default")
-        }
-        .font(.title2)
-        .frame(width: 95, alignment: .leading)
-        
-        Group {
-          Text("Type")
-          Text("Name")
-          Text("Status")
-          Text("Station(s)")
-        }
-        .frame(width: 140, alignment: .leading)
-      }
-    }
-    .font(.title2)
-    .padding(.vertical, 10)
-    .padding(.horizontal)
-  }
-}
-
-struct PickerFooter: View {
-  let store: Store<PickerState, PickerAction>
-  
-  var body: some View {
-    WithViewStore(store) { viewStore in
-      
-      HStack(){
-        Button("Test") {viewStore.send(.testButton(viewStore.selectedPacket))}
-        .disabled(viewStore.selectedPacket == nil)
-        Circle()
-          .fill(viewStore.testStatus ? Color.green : Color.red)
-          .frame(width: 20, height: 20)
-        
-        Spacer()
-        Button("Cancel") {viewStore.send(.cancelButton) }
-        .keyboardShortcut(.cancelAction)
-        
-        Spacer()
-        Button("Connect") {viewStore.send(.connectButton(viewStore.selectedPacket))}
-        .keyboardShortcut(.defaultAction)
-        .disabled(viewStore.selectedPacket == nil)
-      }
-    }
-    .padding(.vertical, 10)
-    .padding(.horizontal)
-  }
-}
-
 // ----------------------------------------------------------------------------
-// MARK: - Preview(s)
+// MARK: - Preview
 
 struct PickerView_Previews: PreviewProvider {
   static var previews: some View {
 
     PickerView(
       store: Store(
-        initialState: PickerState(pickType: .radio,
-                                  testStatus: true),
+        initialState: PickerState(pickType: .radio),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
     )
+      .previewDisplayName("Radio Picker (empty)")
+
     PickerView(
       store: Store(
-        initialState: PickerState(pickType: .station,
-                                  testStatus: false),
+        initialState: PickerState(pickType: .radio),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
     )
-  }
-}
+      .previewDisplayName("Radio Picker")
 
-struct PickerHeader_Previews: PreviewProvider {
-  static var previews: some View {
-    PickerHeader(pickType: .radio)
-  }
-}
-
-struct PickerFooter_Previews: PreviewProvider {
-  static var previews: some View {
-
-    PickerFooter(store: Store(
-      initialState: PickerState(pickType: .radio, testStatus: true),
-      reducer: pickerReducer,
-      environment: PickerEnvironment() )
+    PickerView(
+      store: Store(
+        initialState: PickerState(pickType: .station),
+        reducer: pickerReducer,
+        environment: PickerEnvironment()
+      )
     )
+      .previewDisplayName("Station Picker")
   }
 }
 
@@ -176,7 +124,7 @@ func testPackets() -> [Packet] {
 func testPacket1() -> Packet {
   var packet = Packet()
   packet.nickname = "Dougs 6500"
-  packet.status = "Available"
+  packet.status = "In Use"
   packet.serial = "1234-5678-9012-3456"
   packet.publicIp = "10.0.1.200"
   packet.guiClientHandles = "1,2"

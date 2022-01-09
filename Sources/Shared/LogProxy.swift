@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-public enum LogLevel: String {
+public enum LogLevel: String, CaseIterable {
     case debug
     case verbose
     case info
