@@ -28,7 +28,7 @@ public struct PickerView: View {
       VStack(alignment: .leading) {
         PickerHeaderView(pickType: viewStore.pickType)
         Divider()
-        if (viewStore.pickType == .radio && viewStore.discovery.packets.count == 0) || (viewStore.pickType == .station && viewStore.discovery.stations.count == 0) {
+        if viewStore.discovery.packets.count == 0 {
           Spacer()
           HStack {
             Spacer()
@@ -38,31 +38,20 @@ public struct PickerView: View {
           Spacer()
         } else {
           List {
-            if viewStore.pickType == .radio {
             ForEachStore(
               self.store.scope(
                 state: \.discovery.packets,
-                action: PickerAction.radio(id:action:)
+                action: PickerAction.packet(id:action:)
               )
             ) { packetStore in
-                RadioPacketView(store: packetStore)
-            }
-            } else {
-              ForEachStore(
-                self.store.scope(
-                  state: \.discovery.stations,
-                  action: PickerAction.station(id:action:)
-                )
-              ) { packetStore in
-                StationPacketView(store: packetStore)
-              }
+                PacketView(store: packetStore)
             }
           }
         }
         Divider()
         PickerFooterView(store: store)
       }
-      .frame(minWidth: 650, minHeight: 200, idealHeight: 300, maxHeight: 400)
+      .frame(minWidth: 700, minHeight: 200, idealHeight: 300, maxHeight: 400)
       .onAppear {
         viewStore.send(.onAppear)
       }

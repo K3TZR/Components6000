@@ -46,6 +46,7 @@ public struct PickerState: Equatable {
   public var pickType: PickType
   public var selectedPacket: Packet?
   public var testStatus = false
+  public var forceUpdate = false
 }
 
 public enum PickerAction: Equatable {
@@ -64,8 +65,7 @@ public enum PickerAction: Equatable {
   case defaultChanged(Packet)
   
   // upstream actions
-  case radio(id: UUID, action: RadioPacketAction)
-  case station(id: UUID, action: StationPacketAction)
+  case packet(id: UUID, action: PacketAction)
 }
 
 public struct PickerEnvironment {
@@ -83,15 +83,10 @@ public struct PickerEnvironment {
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
-  radioPacketReducer.forEach(
+  packetReducer.forEach(
     state: \PickerState.discovery.packets,
-    action: /PickerAction.radio(id:action:),
-    environment: { _ in RadioPacketEnvironment() }
-      ),
-  stationPacketReducer.forEach(
-    state: \PickerState.discovery.stations,
-    action: /PickerAction.station(id:action:),
-    environment: { _ in StationPacketEnvironment() }
+    action: /PickerAction.packet(id:action:),
+    environment: { _ in PacketEnvironment() }
       ),
   Reducer { state, action, environment in
     switch action {
@@ -134,7 +129,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       
     case let .packetChange(update):
       // process a DiscoveryPacket change
-      state.discovery.packets[id: update.packet.id] = update.packet
+      state.forceUpdate.toggle()
       return .none
       
     case let .testResultReceived(result):
@@ -145,7 +140,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // ----------------------------------------------------------------------------
       // MARK: - Radio actions
 
-    case let .radio(id: id, action: .defaultButton):
+    case let .packet(id: id, action: .defaultButton):
         let thisPacket = state.discovery.packets[id: id]!
         if thisPacket.isDefault {
           for packet in state.discovery.packets where packet.id != thisPacket.id {
@@ -154,29 +149,9 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
         }
       return Effect(value: .defaultChanged(thisPacket))
 
-    case let .radio(id: id, action: .selection(value)):
+    case let .packet(id: id, action: .selection(value)):
       if value {
         state.selectedPacket = state.discovery.packets[id: id]
-      } else {
-        state.selectedPacket = nil
-      }
-      return .none
-
-      // ----------------------------------------------------------------------------
-      // MARK: - Station actions
-
-    case let .station(id: id, action: .defaultButton):
-      let thisPacket = state.discovery.stations[id: id]!
-      if thisPacket.isDefault {
-        for packet in state.discovery.stations where packet.id != thisPacket.id {
-          state.discovery.stations[id: packet.id]!.isDefault = false
-        }
-      }
-      return Effect(value: .defaultChanged(thisPacket))
-
-    case let .station(id: id, action: .selection(value)):
-      if value {
-          state.selectedPacket = state.discovery.stations[id: id]
       } else {
         state.selectedPacket = nil
       }

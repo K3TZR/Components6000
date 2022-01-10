@@ -14,18 +14,18 @@ public enum PacketSource: String, Equatable {
   case smartlink = "Smartlink"
 }
 
-public enum PacketAction {
+public enum PacketState{
   case added
   case deleted
   case updated
 }
 
 public struct PacketChange: Equatable {
-  public var action: PacketAction
+  public var state: PacketState
   public var packet: Packet
 
-  public init(_ action: PacketAction, packet: Packet) {
-    self.action = action
+  public init(_ state: PacketState, packet: Packet) {
+    self.state = state
     self.packet = packet
   }
 }
