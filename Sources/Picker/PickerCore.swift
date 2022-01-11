@@ -26,9 +26,19 @@ public enum PickerButton: Equatable {
   case connect
 }
 
+public struct PickerSelection: Equatable {
+  public init(_ packet: Packet, _ clientIndex: Int?) {
+    self.packet = packet
+    self.clientIndex = clientIndex
+  }
+
+  public var packet: Packet
+  public var clientIndex: Int?
+}
+
 public struct PickerState: Equatable {
   public init(pickType: PickType = .radio,
-              selectedPacket: Packet? = nil,
+              selectedPacket: PickerSelection? = nil,
               defaultPacket: Packet? = nil,
               testStatus: Bool = false,
               discovery: Discovery = Discovery.sharedInstance)
@@ -44,7 +54,7 @@ public struct PickerState: Equatable {
   public var defaultPacket: Packet?
   public var discovery: Discovery
   public var pickType: PickType
-  public var selectedPacket: Packet?
+  public var selectedPacket: PickerSelection?
   public var testStatus = false
   public var forceUpdate = false
 }
@@ -54,15 +64,15 @@ public enum PickerAction: Equatable {
   
   // UI controls
   case cancelButton
-  case connectButton(Packet?)
-  case testButton(Packet?)
+  case connectButton(PickerSelection?)
+  case testButton(PickerSelection?)
 
   // effect related
   case clientChange(ClientChange)
   case connectResultReceived(Int?)
   case packetChange(PacketChange)
   case testResultReceived(Bool)
-  case defaultChanged(Packet)
+  case defaultChanged(PickerSelection?)
   
   // upstream actions
   case packet(id: UUID, action: PacketAction)
@@ -147,11 +157,12 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
             state.discovery.packets[id: packet.id]!.isDefault = false
           }
         }
-      return Effect(value: .defaultChanged(thisPacket))
+      // FIXME: this wrong for a non-guiClient
+      return Effect(value: .defaultChanged(PickerSelection(thisPacket, nil)))
 
-    case let .packet(id: id, action: .selection(value)):
-      if value {
-        state.selectedPacket = state.discovery.packets[id: id]
+    case let .packet(id: id, action: .selection(isSelected, clientIndex)):
+      if isSelected {
+        state.selectedPacket = PickerSelection(state.discovery.packets[id: id]!, clientIndex)
       } else {
         state.selectedPacket = nil
       }

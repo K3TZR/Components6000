@@ -27,10 +27,12 @@ public struct DefaultConnection: Codable, Equatable {
 
   var source: String
   var publicIp: String
+  var clientIndex: Int?
 
   enum CodingKeys: String, CodingKey {
     case source
     case publicIp
+    case clientIndex
   }
 }
 
@@ -65,7 +67,7 @@ public struct ApiState: Equatable {
   public var clearNow = false
   public var command = Command()
   public var commandToSend = ""
-  public var connectedPacket: Packet? = nil
+  public var connectedPacket: PickerSelection? = nil
   public var discovery: Discovery? = nil
   public var alert: AlertView?
   public var loginState: LoginState? = nil
@@ -190,7 +192,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
           // using the default
           if state.command.connect(packet) {
             // default connected
-            state.connectedPacket = packet
+            state.connectedPacket = PickerSelection(packet, nil)
             if state.clearOnConnect { state.commandMessages.removeAll() }
           } else {
             // default failed to open
@@ -220,14 +222,14 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       if state.clearOnDisconnect { state.commandMessages.removeAll() }
       return .none
       
-    case let .pickerAction(.connectButton(packet)):
+    case let .pickerAction(.connectButton(selection)):
       state.pickerState = nil
-      if state.command.connect(packet!) {
-        state.connectedPacket = packet
+      if state.command.connect(selection!.packet) {
+        state.connectedPacket = selection
         if state.clearOnConnect { state.commandMessages.removeAll() }
       } else {
         state.connectedPacket = nil
-        state.alert = AlertView(title: "Failed to connect to \(packet!.nickname)")
+        state.alert = AlertView(title: "Failed to connect to \(selection?.packet.nickname ?? "-- Unknown --")")
       }
       return .none
       
@@ -235,16 +237,16 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
       
-    case let .pickerAction(.testButton(packet)):
-      print("-----> ApiCore: Test, packet = \(packet!.nickname)")
+    case let .pickerAction(.testButton(selection)):
+      print("-----> ApiCore: Test, packet = \(selection?.packet.nickname ?? "-- Unknown --")")
       return .none
       
-    case let .pickerAction(.defaultChanged(packet)):
-      if packet.isDefault {
+    case let .pickerAction(.defaultChanged(selection)):
+      if let selection = selection {
         // save the dafault
-        state.defaultConnection = DefaultConnection(source: packet.source.rawValue, publicIp: packet.publicIp)
+        state.defaultConnection = DefaultConnection(source: selection.packet.source.rawValue, publicIp: selection.packet.publicIp, clientIndex: selection.clientIndex)
         // close the picker and connect
-        return Effect(value: .pickerAction(.connectButton(packet)))
+        return Effect(value: .pickerAction(.connectButton(selection)))
 
       } else {
         state.defaultConnection = nil

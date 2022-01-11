@@ -75,6 +75,7 @@ final public class Command: NSObject {
     var portToUse = 0
     var localInterface: String?
     var success = true
+
     _packetSource = packet.source
     
     // identify the port

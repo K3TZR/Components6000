@@ -20,6 +20,10 @@ struct PickerHeaderView: View {
         .font(.title)
         .padding(.bottom, 10)
 
+      Text("Click on a \(pickType == .radio ? "NAME" : "STATION" ) in the list below")
+        .font(.title3)
+        .padding(.bottom, 10)
+
       HStack(spacing: 0) {
         Group {
           Text("Default")

@@ -10,7 +10,6 @@ import Combine
 
 public enum LogLevel: String, CaseIterable {
     case debug
-    case verbose
     case info
     case warning
     case error

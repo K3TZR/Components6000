@@ -7,7 +7,6 @@
 
 import Foundation
 import Shared
-import LogProxy
 
 extension WanListener {
   // ------------------------------------------------------------------------------

@@ -12,11 +12,6 @@ import Login
 import Picker
 import Shared
 
-public struct AlertView: Equatable, Identifiable {
-  public var title: String
-  public var id: String { self.title }
-}
-
 // ----------------------------------------------------------------------------
 // MARK: - View
 

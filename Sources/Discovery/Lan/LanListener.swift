@@ -11,7 +11,6 @@ import Combine
 
 import CocoaAsyncSocket
 import Shared
-import LogProxy
 
 public enum LanListenerError: Error {
   case kSocketError
@@ -27,7 +26,7 @@ final class LanListener: NSObject, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public private(set) var isListening: Bool = false
+  public private(set) var isListening: Bool = false
 
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
@@ -57,14 +56,14 @@ final class LanListener: NSObject, ObservableObject {
     
     try! _udpSocket.enableReusePort(true)
     try! _udpSocket.bind(toPort: port)
-    _log(LogEntry("Discovery: UDP Socket initialized", .debug, #function, #file, #line))
+    _log(LogEntry("Discovery: Lan Listener UDP Socket initialized", .debug, #function, #file, #line))
   }
 
   func start(checkInterval: TimeInterval = 1.0, timeout: TimeInterval = 10.0) throws {
     do {
       try _udpSocket.beginReceiving()
       DispatchQueue.main.async { self.isListening = true }
-      _log(LogEntry("Discovery: Listening for broadcasts", .debug, #function, #file, #line))
+      _log(LogEntry("Discovery: Lan Listener is listening", .debug, #function, #file, #line))
       
       // setup a timer to watch for Radio timeouts
       Timer.publish(every: checkInterval, on: .main, in: .default)
@@ -97,9 +96,9 @@ final class LanListener: NSObject, ObservableObject {
   /// - Parameter condition:  a closure defining the condition for removal
   private func remove(condition: (Packet) -> Bool) {
     for packet in _discovery!.packets where condition(packet) { 
-      _discovery!.packetPublisher.send(PacketChange(.deleted, packet: packet))
-      _log(LogEntry("Discovery: Packet removed, lastSeen = \(packet.lastSeen)", .debug, #function, #file, #line))
-      _discovery?.packets.remove(id: packet.id)
+      let removedPacket = _discovery?.packets.remove(id: packet.id)
+      _discovery!.packetPublisher.send(PacketChange(.deleted, packet: removedPacket!))
+      _log(LogEntry("Discovery: Lan Listener packet removed, lastSeen = \(removedPacket!.lastSeen)", .debug, #function, #file, #line))
     }
   }
 }

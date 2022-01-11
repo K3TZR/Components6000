@@ -58,7 +58,7 @@ struct TopButtonsView: View {
         ),
         content: { Alert(title: Text($0.title)) }
       )
-      .onAppear(perform: {viewStore.send(.onAppear)})
+      .onAppear() { viewStore.send(.onAppear) }
     }
   }
 }

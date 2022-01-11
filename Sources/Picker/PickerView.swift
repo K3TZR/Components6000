@@ -44,7 +44,7 @@ public struct PickerView: View {
                 action: PickerAction.packet(id:action:)
               )
             ) { packetStore in
-                PacketView(store: packetStore)
+              PacketView(store: packetStore, pickType: viewStore.pickType)
             }
           }
         }

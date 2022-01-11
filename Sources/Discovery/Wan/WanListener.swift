@@ -11,7 +11,6 @@ import Combine
 
 import Login
 import Shared
-import LogProxy
 
 public enum WanListenerError: Error {
   case kFailedToObtainIdToken

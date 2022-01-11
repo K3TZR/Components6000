@@ -30,9 +30,7 @@ public struct LogView: View {
         LogHeader(store: store)
         Divider().background(Color(.red))
         Spacer()
-        //      LogBodyView(logManager: logManager)
-        Text("---------- Log Lines go here ----------")
-          .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
+        LogBodyView(store: store)
         Spacer()
         Divider().background(Color(.red))
         LogFooter(store: store)
@@ -41,10 +39,16 @@ public struct LogView: View {
       .toolbar {
         Button("Api View") { viewStore.send(.apiViewButton) }
       }
+      .alert(
+        item: viewStore.binding(
+          get: { $0.alert },
+          send: .alertDismissed
+        ),
+        content: { Alert(title: Text($0.title)) }
+      )
+
+      .onAppear() { viewStore.send(.onAppear) }
     }
-    //    .onAppear() {
-    //      logManager.loadDefaultLog()
-    //    }
     //    .sheet(isPresented: $logManager.showLogPicker) {
     //      LogPickerView().environmentObject(logManager)
     //    }
@@ -58,7 +62,7 @@ struct LogView_Previews: PreviewProvider {
   static var previews: some View {
     LogView(
       store: Store(
-        initialState: LogState(),
+        initialState: LogState(domain: "net.k3tzr", appName: "Api6000"),
         reducer: logReducer,
         environment: LogEnvironment()
       )

@@ -15,8 +15,19 @@ import Shared
 
 struct PacketView: View {
   let store: Store<Packet, PacketAction>
+  let pickType: PickType
 
-  @State var isSelected = false
+  @State var radioSelected = false
+  @State var firstStationSelected = false
+  @State var secondStationSelected = false
+
+  func parseStations(_ clients: IdentifiedArrayOf<GuiClient>) -> [String] {
+    switch clients.count {
+    case 1: return [clients[0].station, ""]
+    case 2: return [clients[0].station, clients[1].station]
+    default: return ["",""]
+    }
+  }
 
   var body: some View {
     WithViewStore(self.store) { viewStore in
@@ -33,13 +44,30 @@ struct PacketView: View {
             Text(viewStore.source.rawValue)
             Text(viewStore.nickname)
             Text(viewStore.status)
-            Text(viewStore.guiClientStations)
           }
-          .onTapGesture { isSelected.toggle() ; viewStore.send(.selection(isSelected))}
+          .onTapGesture { radioSelected.toggle() ; viewStore.send(.selection(radioSelected, nil))}
+          .disabled(pickType == .station)
           .font(.title3)
           .frame(width: 140, alignment: .leading)
-        }
-        Rectangle().fill(isSelected ? .gray : .clear).frame(width: 700, height: 20).opacity(0.2)
+
+          Group {
+            ZStack {
+              Text(parseStations(viewStore.guiClients)[0])
+                .onTapGesture { firstStationSelected.toggle() ; viewStore.send(.selection(firstStationSelected, 0))}
+                .disabled(pickType == .radio)
+
+              Rectangle().fill(firstStationSelected ? .gray : .clear).frame(width: 70, height: 20).opacity(0.2)
+            }
+            ZStack {
+              Text(parseStations(viewStore.guiClients)[1])
+                .onTapGesture { secondStationSelected.toggle() ; viewStore.send(.selection(secondStationSelected, 1))}
+                .disabled(pickType == .radio)
+              Rectangle().fill(secondStationSelected ? .gray : .clear).frame(width: 70, height: 20).opacity(0.2)
+            }
+          }
+          .font(.title3)
+          .frame(width: 140, alignment: .leading)        }
+        Rectangle().fill(radioSelected ? .gray : .clear).frame(width: 500, height: 20).opacity(0.2)
       }
     }
   }
@@ -53,7 +81,8 @@ struct PacketView_Previews: PreviewProvider {
     PacketView(store: Store(
       initialState: testPacket1(),
       reducer: packetReducer,
-      environment: PacketEnvironment() )
+      environment: PacketEnvironment() ),
+               pickType: .radio
     )
     .frame(minWidth: 700)
     .padding(.horizontal)

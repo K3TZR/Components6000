@@ -16,8 +16,48 @@ public typealias IdToken = String
 public typealias KeyValuesArray = [(key:String, value:String)]
 public typealias ValuesArray = [String]
 
+
+
+public struct AlertView: Equatable, Identifiable {
+
+  public init(
+    title: String
+  )
+  {
+    self.title = title
+  }
+  public var title: String
+  public var id: String { self.title }
+}
+
+
+
+
+
+
 // ----------------------------------------------------------------------------
 // MARK: - Extensions
+
+extension FileManager {
+
+  public static func appFolder(for bundleIdentifier: String) -> URL {
+    let fileManager = FileManager.default
+    let urls = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask )
+    let appFolderUrl = urls.first!.appendingPathComponent( bundleIdentifier )
+
+    // does the folder exist?
+    if !fileManager.fileExists( atPath: appFolderUrl.path ) {
+
+      // NO, create it
+      do {
+        try fileManager.createDirectory( at: appFolderUrl, withIntermediateDirectories: true, attributes: nil)
+      } catch let error as NSError {
+        fatalError("Error creating App Support folder: \(error.localizedDescription)")
+      }
+    }
+    return appFolderUrl
+  }
+}
 
 public extension Bool {
     var as1or0Int: Int { self ? 1 : 0 }

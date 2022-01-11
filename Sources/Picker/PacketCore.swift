@@ -11,7 +11,7 @@ import Shared
 public enum PacketAction: Equatable {
   // UI actions
   case defaultButton
-  case selection(Bool)
+  case selection(Bool, Int?)
 }
 
 public struct PacketEnvironment {
@@ -25,7 +25,7 @@ let packetReducer = Reducer<Packet, PacketAction, PacketEnvironment>
       state.isDefault.toggle()
       return .none
 
-    case .selection(_):
+    case .selection(_,_):
       // handled downstream
       return .none
     }
