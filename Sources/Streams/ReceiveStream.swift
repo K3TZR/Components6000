@@ -8,7 +8,6 @@
 import Foundation
 import CocoaAsyncSocket
 
-import LogProxy
 import Shared
 
 extension Stream: GCDAsyncUdpSocketDelegate {

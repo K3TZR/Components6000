@@ -37,7 +37,7 @@ public struct LogView: View {
       }
       .frame(minWidth: 700)
       .toolbar {
-        Button("Api View") { viewStore.send(.apiViewButton) }
+        Button(viewStore.backName) { viewStore.send(.backButton) }
       }
       .alert(
         item: viewStore.binding(

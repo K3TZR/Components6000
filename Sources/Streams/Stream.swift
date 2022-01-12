@@ -10,7 +10,6 @@ import Foundation
 import CocoaAsyncSocket
 import Combine
 
-import LogProxy
 import Shared
 
 public struct UdpStatus: Identifiable, Equatable {
@@ -19,10 +18,10 @@ public struct UdpStatus: Identifiable, Equatable {
   }
   
   public var id = UUID()
-  var isBound = false
-  var host = ""
-  var port: UInt16 = 0
   var error: Error?
+  var host = ""
+  var isBound = false
+  var port: UInt16 = 0
 }
 
 ///  Stream Manager Class implementation
@@ -31,17 +30,17 @@ final class Stream: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  public var streamPublisher = PassthroughSubject<String, Never>()
   public var statusPublisher = PassthroughSubject<UdpStatus, Never>()
+  public var streamPublisher = PassthroughSubject<String, Never>()
 
  // ----------------------------------------------------------------------------
   // MARK: - Internal properties
   
   var _isRegistered = false
-  var _sendIp = ""
-  var _sendPort: UInt16 = 4991 // default port number
   let _log = LogProxy.sharedInstance.publish
   let _processQ = DispatchQueue(label: "Stream.processQ", qos: .userInteractive)
+  var _sendIp = ""
+  var _sendPort: UInt16 = 4991 // default port number
   var _socket: GCDAsyncUdpSocket!
   
   // ----------------------------------------------------------------------------
@@ -52,9 +51,9 @@ final class Stream: NSObject {
   private let _receiveQ = DispatchQueue(label: "Stream.ReceiveQ", qos: .userInteractive)
   private let _registerQ = DispatchQueue(label: "Stream.RegisterQ")
   
+  private let kMaxBindAttempts = 20
   private let kPingCmd = "client ping handle"
   private let kPingDelay: UInt32 = 50
-  private let kMaxBindAttempts = 20
   private let kRegistrationDelay: UInt32 = 250_000 // (250 microseconds)
     
   // ----------------------------------------------------------------------------
@@ -131,7 +130,7 @@ final class Stream: NSObject {
       // a UDP bind has been established
       beginReceiving()
     }
-    statusPublisher.send(UdpStatus(isBound: success, host: _sendIp, port: _receivePort, error: nil))
+    statusPublisher.send(UdpStatus(error: nil, host: _sendIp, isBound: success, port: _receivePort))
     return success
   }
   
@@ -143,7 +142,7 @@ final class Stream: NSObject {
       
     } catch let error {
       // read error
-      statusPublisher.send(UdpStatus(isBound: true, host: _sendIp, port: _receivePort, error: error))
+      statusPublisher.send(UdpStatus(error: error, host: _sendIp, isBound: true, port: _receivePort))
     }
   }
   

@@ -9,34 +9,16 @@ import ComposableArchitecture
 import Shared
 import SwiftUI
 
-public struct LogEntry: Identifiable, Equatable {
-
-  public init(text: String, color: Color = .primary) {
-    self.text = text
-    self.color = color
-  }
-  public var id = UUID()
-  public var text: String
-  public var color: Color
-}
-
-public enum LogFilter: String, CaseIterable, Identifiable {
-  case excludes
-  case includes
-  case none
-  case prefix
-
-  public var id: String { self.rawValue }
-}
-
 public struct LogState: Equatable {
   public init(domain: String,
               appName: String,
+              backName: String = "Back",
               fontSize: CGFloat = 12
   )
   {
     self.domain = domain
     self.appName = appName
+    self.backName = backName
     self.fontSize = fontSize
     self.logLevel = LogLevel(rawValue: UserDefaults.standard.string(forKey: "logLevel") ?? "debug") ?? .debug
     self.filterBy = LogFilter(rawValue: UserDefaults.standard.string(forKey: "filterBy") ?? "none") ?? .none
@@ -50,6 +32,7 @@ public struct LogState: Equatable {
   public var showTimestamps: Bool { didSet { UserDefaults.standard.set(showTimestamps, forKey: "showTimestamps") } }
 
   // normal state
+  public var backName: String
   public var domain: String
   public var alert: AlertView?
   public var appName: String
@@ -63,7 +46,7 @@ public struct LogState: Equatable {
 public enum LogAction: Equatable {
   // UI actions
   case alertDismissed
-  case apiViewButton
+  case backButton
   case clearButton
   case emailButton
   case filterBy(LogFilter)
@@ -91,7 +74,7 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     state.alert = nil
     return .none
     
-  case .apiViewButton:
+  case .backButton:
     // handled downstream
     return .none
 
@@ -117,8 +100,21 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     return .none
 
   case .loadButton:
-    // TODO
-    state.alert = AlertView(title: "Load: NOT IMPLEMENTED")
+//    // TODO
+//    state.alert = AlertView(title: "Load: NOT IMPLEMENTED")
+    if let url = showOpenPanel() {
+      state.logMessages.removeAll()
+      do {
+        let fileString = try String(contentsOf: url)
+        let fileArray = fileString.components(separatedBy: "\n")
+        for item in fileArray {
+          state.logMessages.append(LogEntry(text: item, color: lineColor(item)))
+        }
+
+      } catch {
+        return .none
+      }
+    }
     return .none
     
   case let .logLevel(level):
@@ -138,8 +134,11 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     return .none
     
   case .saveButton:
-    // TODO
-    state.alert = AlertView(title:"Save: NOT IMPLEMENTED")
+    if let saveURL = showSavePanel() {
+      let textArray = state.logMessages.map { $0.text }
+      let fileTextArray = textArray.joined(separator: "\n")
+      try? fileTextArray.write(to: saveURL, atomically: true, encoding: .utf8)
+    }
     return .none
     
   case .timestampsButton:
@@ -148,77 +147,3 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
   }
 }
 //  .debug("LOG ")
-
-// ----------------------------------------------------------------------------
-// MARK: - Private pure functions
-
-private func getLogUrl(for domain: String, appName: String) -> URL? {
-  let appFolder = FileManager.appFolder(for: domain + "." + appName + "/Logs")
-  let url = appFolder.appendingPathComponent(appName + ".log")
-
-  let fileManager = FileManager()
-  if fileManager.fileExists( atPath: url.path ) {
-    return url
-  }
-  return nil
-}
-
-private func readLogFile(at url: URL) -> IdentifiedArrayOf<LogEntry>? {
-  var messages = IdentifiedArrayOf<LogEntry>()
-
-  func lineColor(_ text: String) -> Color {
-    if text.contains("[Debug]") {
-      return .gray
-    } else if  text.contains("[Info]") {
-      return .primary
-    } else if  text.contains("[Warning]") {
-      return .orange
-    } else if  text.contains("[Error]") {
-      return .red
-    } else {
-      return .primary
-    }
-  }
-
-  do {
-    // get the contents of the file
-    let logString = try String(contentsOf: url, encoding: .ascii)
-    // parse it into lines
-    let lines = logString.components(separatedBy: "\n")
-    for line in lines {
-      messages.append(LogEntry(text: line, color: lineColor(line)))
-    }
-    return messages
-
-  } catch {
-    return nil
-  }
-}
-
-private func filter(_ messages: IdentifiedArrayOf<LogEntry>, level: LogLevel, filter: LogFilter, filterText: String = "", showTimes: Bool = true) -> IdentifiedArrayOf<LogEntry> {
-  var lines = IdentifiedArrayOf<LogEntry>()
-  var limitedLines = IdentifiedArrayOf<LogEntry>()
-
-  // filter the log entries
-  switch level {
-  case .debug:     lines = messages
-  case .info:      lines = messages.filter { $0.text.contains(" [Error] ") || $0.text.contains(" [Warning] ") || $0.text.contains(" [Info] ") }
-  case .warning:   lines = messages.filter { $0.text.contains(" [Error] ") || $0.text.contains(" [Warning] ") }
-  case .error:     lines = messages.filter { $0.text.contains(" [Error] ") }
-  }
-
-  switch filter {
-  case .none:       limitedLines = lines
-  case .prefix:     limitedLines = lines.filter { $0.text.contains(" > " + filterText) }
-  case .includes:   limitedLines = lines.filter { $0.text.contains(filterText) }
-  case .excludes:   limitedLines = lines.filter { !$0.text.contains(filterText) }
-  }
-
-  if !showTimes {
-    for line in limitedLines {
-      let startIndex = line.text.firstIndex(of: "[") ?? line.text.startIndex
-      limitedLines[id: line.id]?.text = String(line.text[startIndex..<line.text.endIndex])
-    }
-  }
-  return limitedLines
-}

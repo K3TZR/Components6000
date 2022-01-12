@@ -120,46 +120,12 @@ final public class Command: NSObject {
   public func disconnect() {
     _socket.disconnect()
   }
-  
-  /// Send a Command to the Radio (hardware)
-  /// - Parameters:
-  ///   - cmd:            a Command string
-  ///   - diagnostic:     whether to add "D" suffix
-  /// - Returns:          the Sequence Number of the Command
-  public func send(_ cmd: String, diagnostic: Bool = false) -> UInt {
-    let assignedNumber = sequenceNumber
-    
-    _sendQ.sync {
-      // assemble the command
-      let command =  "C" + "\(diagnostic ? "D" : "")" + "\(self.sequenceNumber)|" + cmd + "\n"
-      
-      // send it, no timeout, tag = segNum
-      self._socket.write(command.data(using: String.Encoding.utf8, allowLossyConversion: false)!, withTimeout: -1, tag: assignedNumber)
-      
-      // atomically increment the Sequence Number
-      $sequenceNumber.mutate { $0 += 1}
-
-      // TODO: REMOVE THIS LOG
-      _log(LogEntry("-----> Command: did send \(command)", .debug, #function, #file, #line))
-    }
-    // return the Sequence Number used by this send
-    return UInt(assignedNumber)
-  }
 }
 
 // ----------------------------------------------------------------------------
 // MARK: - GCDAsyncSocketDelegate extension
 
 extension Command: GCDAsyncSocketDelegate {
-  
-  public func socket(_ sock: GCDAsyncSocket, didRead data: Data, withTag tag: Int) {
-    // publish the received data, remove the EOL
-    if let text = String(data: data, encoding: .ascii)?.dropLast() {
-      commandPublisher.send(text)
-    }
-    // trigger the next read
-    _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
-  }
   
   public func socketDidSecure(_ sock: GCDAsyncSocket) {
     // TLS connection complete

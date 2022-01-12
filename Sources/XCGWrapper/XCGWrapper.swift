@@ -10,21 +10,23 @@ import Combine
 import XCGLogger
 import ObjcExceptionBridging
 
-import LogProxy
+import Shared
 
 public final class XCGWrapper: Equatable {
   // ----------------------------------------------------------------------------
-  // MARK: - Private properties
+  // MARK: - Internal properties
   
   var log: XCGLogger {
     get { _logQ.sync { _log } }
     set { _logQ.sync(flags: .barrier) {_log = newValue }}}
   
-  private var _logCancellable: AnyCancellable?
-  
-  private var _defaultLogUrl: URL!
+  // ----------------------------------------------------------------------------
+  // MARK: - Private properties
+    
   private var _defaultFolder: String!
+  private var _defaultLogUrl: URL!
   private var _log: XCGLogger!
+  private var _logCancellable: AnyCancellable?
   private var _logQ = DispatchQueue(label: "XCGWrapper.logQ", attributes: [.concurrent])
 
   private let kMaxLogFiles: UInt8  = 10
@@ -108,7 +110,6 @@ public final class XCGWrapper: Equatable {
           // Log Handler to support XCGLogger
           switch entry.level {
             
-          case .verbose:  log.verbose(entry.msg, functionName: entry.function, fileName: entry.file, lineNumber: entry.line )
           case .debug:    log.debug(entry.msg, functionName: entry.function, fileName: entry.file, lineNumber: entry.line)
           case .info:     log.info(entry.msg, functionName: entry.function, fileName: entry.file, lineNumber: entry.line)
           case .warning:  log.warning(entry.msg, functionName: entry.function, fileName: entry.file, lineNumber: entry.line)
