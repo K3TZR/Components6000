@@ -40,7 +40,7 @@ final class LanListener: NSObject, ObservableObject {
   private let _udpQ = DispatchQueue(label: "DiscoveryListener" + ".udpQ")
   private var _udpSocket: GCDAsyncUdpSocket!
 
-  let _log = LogProxy.sharedInstance.publish
+  let _log = LogProxy.sharedInstance.log
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
@@ -56,14 +56,14 @@ final class LanListener: NSObject, ObservableObject {
     
     try! _udpSocket.enableReusePort(true)
     try! _udpSocket.bind(toPort: port)
-    _log(LogEntry("Discovery: Lan Listener UDP Socket initialized", .debug, #function, #file, #line))
+    _log("Discovery: Lan Listener UDP Socket initialized", .debug, #function, #file, #line)
   }
 
   func start(checkInterval: TimeInterval = 1.0, timeout: TimeInterval = 10.0) throws {
     do {
       try _udpSocket.beginReceiving()
       DispatchQueue.main.async { self.isListening = true }
-      _log(LogEntry("Discovery: Lan Listener is listening", .debug, #function, #file, #line))
+      _log("Discovery: Lan Listener is listening", .debug, #function, #file, #line)
       
       // setup a timer to watch for Radio timeouts
       Timer.publish(every: checkInterval, on: .main, in: .default)
@@ -98,7 +98,7 @@ final class LanListener: NSObject, ObservableObject {
     for packet in _discovery!.packets where condition(packet) { 
       let removedPacket = _discovery?.packets.remove(id: packet.id)
       _discovery!.packetPublisher.send(PacketChange(.deleted, packet: removedPacket!))
-      _log(LogEntry("Discovery: Lan Listener packet removed, lastSeen = \(removedPacket!.lastSeen)", .debug, #function, #file, #line))
+      _log("Discovery: Lan Listener packet removed, lastSeen = \(removedPacket!.lastSeen)", .debug, #function, #file, #line)
     }
   }
 }

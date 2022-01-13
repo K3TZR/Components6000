@@ -19,6 +19,7 @@ let package = Package(
     .library(name: "XCGWrapper", targets: ["XCGWrapper"]),
     .library(name: "SecureStorage", targets: ["SecureStorage"]),
     .library(name: "Login", targets: ["Login"]),
+    .library(name: "ApiObjects", targets: ["ApiObjects"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
@@ -27,6 +28,13 @@ let package = Package(
     .package(url: "https://github.com/DaveWoodCom/XCGLogger.git", from: "7.0.1"),
   ],
   targets: [
+    .target(
+      name: "ApiObjects",
+      dependencies: [
+        "Commands",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
     .target(
       name: "Shared",
       dependencies: [
@@ -50,6 +58,7 @@ let package = Package(
         "Picker",
         "Discovery",
         "Commands",
+        "ApiObjects",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),

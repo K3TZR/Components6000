@@ -61,7 +61,7 @@ extension WanListener {
     // Check for unknown Message Types
     guard let token = MessageTokens(rawValue: properties[0].key)  else {
       // log it and ignore the message
-      _log(LogEntry("Discovery: unknown Message - \(msg)", .warning, #function, #file, #line))
+      _log("Discovery: unknown Message - \(msg)", .warning, #function, #file, #line)
       return
     }
     // which primary message type?
@@ -82,7 +82,7 @@ extension WanListener {
     // Check for unknown property (ignore 0th property)
     guard let token = ApplicationTokens(rawValue: properties[0].key)  else {
       // log it and ignore the message
-      _log(LogEntry("Discovery: unknown application token:, \(properties[1].key)", .warning, #function, #file, #line))
+      _log("Discovery: unknown application token:, \(properties[1].key)", .warning, #function, #file, #line)
       return
     }
     switch token {
@@ -99,7 +99,7 @@ extension WanListener {
     // Check for unknown Message Types (ignore 0th property)
     guard let token = RadioTokens(rawValue: properties[0].key)  else {
       // log it and ignore the message
-      _log(LogEntry("Discovery: unknown radio token: \(properties[1].key)", .warning, #function, #file,#line))
+      _log("Discovery: unknown radio token: \(properties[1].key)", .warning, #function, #file,#line)
       return
     }
     // which secondary message type?
@@ -119,7 +119,7 @@ extension WanListener {
       // Check for Unknown Keys
       guard let token = InfoTokens(rawValue: property.key)  else {
         // log it and ignore the Key
-        _log(LogEntry("Discovery: unknown info token: \(property.key)", .warning, #function, #file, #line))
+        _log("Discovery: unknown info token: \(property.key)", .warning, #function, #file, #line)
         continue
       }
       // Known tokens, in alphabetical order
@@ -133,7 +133,7 @@ extension WanListener {
   /// Respond to an Invalid registration
   /// - Parameter msg:                the message text
   private func parseRegistrationInvalid(_ properties: KeyValuesArray) {
-        _log(LogEntry("Discovery: invalid registration: \(properties.count == 3 ? properties[2].key : "")", .warning, #function, #file, #line))
+        _log("Discovery: invalid registration: \(properties.count == 3 ? properties[2].key : "")", .warning, #function, #file, #line)
   }
   
   /// Parse a received "user settings" message
@@ -148,7 +148,7 @@ extension WanListener {
       // Check for Unknown Keys
       guard let token = UserSettingsTokens(rawValue: property.key)  else {
         // log it and ignore the Key
-        _log(LogEntry("Discovery: unknown settings token: \(property.key)", .warning, #function, #file, #line))
+        _log("Discovery: unknown settings token: \(property.key)", .warning, #function, #file, #line)
         continue
       }
       // Known tokens, in alphabetical order
@@ -180,7 +180,7 @@ extension WanListener {
       // Check for Unknown Keys
       guard let token = ConnectReadyTokens(rawValue: property.key)  else {
         // log it and ignore the Key
-        _log(LogEntry("Discovery: unknown connect token: \(property.key)", .warning, #function, #file, #line))
+        _log("Discovery: unknown connect token: \(property.key)", .warning, #function, #file, #line)
         continue
       }
       // Known tokens, in alphabetical order
@@ -253,7 +253,7 @@ extension WanListener {
       // Check for Unknown Keys
       guard let token = TestConnectionTokens(rawValue: property.key)  else {
         // log it and ignore the Key
-        _log(LogEntry("Discovery: unknown testConnection token: \(property.key)", .warning, #function, #file, #line))
+        _log("Discovery: unknown testConnection token: \(property.key)", .warning, #function, #file, #line)
         continue
       }
       

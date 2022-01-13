@@ -12,6 +12,7 @@ import Login
 import Picker
 import Discovery
 import Commands
+import ApiObjects
 import Shared
 
 public struct ApiState: Equatable {
@@ -30,6 +31,7 @@ public struct ApiState: Equatable {
   public var smartlinkEmail: String { didSet { UserDefaults.standard.set(smartlinkEmail, forKey: "smartlinkEmail") } }
 
   // normal state
+  public var objectsState: ObjectsState?
   public var clearNow = false
   public var command = Command()
   public var commandToSend = ""
@@ -140,6 +142,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
 
     case .onAppear:
+      state.objectsState = ObjectsState(state.command)
       listenForPackets(&state)
       return listenForCommands(state.command)
       
@@ -251,9 +254,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // MARK: - Command actions
 
     case let .commandAction(message):
-
-      print("-----> commandAction received")
-
       state.commandMessages.append(message)
       state.update.toggle()
       return .none

@@ -60,7 +60,7 @@ extension Discovery {
       // check for unknown Keys
       guard let token = DiscoveryTokens(rawValue: property.key) else {
         // log it and ignore the Key
-        _log(LogEntry("Discovery: Unknown token - \(property.key) = \(property.value)", .warning, #function, #file, #line))
+        _log("Discovery: Unknown token - \(property.key) = \(property.value)", .warning, #function, #file, #line)
         continue
       }
       switch token {

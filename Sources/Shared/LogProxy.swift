@@ -50,15 +50,33 @@ final public class LogProxy {
   
   /// Publish a log message
   /// - Parameters:
-  ///   - logEntry:        a LogEntry struct
-  public func publish(_ logEntry: LogEntry ) {
-    
+  ///   - msg:         a message
+  ///   - level:       the log level
+  ///   - function:    the function performing the logging
+  ///   - file:        the file performing the logging
+  ///   - line:        the line performing the logging
+  public func log(_ msg: String, _ level: LogLevel, _ function: StaticString, _ file: StaticString, _ line: Int ) {
+
     if publishLog {
       // publish for use by a logging module
-      logPublisher.send(logEntry)
+      logPublisher.send( LogEntry(msg, level, function, file, line) )
     } else {
       // print to the console
-      print("\(logEntry.msg), level = \(logEntry.level.rawValue)")
+      print("\(msg), level = \(level.rawValue)")
     }
   }
+
+  /// Publish a log message
+  /// - Parameters:
+  ///   - logEntry:        a LogEntry struct
+//  public func publish(_ logEntry: LogEntry ) {
+//    
+//    if publishLog {
+//      // publish for use by a logging module
+//      logPublisher.send(logEntry)
+//    } else {
+//      // print to the console
+//      print("\(logEntry.msg), level = \(logEntry.level.rawValue)")
+//    }
+//  }
 }

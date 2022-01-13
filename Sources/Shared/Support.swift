@@ -10,13 +10,22 @@ import Foundation
 // ----------------------------------------------------------------------------
 // MARK: - Aliases
 
+public typealias AntennaPort = String
 public typealias GuiClientId = String
 public typealias Handle = UInt32
+public typealias Hz = Int
 public typealias IdToken = String
 public typealias KeyValuesArray = [(key:String, value:String)]
+public typealias MicrophonePort = String
+public typealias ObjectId = UInt16
+public typealias RadioId = String
+public typealias ReplyHandler = (_ command: String, _ seqNumber: SequenceNumber, _ responseValue: String, _ reply: String) -> Void
+public typealias ReplyTuple = (replyTo: ReplyHandler?, command: String)
+public typealias RfGainValue = String
+public typealias SequenceNumber = UInt
+public typealias SliceId = ObjectId
+public typealias StreamId = UInt32
 public typealias ValuesArray = [String]
-
-
 
 public struct AlertView: Equatable, Identifiable {
 
@@ -29,11 +38,6 @@ public struct AlertView: Equatable, Identifiable {
   public var title: String
   public var id: String { self.title }
 }
-
-
-
-
-
 
 // ----------------------------------------------------------------------------
 // MARK: - Extensions
@@ -73,7 +77,10 @@ public extension String {
   var handle: Handle? { self.hasPrefix("0x") ? UInt32(String(self.dropFirst(2)), radix: 16) : UInt32(self, radix: 16) }
   var bValue: Bool { (Int(self) ?? 0) == 1 ? true : false }
   var iValue: Int { Int(self) ?? 0 }
+  var mhzToHz: Hz { Hz( (Double(self) ?? 0) * 1_000_000 ) }
+  var objectId: ObjectId? { UInt16(self, radix: 10) }
   var tValue: Bool { self.lowercased() == "true" ? true : false }
+  var uValue: UInt { UInt(self) ?? 0 }
 
   /// Parse a String of <key=value>'s separated by the given Delimiter
   /// - Parameters:
@@ -196,6 +203,9 @@ extension Version {
   public var isOldApi: Bool { isV1 || isV2 }
 }
 
+public extension Int {
+    var hzToMhz: String { String(format: "%02.6f", Double(self) / 1_000_000.0) }
+}
 public extension UInt16 {
     var hex: String { return String(format: "0x%04X", self) }
     func toHex(_ format: String = "0x%04X") -> String { String(format: format, self) }
