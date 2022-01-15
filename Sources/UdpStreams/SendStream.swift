@@ -8,12 +8,12 @@
 import Foundation
 import CocoaAsyncSocket
 
-extension Stream {
+extension UdpStream {
 
   /// Send message (as Data) to the Radio using UDP on the current ip & port
   /// - Parameters:
   ///   - data:               a Data
-  func sendData(_ data: Data) {
+  public func sendData(_ data: Data) {
     _socket.send(data, toHost: _sendIp, port: _sendPort, withTimeout: -1, tag: 0)
   }
 }

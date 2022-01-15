@@ -11,8 +11,9 @@ import Dispatch
 import Login
 import Picker
 import Discovery
-import Commands
-import ApiObjects
+import TcpCommands
+import UdpStreams
+import Radio
 import Shared
 
 public struct ApiState: Equatable {
@@ -31,9 +32,9 @@ public struct ApiState: Equatable {
   public var smartlinkEmail: String { didSet { UserDefaults.standard.set(smartlinkEmail, forKey: "smartlinkEmail") } }
 
   // normal state
-  public var objectsState: ObjectsState?
+  public var radio: Radio?
   public var clearNow = false
-  public var command = Command()
+  public var command = TcpCommand()
   public var commandToSend = ""
   public var connectedPacket: PickerSelection? = nil
   public var discovery: Discovery? = nil
@@ -142,7 +143,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
 
     case .onAppear:
-      state.objectsState = ObjectsState(state.command)
       listenForPackets(&state)
       return listenForCommands(state.command)
       
@@ -190,9 +190,11 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.pickerState = nil
       if state.clearOnDisconnect { state.commandMessages.removeAll() }
       return .none
-      
+
+      // TODO: take into account the clientIndex and isGui
     case let .pickerAction(.connectButton(selection)):
       state.pickerState = nil
+      state.radio = Radio(selection!.packet, command: state.command, stream: UdpStream())
       if state.command.connect(selection!.packet) {
         state.connectedPacket = selection
         if state.clearOnConnect { state.commandMessages.removeAll() }

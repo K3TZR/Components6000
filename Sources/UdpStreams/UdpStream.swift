@@ -1,5 +1,5 @@
 //
-//  UdpManager.swift
+//  UdpStream.swift
 //  CommonCode
 //
 //  Created by Douglas Adams on 8/15/15.
@@ -24,9 +24,9 @@ public struct UdpStatus: Identifiable, Equatable {
   var port: UInt16 = 0
 }
 
-///  Stream Manager Class implementation
+///  UDP Stream Class implementation
 ///      manages all Udp communication with a Radio
-final class Stream: NSObject {
+final public class UdpStream: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
@@ -37,7 +37,7 @@ final class Stream: NSObject {
   // MARK: - Internal properties
   
   var _isRegistered = false
-  let _log = LogProxy.sharedInstance.publish
+  let _log = LogProxy.sharedInstance.log
   let _processQ = DispatchQueue(label: "Stream.processQ", qos: .userInteractive)
   var _sendIp = ""
   var _sendPort: UInt16 = 4991 // default port number
@@ -48,8 +48,8 @@ final class Stream: NSObject {
 
   private var _isBound = false
   private var _receivePort: UInt16 = 0
-  private let _receiveQ = DispatchQueue(label: "Stream.ReceiveQ", qos: .userInteractive)
-  private let _registerQ = DispatchQueue(label: "Stream.RegisterQ")
+  private let _receiveQ = DispatchQueue(label: "UdpStream.ReceiveQ", qos: .userInteractive)
+  private let _registerQ = DispatchQueue(label: "UdpStream.RegisterQ")
   
   private let kMaxBindAttempts = 20
   private let kPingCmd = "client ping handle"
@@ -62,7 +62,7 @@ final class Stream: NSObject {
   /// Initialize a Stream Manager
   /// - Parameters:
   ///   - receivePort:            a port number
-  init(receivePort: UInt16 = 4991) {
+  public init(receivePort: UInt16 = 4991) {
     self._receivePort = receivePort
     
     super.init()
@@ -72,17 +72,17 @@ final class Stream: NSObject {
     _socket.setIPv4Enabled(true)
     _socket.setIPv6Enabled(false)
 
-    _log(LogEntry("Stream: UDP socket initialized", .debug, #function, #file, #line))
+    _log("Stream: UDP socket initialized", .debug, #function, #file, #line)
   }
   
   // ----------------------------------------------------------------------------
-  // MARK: - Internal methods
+  // MARK: - Public methods
   
   /// Bind to a UDP Port
   /// - Parameters:
   ///   - selectedRadio:      a DiscoveredPacket
   ///   - clientHandle:       handle
-  func bind(_ packet: Packet) -> Bool {
+  public func bind(_ packet: Packet) -> Bool {
     var success               = false
     var portToUse             : UInt16 = 0
     var tries                 = kMaxBindAttempts
@@ -107,12 +107,12 @@ final class Stream: NSObject {
     for _ in 0..<tries {
       do {
         try _socket.bind(toPort: portToUse)
-        _log(LogEntry("Stream: bound to port, \(portToUse)", .debug, #function, #file, #line))
+        _log("UdpStream: bound to port, \(portToUse)", .debug, #function, #file, #line)
         success = true
         
       } catch {
         // We didn't get the port we wanted
-        _log(LogEntry("Stream: FAILED to bind to port, \(portToUse)", .debug, #function, #file, #line))
+        _log("UdpStream: FAILED to bind to port, \(portToUse)", .debug, #function, #file, #line)
         
         // try the next Port Number
         portToUse += 1
@@ -135,7 +135,7 @@ final class Stream: NSObject {
   }
   
   /// Begin receiving UDP data
-  func beginReceiving() {
+  public func beginReceiving() {
     do {
       // Begin receiving
       try _socket.beginReceiving()
@@ -147,7 +147,7 @@ final class Stream: NSObject {
   }
   
   /// Unbind from the UDP port
-  func unbind(reason: String) {
+  public func unbind(reason: String) {
     _isBound = false
     
     // tell the receive socket to close
@@ -159,31 +159,29 @@ final class Stream: NSObject {
     // TODO: publish ???
   }
   
-// TODO: Should this be somewhere else????
-  
-//  /// Register UDP client handle
-//  /// - Parameters:
-//  ///   - clientHandle:       our client handle
-//  func register(clientHandle: Handle?) {
-//    guard clientHandle != nil else {
-//      // should not happen
-//      _log(LogEntry("Stream: No client handle in register UDP", .error, #function, #file, #line))
-//      return
-//    }
-//    // register & keep open the router (on a background queue)
-//    _registerQ.async { [unowned self] in
-//      while self._socket != nil && !self._isRegistered && self._isBound {
-//
-//        self._log(LogEntry("Stream: register wan, handle=" + clientHandle!.hex, .debug, #function, #file, #line))
-//
-//        // send a Registration command
-//        let cmd = "client udp_register handle=" + clientHandle!.hex
-//        self.sendData(cmd.data(using: String.Encoding.ascii, allowLossyConversion: false)!)
-//
-//        // pause
-//        usleep(self.kRegistrationDelay)
-//      }
-//      self._log(LogEntry("Stream: register wan exited, Registration=\(self._isRegistered)", .debug, #function, #file, #line))
-//    }
-//  }
+  /// Register UDP client handle
+  /// - Parameters:
+  ///   - clientHandle:       our client handle
+  public func register(clientHandle: Handle?) {
+    guard clientHandle != nil else {
+      // should not happen
+      _log("UdpStream: No client handle in register UDP", .error, #function, #file, #line)
+      return
+    }
+    // register & keep open the router (on a background queue)
+    _registerQ.async { [unowned self] in
+      while self._socket != nil && !self._isRegistered && self._isBound {
+
+        self._log("UdpStream: register wan, handle = " + clientHandle!.hex, .debug, #function, #file, #line)
+
+        // send a Registration command
+        let cmd = "client udp_register handle=" + clientHandle!.hex
+        self.sendData(cmd.data(using: String.Encoding.ascii, allowLossyConversion: false)!)
+
+        // pause
+        usleep(self.kRegistrationDelay)
+      }
+      self._log("UdpStream: register wan exited, Registration = \(self._isRegistered)", .debug, #function, #file, #line)
+    }
+  }
 }

@@ -8,7 +8,7 @@
 import Foundation
 import Shared
 
-extension Command {
+extension TcpCommand {
   /// Send a Command to the connected Radio
   /// - Parameters:
   ///   - cmd:            a Command string

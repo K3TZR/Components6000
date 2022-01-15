@@ -14,12 +14,12 @@ let package = Package(
     .library(name: "Picker", targets: ["Picker"]),
     .library(name: "ApiViewer", targets: ["ApiViewer"]),
     .library(name: "LogViewer", targets: ["LogViewer"]),
-    .library(name: "Commands", targets: ["Commands"]),
-    .library(name: "Streams", targets: ["Streams"]),
+    .library(name: "TcpCommands", targets: ["TcpCommands"]),
+    .library(name: "UdpStreams", targets: ["UdpStreams"]),
     .library(name: "XCGWrapper", targets: ["XCGWrapper"]),
     .library(name: "SecureStorage", targets: ["SecureStorage"]),
     .library(name: "Login", targets: ["Login"]),
-    .library(name: "ApiObjects", targets: ["ApiObjects"]),
+    .library(name: "Radio", targets: ["Radio"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
@@ -29,9 +29,10 @@ let package = Package(
   ],
   targets: [
     .target(
-      name: "ApiObjects",
+      name: "Radio",
       dependencies: [
-        "Commands",
+        "TcpCommands",
+        "UdpStreams",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -57,8 +58,9 @@ let package = Package(
         "Login",
         "Picker",
         "Discovery",
-        "Commands",
-        "ApiObjects",
+        "TcpCommands",
+        "UdpStreams",
+        "Radio",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -95,14 +97,14 @@ let package = Package(
       ]
     ),
     .target(
-      name: "Commands",
+      name: "TcpCommands",
       dependencies: [
         "Shared",
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),
     .target(
-      name: "Streams",
+      name: "UdpStreams",
       dependencies: [
         "Shared",
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
@@ -133,8 +135,8 @@ let package = Package(
       dependencies: ["XCGWrapper"]
     ),
     .testTarget(
-      name: "CommandsTests",
-      dependencies: ["Commands", "Discovery"]
+      name: "TcpCommandsTests",
+      dependencies: ["TcpCommands", "Discovery"]
     ),
   ]
 )

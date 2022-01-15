@@ -1,6 +1,6 @@
 //
 //  Receive.swift
-//  Components6000/Commands
+//  Components6000/TcpCommands
 //
 //  Created by Douglas Adams on 1/11/22.
 //
@@ -8,7 +8,7 @@
 import Foundation
 import CocoaAsyncSocket
 
-extension Command {
+extension TcpCommand {
 
   /// Receive a Command (text) from the connected Radio, publishes the received text
   /// - Parameters:

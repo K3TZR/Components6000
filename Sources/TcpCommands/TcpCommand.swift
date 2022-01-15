@@ -1,6 +1,6 @@
 //
-//  TcpManager.swift
-//  Components6000/Commands
+//  TcpCommand.swift
+//  Components6000/TcpCommands
 //
 //  Created by Douglas Adams on 12/24/21.
 //
@@ -23,9 +23,9 @@ public struct TcpStatus: Identifiable, Equatable {
   var error: Error?
 }
 
-///  Command Manager Class implementation
+///  Tcp Command Class implementation
 ///      manages all Tcp communication with a Radio
-final public class Command: NSObject {
+final public class TcpCommand: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
@@ -38,8 +38,8 @@ final public class Command: NSObject {
   // MARK: - Internal properties
   
   let _log = LogProxy.sharedInstance.log
-  let _receiveQ = DispatchQueue(label: "Command.receiveQ")
-  let _sendQ = DispatchQueue(label: "Command.sendQ")
+  let _receiveQ = DispatchQueue(label: "TcpCommand.receiveQ")
+  let _sendQ = DispatchQueue(label: "TcpCommand.sendQ")
   var _socket: GCDAsyncSocket!
   var _timeout = 0.0   // seconds
   var _packetSource: PacketSource?
@@ -61,7 +61,7 @@ final public class Command: NSObject {
     _socket.isIPv4PreferredOverIPv6 = true
     _socket.isIPv6Enabled = false
     
-    _log("Command: TCP socket initialized", .debug, #function, #file, #line)
+    _log("TcpCommand: TCP socket initialized", .debug, #function, #file, #line)
   }
   
   // ----------------------------------------------------------------------------
@@ -95,23 +95,23 @@ final public class Command: NSObject {
         
         // connect via the localInterface
         try _socket.connect(toHost: packet.publicIp, onPort: UInt16(portToUse), viaInterface: localInterface, withTimeout: _timeout)
-        _log("Command: connect to the \(String(describing: localInterface)) interface, \(packet.publicIp) on port \(portToUse)", .debug, #function, #file, #line)
+        _log("TcpCommand: connect to the \(String(describing: localInterface)) interface, \(packet.publicIp) on port \(portToUse)", .debug, #function, #file, #line)
 
       } else {
         // connect on the default interface
         try _socket.connect(toHost: packet.publicIp, onPort: UInt16(portToUse), withTimeout: _timeout)
-        _log("Command: connect to the default interface, \(packet.publicIp) on port \(portToUse)", .debug, #function, #file, #line)
+        _log("TcpCommand: connect to the default interface, \(packet.publicIp) on port \(portToUse)", .debug, #function, #file, #line)
       }
       
     } catch _ {
       // connection attemp failed
-      _log("Command: connection failed", .debug, #function, #file, #line)
+      _log("TcpCommand: connection failed", .debug, #function, #file, #line)
       success = false
     }
     //        if success { _isWan = packet.isWan ; _seqNum = 0 }
     if success {
       sequenceNumber = 0
-      _log("Command: connection successful", .debug, #function, #file, #line)
+      _log("TcpCommand: connection successful", .debug, #function, #file, #line)
     }
     return success
   }
@@ -125,11 +125,11 @@ final public class Command: NSObject {
 // ----------------------------------------------------------------------------
 // MARK: - GCDAsyncSocketDelegate extension
 
-extension Command: GCDAsyncSocketDelegate {
+extension TcpCommand: GCDAsyncSocketDelegate {
   
   public func socketDidSecure(_ sock: GCDAsyncSocket) {
     // TLS connection complete
-    _log("Command: TLS socket did secure", .debug, #function, #file, #line)
+    _log("TcpCommand: TLS socket did secure", .debug, #function, #file, #line)
     statusPublisher.send(
       TcpStatus(isConnected: true,
                 host: sock.connectedHost ?? "",
@@ -140,12 +140,12 @@ extension Command: GCDAsyncSocketDelegate {
   
   public func socket(_ sock: GCDAsyncSocket, didReceive trust: SecTrust, completionHandler: @escaping (Bool) -> Void) {
     // there are no validations for the radio connection
-    _log("Command: TLS socket did receive trust", .debug, #function, #file, #line)
+    _log("TcpCommand: TLS socket did receive trust", .debug, #function, #file, #line)
     completionHandler(true)
   }
 
   public func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
-    _log("Command: socket disconnected \(err == nil ? "" : "with error")", .debug, #function, #file, #line)
+    _log("TcpCommand: socket disconnected \(err == nil ? "" : "with error")", .debug, #function, #file, #line)
     statusPublisher.send(
       TcpStatus(isConnected: false,
                 host: "",
@@ -163,11 +163,11 @@ extension Command: GCDAsyncSocketDelegate {
     if _packetSource == .smartlink {
       // YES, secure the connection using TLS
       sock.startTLS( [GCDAsyncSocketManuallyEvaluateTrust : 1 as NSObject] )
-      _log("Command: socket connected to Smartlink \(host) on port \(port), TLS initialized", .debug, #function, #file, #line)
+      _log("TcpCommand: socket connected to Smartlink \(host) on port \(port), TLS initialized", .debug, #function, #file, #line)
 
     } else {
       // NO, we're connected
-      _log("Command: socket connected to Local \(host) on port \(port)", .debug, #function, #file, #line)
+      _log("TcpCommand: socket connected to Local \(host) on port \(port)", .debug, #function, #file, #line)
       statusPublisher.send(
         TcpStatus(isConnected: true,
                   host: host,

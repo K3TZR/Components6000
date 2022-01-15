@@ -10,10 +10,10 @@ import ComposableArchitecture
 import Combine
 import SwiftUI
 
-import Commands
+import TcpCommands
 import Shared
 
-public func listenForCommands(_ command: Command) -> Effect<ApiAction, Never> {
+public func listenForCommands(_ command: TcpCommand) -> Effect<ApiAction, Never> {
 
   return
     command.commandPublisher

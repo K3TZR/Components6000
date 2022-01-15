@@ -10,9 +10,9 @@ import CocoaAsyncSocket
 
 import Shared
 
-extension Stream: GCDAsyncUdpSocketDelegate {
+extension UdpStream: GCDAsyncUdpSocketDelegate {
   
-  func udpSocket(_ sock: GCDAsyncUdpSocket, didReceive data: Data, fromAddress address: Data, withFilterContext filterContext: Any?) {
+  public func udpSocket(_ sock: GCDAsyncUdpSocket, didReceive data: Data, fromAddress address: Data, withFilterContext filterContext: Any?) {
     _processQ.async { [weak self] in
       
       if let vita = Vita.decode(from: data) {
@@ -25,7 +25,7 @@ extension Stream: GCDAsyncUdpSocketDelegate {
         
         
       } else {
-        self?._log(LogEntry("Stream: Unable to decode Vita packet", .warning, #function, #file, #line))
+        self?._log("UdpStream: Unable to decode Vita packet", .warning, #function, #file, #line)
       }
     }
   }
