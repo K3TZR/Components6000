@@ -15,12 +15,12 @@ import Shared
 
 public func listenForCommands(_ command: TcpCommand) -> Effect<ApiAction, Never> {
 
-  return
-    command.commandPublisher
-      .receive(on: DispatchQueue.main)
-      .map { text in .commandAction(CommandMessage(text: text, color: lineColor(text))) }
-      .eraseToEffect()
-      .cancellable(id: CommandSubscriptionId())
+  command.commandPublisher
+    .filter { ($0.prefix(1) == "R" && $0.contains("|0|")) == false }
+    .receive(on: DispatchQueue.main)
+    .map { text in .commandAction(CommandMessage(text: text, color: lineColor(text))) }
+    .eraseToEffect()
+    .cancellable(id: CommandSubscriptionId())
 }
 
 /// Assign each text line a color

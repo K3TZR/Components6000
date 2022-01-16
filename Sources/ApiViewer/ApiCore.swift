@@ -28,7 +28,6 @@ public struct ApiState: Equatable {
   public var wanLogin: Bool { didSet { UserDefaults.standard.set(wanLogin, forKey: "wanLogin") } }
   public var showTimes: Bool { didSet { UserDefaults.standard.set(showTimes, forKey: "showTimes") } }
   public var showPings: Bool { didSet { UserDefaults.standard.set(showPings, forKey: "showPings") } }
-  public var showReplies: Bool { didSet { UserDefaults.standard.set(showReplies, forKey: "showReplies") } }
   public var smartlinkEmail: String { didSet { UserDefaults.standard.set(smartlinkEmail, forKey: "smartlinkEmail") } }
 
   // normal state
@@ -41,6 +40,7 @@ public struct ApiState: Equatable {
   public var alert: AlertView?
   public var loginState: LoginState? = nil
   public var commandMessages = IdentifiedArrayOf<CommandMessage>()
+  public var filteredCommandMessages = IdentifiedArrayOf<CommandMessage>()
   public var pickerState: PickerState? = nil
   public var update = false
     
@@ -55,7 +55,6 @@ public struct ApiState: Equatable {
     wanLogin = UserDefaults.standard.bool(forKey: "wanLogin")
     showTimes = UserDefaults.standard.bool(forKey: "showTimes")
     showPings = UserDefaults.standard.bool(forKey: "showPings")
-    showReplies = UserDefaults.standard.bool(forKey: "showReplies")
     smartlinkEmail = UserDefaults.standard.string(forKey: "smartlinkEmail") ?? ""
   }
 }
@@ -194,13 +193,18 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // TODO: take into account the clientIndex and isGui
     case let .pickerAction(.connectButton(selection)):
       state.pickerState = nil
-      state.radio = Radio(selection!.packet, command: state.command, stream: UdpStream())
-      if state.command.connect(selection!.packet) {
-        state.connectedPacket = selection
-        if state.clearOnConnect { state.commandMessages.removeAll() }
+      state.radio = Radio(selection!.packet, connectionType: state.isGui ? .gui : .nonGui, command: state.command, stream: UdpStream())
+      if state.radio != nil {
+        if state.radio!.connect(selection!.packet) {
+          state.connectedPacket = selection
+          if state.clearOnConnect { state.commandMessages.removeAll() }
+        } else {
+          state.connectedPacket = nil
+          state.alert = AlertView(title: "Failed to connect to Radio \(selection?.packet.nickname ?? "-- Unknown --")")
+        }
       } else {
         state.connectedPacket = nil
-        state.alert = AlertView(title: "Failed to connect to \(selection?.packet.nickname ?? "-- Unknown --")")
+        state.alert = AlertView(title: "Failed to open Radio \(selection?.packet.nickname ?? "-- Unknown --")")
       }
       return .none
       

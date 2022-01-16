@@ -30,7 +30,6 @@ struct TopButtonsView: View {
           Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .button(\.isGui)))
           Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .button(\.showTimes)))
           Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .button(\.showPings)))
-          Toggle("Replies", isOn: viewStore.binding(get: \.showReplies, send: .button(\.showReplies)))
           Toggle("WanLogin", isOn: viewStore.binding(get: \.wanLogin, send: .button(\.wanLogin))).disabled(viewStore.connectionMode == .local)
         }
 

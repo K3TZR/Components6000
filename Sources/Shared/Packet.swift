@@ -42,20 +42,21 @@ public struct Packet: Identifiable, Equatable, Hashable {
   // MARK: - Public properties
   
   // these fields are NOT in the received packet but are in the Packet struct
-  public var id: UUID                                     //  NOT in received packet
-  public var lastSeen: Date                               //  NOT in received packet
-  public var source: PacketSource                         //  NOT in received packet
-  public var isDefault = false                            //  NOT in received packet
-  public var isPortForwardOn = false                      //  NOT in received packet
-//  public var isSelected = false                           //  NOT in received packet
-  public var guiClients = IdentifiedArrayOf<GuiClient>()  //  NOT in received packet
-  public var localInterfaceIP = ""                        //  NOT in received packet
-  public var requiresHolePunch = false                    //  NOT in received packet
-  public var negotiatedHolePunchPort = 0                  //  NOT in received packet
+  public var id: UUID
+  public var lastSeen: Date
+  public var source: PacketSource
+  public var isDefault = false
+  public var isPortForwardOn = false
+//  public var isSelected = false
+  public var guiClients = IdentifiedArrayOf<GuiClient>()
+  public var localInterfaceIP = ""
+  public var requiresHolePunch = false
+  public var negotiatedHolePunchPort = 0
+  public var wanHandle = ""
 
   // PACKET TYPE                                     LAN   WAN
 
-  // these fields in the received packet are copied to the Packet struct
+  // these fields in the received packet ARE COPIED to the Packet struct
   public var callsign = ""                        //  X     X
   public var guiClientHandles = ""                //  X     X
   public var guiClientPrograms = ""               //  X     X
@@ -77,7 +78,7 @@ public struct Packet: Identifiable, Equatable, Hashable {
   public var upnpSupported = false                //        X
   public var version = ""                         //  X     X
 
-  // these fields in the received packet are NOT copied to the Packet struct
+  // these fields in the received packet ARE NOT COPIED to the Packet struct
 //  public var availableClients = 0                 //  X         ignored
 //  public var availablePanadapters = 0             //  X         ignored
 //  public var availableSlices = 0                  //  X         ignored

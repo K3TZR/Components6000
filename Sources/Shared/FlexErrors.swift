@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import Shared
 
 /// Given an errorcode return an errorlevel
 ///      Flex 6000 error codes

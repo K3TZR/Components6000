@@ -14,6 +14,6 @@ extension UdpStream {
   /// - Parameters:
   ///   - data:               a Data
   public func sendData(_ data: Data) {
-    _socket.send(data, toHost: _sendIp, port: _sendPort, withTimeout: -1, tag: 0)
+    _socket.send(data, toHost: sendIp, port: sendPort, withTimeout: -1, tag: 0)
   }
 }

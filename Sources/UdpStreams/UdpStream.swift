@@ -33,14 +33,15 @@ final public class UdpStream: NSObject {
   public var statusPublisher = PassthroughSubject<UdpStatus, Never>()
   public var streamPublisher = PassthroughSubject<String, Never>()
 
- // ----------------------------------------------------------------------------
+  public var sendIp = ""
+  public var sendPort: UInt16 = 4991 // default port number
+
+  // ----------------------------------------------------------------------------
   // MARK: - Internal properties
   
   var _isRegistered = false
   let _log = LogProxy.sharedInstance.log
   let _processQ = DispatchQueue(label: "Stream.processQ", qos: .userInteractive)
-  var _sendIp = ""
-  var _sendPort: UInt16 = 4991 // default port number
   var _socket: GCDAsyncUdpSocket!
   
   // ----------------------------------------------------------------------------
@@ -92,12 +93,12 @@ final public class UdpStream: NSObject {
       
     case (.smartlink, true):        // isWan w/hole punch
       portToUse = UInt16(packet.negotiatedHolePunchPort)
-      _sendPort = UInt16(packet.negotiatedHolePunchPort)
+      sendPort = UInt16(packet.negotiatedHolePunchPort)
       tries = 1  // isWan w/hole punch
       
     case (.smartlink, false):       // isWan
       portToUse = UInt16(packet.publicUdpPort!)
-      _sendPort = UInt16(packet.publicUdpPort!)
+      sendPort = UInt16(packet.publicUdpPort!)
       
     default:                  // local
       portToUse = _receivePort
@@ -124,13 +125,13 @@ final public class UdpStream: NSObject {
     if success {
       // YES, save the actual port & ip in use
       _receivePort = portToUse
-      _sendIp = packet.publicIp
+      sendIp = packet.publicIp
       _isBound = true
       
       // a UDP bind has been established
       beginReceiving()
     }
-    statusPublisher.send(UdpStatus(error: nil, host: _sendIp, isBound: success, port: _receivePort))
+    statusPublisher.send(UdpStatus(error: nil, host: sendIp, isBound: success, port: _receivePort))
     return success
   }
   
@@ -142,7 +143,7 @@ final public class UdpStream: NSObject {
       
     } catch let error {
       // read error
-      statusPublisher.send(UdpStatus(error: error, host: _sendIp, isBound: true, port: _receivePort))
+      statusPublisher.send(UdpStatus(error: error, host: sendIp, isBound: true, port: _receivePort))
     }
   }
   

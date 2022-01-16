@@ -30,6 +30,7 @@ public final class Radio: Equatable {
   public static let kRemoved          = "removed"
 
 
+  public var pingerEnabled = true
   public var radioState: RadioState = .clientDisconnected
   public var connectionHandle: Handle?
   public var hardwareVersion: String?
@@ -42,14 +43,18 @@ public final class Radio: Equatable {
   @Published public var equalizers = [Equalizer.EqType: Equalizer]()
 
 
+
+  @Published public private(set) var antennaList = [AntennaPort]()
+  @Published public private(set) var atuPresent = false
   @Published public private(set) var availablePanadapters = 0
   @Published public private(set) var availableSlices = 0
   @Published public private(set) var backlight = 0
   @Published public private(set) var bandPersistenceEnabled = false
   @Published public private(set) var binauralRxEnabled = false
-  @Published public private(set) var boundClientId: String?
+  @Published public var boundClientId: String?
   @Published public private(set) var calFreq: MHz = 0
   @Published public private(set) var callsign = ""
+  @Published public private(set) var chassisSerial = ""
   @Published public private(set) var daxIqAvailable = 0
   @Published public private(set) var daxIqCapacity = 0
   @Published public private(set) var enforcePrivateIpEnabled = false
@@ -60,28 +65,48 @@ public final class Radio: Equatable {
   @Published public private(set) var filterCwLevel = 0
   @Published public private(set) var filterDigitalLevel = 0
   @Published public private(set) var filterVoiceLevel = 0
+  @Published public private(set) var fpgaMbVersion = ""
   @Published public private(set) var freqErrorPpb = 0
   @Published public private(set) var frontSpeakerMute = false
   @Published public private(set) var fullDuplexEnabled = false
+  @Published public private(set) var gateway = ""
+  @Published public private(set) var gpsPresent = false
   @Published public private(set) var gpsdoPresent = false
   @Published public private(set) var headphoneGain = 0
   @Published public private(set) var headphoneMute = false
+  @Published public private(set) var ipAddress = ""
   @Published public private(set) var lineoutGain = 0
   @Published public private(set) var lineoutMute = false
   @Published public private(set) var localPtt = false
+  @Published public private(set) var location = ""
   @Published public private(set) var locked = false
+  @Published public private(set) var macAddress = ""
+  @Published public private(set) var micList = [MicrophonePort]()
   @Published public private(set) var mox = false
   @Published public private(set) var muteLocalAudio = false
+  @Published public private(set) var netmask = ""
   @Published public private(set) var nickname = ""
+  @Published public private(set) var numberOfScus = 0
+  @Published public private(set) var numberOfSlices = 0
+  @Published public private(set) var numberOfTx = 0
   @Published public private(set) var oscillator = ""
+  @Published public private(set) var picDecpuVersion = ""
   @Published public private(set) var program = ""
+  @Published public private(set) var psocMbPa100Version = ""
+  @Published public private(set) var psocMbtrxVersion = ""
   @Published public private(set) var radioAuthenticated = false
+  @Published public private(set) var radioModel = ""
+  @Published public private(set) var radioOptions = ""
+  @Published public private(set) var region = ""
   @Published public private(set) var radioScreenSaver = ""
   @Published public private(set) var remoteOnEnabled = false
   @Published public private(set) var rttyMark = 0
   @Published public private(set) var serverConnected = false
   @Published public private(set) var setting = ""
+  @Published public private(set) var sliceList = [SliceId]()
+  @Published public private(set) var smartSdrMB = ""
   @Published public private(set) var snapTuneEnabled = false
+  @Published public private(set) var softwareVersion = ""
   @Published public private(set) var startCalibration = false
   @Published public private(set) var state = ""
   @Published public private(set) var staticGateway = ""
@@ -90,6 +115,7 @@ public final class Radio: Equatable {
   @Published public private(set) var station = ""
   @Published public private(set) var tnfsEnabled = false
   @Published public private(set) var tcxoPresent = false
+  @Published public private(set) var uptime = 0
 
 
   enum FilterSharpnessTokens: String {
@@ -98,6 +124,26 @@ public final class Radio: Equatable {
     case voice
     case autoLevel                = "auto_level"
     case level
+  }
+  enum InfoTokens: String {
+    case atuPresent               = "atu_present"
+    case callsign
+    case chassisSerial            = "chassis_serial"
+    case gateway
+    case gps
+    case ipAddress                = "ip"
+    case location
+    case macAddress               = "mac"
+    case model
+    case netmask
+    case name
+    case numberOfScus             = "num_scu"
+    case numberOfSlices           = "num_slice"
+    case numberOfTx               = "num_tx"
+    case options
+    case region
+    case screensaver
+    case softwareVersion          = "software_ver"
   }
   enum StatusTokens: String {
     case amplifier
@@ -170,6 +216,54 @@ public final class Radio: Equatable {
     case ip
     case netmask
   }
+  enum VersionTokens: String {
+    case fpgaMb                   = "fpga-mb"
+    case psocMbPa100              = "psoc-mbpa100"
+    case psocMbTrx                = "psoc-mbtrx"
+    case smartSdrMB               = "smartsdr-mb"
+    case picDecpu                 = "pic-decpu"
+  }
+
+  public struct ConnectionParams {
+    public init(index: Int,
+                //                  station: String = "",
+                //                  program: String = "",
+                clientId: String? = nil,
+                isGui: Bool = true,
+                wanHandle: String = "",
+                //                  lowBandwidthConnect: Bool = false,
+                //                  lowBandwidthDax: Bool = false,
+                //                  needsCwStream: Bool = false,
+                pendingDisconnect: Radio.PendingDisconnect = PendingDisconnect.none) {
+
+      self.index = index
+      //          self.station = station
+      //          self.program = program
+      self.clientId = clientId
+      self.isGui = isGui
+      self.wanHandle = wanHandle
+      //          self.lowBandwidthConnect = lowBandwidthConnect
+      //          self.lowBandwidthDax = lowBandwidthDax
+      //          self.needsCwStream = needsCwStream
+      self.pendingDisconnect = pendingDisconnect
+    }
+
+    public var index: Int
+    //      public var station = ""
+    //      public var program = ""
+    public var clientId: String?
+    public var isGui = true
+    public var wanHandle = ""
+    //      public var lowBandwidthConnect = false
+    //      public var lowBandwidthDax = false
+    //      public var needsCwStream = false
+    public var pendingDisconnect = PendingDisconnect.none
+  }
+
+  public enum PendingDisconnect: Equatable {
+    case none
+    case some (handle: Handle)
+  }
 
   public enum RadioState {
     case tcpConnected (host: String, port: UInt16)
@@ -202,29 +296,116 @@ public final class Radio: Equatable {
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
 
+  private let _appName: String
+  private var _clientId: String?
+  private let _domain: String
+  private let _connectionType: ConnectionType
   private var _clientInitialized = false
   private var _radioInitialized = false
-  private let _parseQ = DispatchQueue(label: "ObjectsCore.parseQ", qos: .userInteractive)
+  private var _params: ConnectionParams!
+  private let _parseQ = DispatchQueue(label: "Radio.parseQ", qos: .userInteractive)
+  private var _pinger: Pinger?
   private var _command: TcpCommand
   private var _stream: UdpStream
   private var _cancellable: AnyCancellable?
   private let _log = LogProxy.sharedInstance.log
   private var _packet: Packet
   private var _replyHandlers = [SequenceNumber: ReplyTuple]()
+  private var _lowBandwidthConnect = false
+  private var _lowBandwidthDax = false
+  private var _stationName: String?
+  private var _programName: String?
+
+  private let kVersionSupported = Version("3.2.34")
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
 
-  public init(_ packet: Packet, command: TcpCommand, stream: UdpStream) {
+  public init(_ packet: Packet, connectionType: ConnectionType, command: TcpCommand, stream: UdpStream, stationName: String? = nil, programName: String? = nil, lowBandwidthConnect: Bool = false, lowBandwidthDax: Bool = false) {
     _packet = packet
+    _connectionType = connectionType
     _command = command
     _stream = stream
+    _lowBandwidthConnect = lowBandwidthConnect
+    _lowBandwidthDax = lowBandwidthDax
+    _stationName = stationName
+    _programName = programName
+
+    let bundleIdentifier = Bundle.main.bundleIdentifier ?? "net.k3tzr.Radio"
+    let separator = bundleIdentifier.lastIndex(of: ".")!
+    _appName = String(bundleIdentifier.suffix(from: bundleIdentifier.index(separator, offsetBy: 1)))
+    _domain = String(bundleIdentifier.prefix(upTo: separator))
+
+    // initialize Equalizers
+    equalizers[.rxsc] = Equalizer(Equalizer.EqType.rxsc.rawValue)
+    equalizers[.txsc] = Equalizer(Equalizer.EqType.txsc.rawValue)
+
     _cancellable = command.commandPublisher
       .receive(on: _parseQ)
       .sink { [weak self] msg in
         self?.receivedMessage(msg)
       }
   }
+
+  // TODO: Update this
+
+  /// Connect to this Radio
+  ///
+  ///   ----- v3 API explanation -----
+  ///
+  ///   Definitions
+  ///     Client:    The application using a radio
+  ///     Api:        The intermediary between the Client and a Radio (e.g. FlexLib, xLib6001, etc.)
+  ///     Radio:    The physical radio (e.g. a Flex-6500)
+  ///
+  ///   There are 5 scenarios:
+  ///
+  ///     1. The Client connects as a Gui, ClientId is known
+  ///         The Client passes clientId = <ClientId>, isGui = true to the Api
+  ///         The Api sends a "client gui <ClientId>" command to the Radio
+  ///
+  ///     2. The Client connects as a Gui, ClientId is NOT known
+  ///         The Client passes clientId = nil, isGui = true to the Api
+  ///         The Api sends a "client gui" command to the Radio
+  ///         The Radio generates a ClientId
+  ///         The Client receives GuiClientHasBeenAdded / Removed / Updated notification(s)
+  ///         The Client finds the desired ClientId
+  ///         The Client persists the ClientId (if desired))
+  ///
+  ///     3. The Client connects as a non-Gui, binding is desired, ClientId is known
+  ///         The Client passes clientId = <ClientId>, isGui = false to the Api
+  ///         The Api sends a "client bind <ClientId>" command to the Radio
+  ///
+  ///     4. The Client connects as a non-Gui, binding is desired, ClientId is NOT known
+  ///         The Client passes clientId = nil, isGui = false to the Api
+  ///         The Client receives GuiClientHasBeenAdded / Removed / Updated notification(s)
+  ///         The Client finds the desired ClientId
+  ///         The Client sets the boundClientId property on the radio class of the Api
+  ///         The radio class causes a "client bind client_id=<ClientId>" command to be sent to the Radio
+  ///         The Client persists the ClientId (if desired))
+  ///
+  ///     5. The Client connects as a non-Gui, binding is NOT desired
+  ///         The Client passes clientId = nil, isGui = false to the Api
+  ///
+  ///     Scenarios 2 & 4 are typically executed once which then allows the Client to use scenarios 1 & 3
+  ///     for all subsequent connections (if the Client has persisted the ClientId)
+  /// - Parameter params:     a struct of parameters
+  /// - Returns:              success / failure
+  public func connect(_ packet: Packet) -> Bool {
+    guard radioState == .clientDisconnected else {
+      _log("Radio: Invalid state on connect, apiState != .clientDisconnected", .warning, #function, #file, #line)
+      return false
+    }
+
+    // attempt to connect
+    if _command.connect(packet) {
+      checkVersion()
+      return true
+    }
+    // connection failed
+    return false
+  }
+
 
   /// Send a command to the Radio (hardware)
   /// - Parameters:
@@ -391,11 +572,11 @@ public final class Radio: Equatable {
       // a UDP port has been bound, inform observers
 //      NC.post(.udpDidBind, object: nil)
 
-    case .clientConnected (let radio):
+    case .clientConnected:
       _log("Radio: client connected (LOCAL)", .debug, #function, #file, #line)
 
       // complete the connection
-      connectionCompletion(to: radio)
+      connectionCompletion()
 
       // Disconnection --------------------------------------------------------------------------
     case .tcpDisconnected (let reason):
@@ -431,7 +612,18 @@ public final class Radio: Equatable {
   }
 
   /// executed after an IP Address has been obtained
-  private func connectionCompletion(to radio: Radio) {
+  private func connectionCompletion() {
+    _log("Radio: connectionCompletion for \(_packet.nickname)", .warning, #function, #file, #line)
+    sendCommands()
+    send("client udpport " + "\(_stream.sendPort)")
+
+    if pingerEnabled {
+      // start pinging the Radio
+      _pinger = Pinger(radio: self, command: _command)
+      _pinger?.startPinging()
+    }
+
+
 //      _log("Radio: connectionCompletion for \(radio.nickname)\(_params.pendingDisconnect != .none ? " (Pending Disconnection)" : "")", .debug, #function, #file, #line)
 //
 //      // send the initial commands if a normal connection
@@ -456,6 +648,118 @@ public final class Radio: Equatable {
   // ----------------------------------------------------------------------------
   // MARK: - ReplyHandlers
 
+  /// Process the Reply to a command, reply format: <value>,<value>,...<value>
+  ///   executes on the parseQ
+  ///
+  /// - Parameters:
+  ///   - command:        the original command
+  ///   - seqNum:         the Sequence Number of the original command
+  ///   - responseValue:  the response value
+  ///   - reply:          the reply
+  public func defaultReplyHandler(_ command: String, sequenceNumber: SequenceNumber, responseValue: String, reply: String) {
+    guard responseValue == Radio.kNoError else {
+
+      // ignore non-zero reply from "client program" command
+      if !command.hasPrefix("client program ") {
+        // Anything other than 0 is an error, log it and ignore the Reply
+        let errorLevel = flexErrorLevel(errorCode: responseValue)
+        _log("Radio, reply to c\(sequenceNumber), \(command): non-zero reply \(responseValue), \(flexErrorString(errorCode: responseValue))", errorLevel, #function, #file, #line)
+      }
+      return
+    }
+
+    // which command?
+    switch command {
+
+    case "client gui":    parseGuiReply( reply.keyValuesArray() )         // (V3 only)
+    case "slice list":    DispatchQueue.main.async { [self] in sliceList = reply.valuesArray().compactMap {$0.objectId} }
+
+    case "ant list":      DispatchQueue.main.async { [self] in antennaList = reply.valuesArray( delimiter: "," ) }
+    case "info":          parseInfoReply( (reply.replacingOccurrences(of: "\"", with: "")).keyValuesArray(delimiter: ",") )
+    case "mic list":      DispatchQueue.main.async { [self] in micList = reply.valuesArray(  delimiter: "," ) }
+    case "radio uptime":  DispatchQueue.main.async { [self] in uptime = Int(reply) ?? 0 }
+    case "version":       parseVersionReply( reply.keyValuesArray(delimiter: "#") )
+    default:              break
+    }
+  }
+
+  /// Parse the Reply to an Info command
+  ///   executed on the parseQ
+  ///
+  /// - Parameters:
+  ///   - properties:          a KeyValuesArray
+  private func parseInfoReply(_ properties: KeyValuesArray) {
+    // process each key/value pair, <key=value>
+    for property in properties {
+      // check for unknown Keys
+      guard let token = InfoTokens(rawValue: property.key) else {
+        // log it and ignore the Key
+        _log("Radio, unknown info token: \(property.key) = \(property.value)", .warning, #function, #file, #line)
+        continue
+      }
+      // Known keys, in alphabetical order
+      switch token {
+
+      case .atuPresent:       atuPresent = property.value.bValue
+      case .callsign:         callsign = property.value
+      case .chassisSerial:    chassisSerial = property.value
+      case .gateway:          gateway = property.value
+      case .gps:              gpsPresent = (property.value != "Not Present")
+      case .ipAddress:        ipAddress = property.value
+      case .location:         location = property.value
+      case .macAddress:       macAddress = property.value
+      case .model:            radioModel = property.value
+      case .netmask:          netmask = property.value
+      case .name:             nickname = property.value
+      case .numberOfScus:     numberOfScus = property.value.iValue
+      case .numberOfSlices:   numberOfSlices = property.value.iValue
+      case .numberOfTx:       numberOfTx = property.value.iValue
+      case .options:          radioOptions = property.value
+      case .region:           region = property.value
+      case .screensaver:      radioScreenSaver = property.value
+      case .softwareVersion:  softwareVersion = property.value
+      }
+    }
+  }
+  /// Parse the Reply to a Client Gui command,
+  ///   executed on the parseQ
+  ///
+  /// - Parameters:
+  ///   - properties:          a KeyValuesArray
+  private func parseGuiReply(_ properties: KeyValuesArray) {
+    // only v3 returns a Client Id
+    for property in properties {
+      // save the returned ID
+      boundClientId = property.key
+      break
+    }
+  }
+
+  /// Parse the Reply to a Version command, reply format: <key=value>#<key=value>#...<key=value>
+  ///   executed on the parseQ
+  ///
+  /// - Parameters:
+  ///   - properties:          a KeyValuesArray
+  private func parseVersionReply(_ properties: KeyValuesArray) {
+    // process each key/value pair, <key=value>
+    for property in properties {
+      // check for unknown Keys
+      guard let token = VersionTokens(rawValue: property.key) else {
+        // log it and ignore the Key
+        _log("Radio, unknown version token: \(property.key) = \(property.value)", .warning, #function, #file, #line)
+        continue
+      }
+      // Known tokens, in alphabetical order
+      switch token {
+
+      case .smartSdrMB:   smartSdrMB = property.value
+      case .picDecpu:     picDecpuVersion = property.value
+      case .psocMbTrx:    psocMbtrxVersion = property.value
+      case .psocMbPa100:  psocMbPa100Version = property.value
+      case .fpgaMb:       fpgaMbVersion = property.value
+      }
+    }
+  }
   /// Reply handler for the "wan validate" command
   /// - Parameters:
   ///   - command:                a Command string
@@ -463,10 +767,48 @@ public final class Radio: Equatable {
   ///   - responseValue:          the response contained in the Reply to the Command
   ///   - reply:                  the descriptive text contained in the Reply to the Command
   private func wanValidateReplyHandler(_ command: String, seqNum: UInt, responseValue: String, reply: String) {
-      // return status
-      updateState(to: .wanHandleValidated(success: responseValue == Radio.kNoError))
+    // return status
+    updateState(to: .wanHandleValidated(success: responseValue == Radio.kNoError))
+  }
+
+  /// Send commands to configure the connection
+  ///
+  private func sendCommands() {
+
+    if _connectionType == .gui && _clientId != nil {
+      send("client gui " + _clientId!)
+    } else {
+      send("client gui")
+    }
+    send("client program " + (_programName != nil ? _programName! : "MacProgram"))
+    if _connectionType == .gui { send("client station " + (_stationName != nil ? _stationName! : "Mac")) }
+    if _connectionType != .gui && _clientId != nil { bindGuiClient(_clientId!) }
+    if _lowBandwidthConnect { requestLowBandwidthConnect() }
+    requestInfo()
+    requestVersion()
+    requestAntennaList()
+    requestMicList()
+    requestGlobalProfile()
+    requestTxProfile()
+    requestMicProfile()
+    requestDisplayProfile()
+    requestSubAll()
+    requestMtuLimit(1_500)
+    requestLowBandwidthDax(_lowBandwidthDax)
+  }
+
+  /// Determine if the Radio Firmware version is compatable with the API version
+  private func checkVersion() {
+      // get the Radio Version
+    let radioVersion = Version(softwareVersion)
+
+      if kVersionSupported < radioVersion  {
+          _log("Api Radio may need to be downgraded: Radio version = \(radioVersion.longString), API supports version = \(kVersionSupported.string)", .warning, #function, #file, #line)
+//          NC.post(.radioDowngrade, object: (apiVersion: kVersionSupported.string, radioVersion: radioVersion.string))
+      }
   }
 }
+
 
 // ----------------------------------------------------------------------------
 // MARK: - StaticModel extension

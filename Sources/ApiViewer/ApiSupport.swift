@@ -127,3 +127,21 @@ func setDefaultConnection(_ conn: DefaultConnection?) {
     }
   }
 }
+
+//func filterMessages(_ messages: IdentifiedArrayOf<CommandMessage>, ) -> IdentifiedArrayOf<CommandMessage> {
+//
+//  // get all except the first character
+//  let suffix = String(text.dropFirst())
+//
+//  // switch on the first character
+//  switch text[text.startIndex] {
+//
+//  case "C":   DispatchQueue.main.async { self.populateMessages(text) }      // Commands
+//  case "H":   DispatchQueue.main.async { self.populateMessages(text) }      // Handle type
+//  case "M":   DispatchQueue.main.async { self.populateMessages(text) }      // Message Type
+//  case "R":   DispatchQueue.main.async { self.parseReplyMessage(suffix) }   // Reply Type
+//  case "S":   DispatchQueue.main.async { self.populateMessages(text) }      // Status type
+//  case "V":   DispatchQueue.main.async { self.populateMessages(text) }      // Version Type
+//  default:    DispatchQueue.main.async { self.populateMessages("Tester: Unknown Message type, \(text[text.startIndex]) ") } // Unknown Type
+//  }
+//}

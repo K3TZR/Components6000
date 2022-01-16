@@ -11,11 +11,13 @@ import Foundation
 // MARK: - Aliases
 
 public typealias AntennaPort = String
+public typealias EqualizerId = String
 public typealias GuiClientId = String
 public typealias Handle = UInt32
 public typealias Hz = Int
 public typealias IdToken = String
 public typealias KeyValuesArray = [(key:String, value:String)]
+public typealias MHz = Double
 public typealias MicrophonePort = String
 public typealias ObjectId = UInt16
 public typealias RadioId = String
@@ -26,6 +28,11 @@ public typealias SequenceNumber = UInt
 public typealias SliceId = ObjectId
 public typealias StreamId = UInt32
 public typealias ValuesArray = [String]
+
+public enum ConnectionType: Equatable {
+  case gui
+  case nonGui
+}
 
 public struct AlertView: Equatable, Identifiable {
 
@@ -74,13 +81,21 @@ public extension Bool {
 }
 
 public extension String {
-  var handle: Handle? { self.hasPrefix("0x") ? UInt32(String(self.dropFirst(2)), radix: 16) : UInt32(self, radix: 16) }
-  var bValue: Bool { (Int(self) ?? 0) == 1 ? true : false }
-  var iValue: Int { Int(self) ?? 0 }
-  var mhzToHz: Hz { Hz( (Double(self) ?? 0) * 1_000_000 ) }
-  var objectId: ObjectId? { UInt16(self, radix: 10) }
-  var tValue: Bool { self.lowercased() == "true" ? true : false }
-  var uValue: UInt { UInt(self) ?? 0 }
+  var bValue          : Bool            { (Int(self) ?? 0) == 1 ? true : false }
+  var cgValue         : CGFloat         { CGFloat(self) }
+  var dValue          : Double          { Double(self) ?? 0 }
+  var fValue          : Float           { Float(self) ?? 0 }
+  var handle          : Handle?         { self.hasPrefix("0x") ? UInt32(String(self.dropFirst(2)), radix: 16) : UInt32(self, radix: 16) }
+  var iValue          : Int             { Int(self) ?? 0 }
+  var list            : [String]        { self.components(separatedBy: ",") }
+  var mhzToHz         : Hz              { Hz( (Double(self) ?? 0) * 1_000_000 ) }
+  var objectId        : ObjectId?       { UInt16(self, radix: 10) }
+  var sequenceNumber  : SequenceNumber  { UInt(self, radix: 10) ?? 0 }
+  var streamId        : StreamId?       { self.hasPrefix("0x") ? UInt32(String(self.dropFirst(2)), radix: 16) : UInt32(self, radix: 16) }
+  var trimmed         : String          { self.trimmingCharacters(in: CharacterSet.whitespaces) }
+  var tValue          : Bool            { self.lowercased() == "true" ? true : false }
+  var uValue          : UInt            { UInt(self) ?? 0 }
+  var uValue32        : UInt32          { UInt32(self) ?? 0 }
 
   /// Parse a String of <key=value>'s separated by the given Delimiter
   /// - Parameters:
@@ -136,6 +151,40 @@ public extension String {
   }
 }
 
+public extension CGFloat {
+    /// Force a CGFloat to be within a min / max value range
+    /// - Parameters:
+    ///   - min:        min CGFloat value
+    ///   - max:        max CGFloat value
+    /// - Returns:      adjusted value
+    func bracket(_ min: CGFloat, _ max: CGFloat) -> CGFloat {
+
+        var value = self
+        if self < min { value = min }
+        if self > max { value = max }
+        return value
+    }
+
+    /// Create a CGFloat from a String
+    /// - Parameters:
+    ///   - string:     a String
+    ///
+    /// - Returns:      CGFloat value of String or 0
+    init(_ string: String) {
+        self = CGFloat(Float(string) ?? 0)
+    }
+
+    /// Format a String with the value of a CGFloat
+    /// - Parameters:
+    ///   - width:      number of digits before the decimal point
+    ///   - precision:  number of digits after the decimal point
+    ///   - divisor:    divisor
+    /// - Returns:      a String representation of the CGFloat
+    private func floatToString(width: Int, precision: Int, divisor: CGFloat) -> String {
+        return String(format: "%\(width).\(precision)f", self / divisor)
+    }
+}
+
 /// Struct to hold a Semantic Version number
 ///     with provision for a Build Number
 ///
@@ -176,9 +225,9 @@ public struct Version {
     public var longString: String { "\(major).\(minor).\(patch) (\(build))" }
     public var string: String { "\(major).\(minor).\(patch)" }
 
-    static func == (lhs: Version, rhs: Version) -> Bool { lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch == rhs.patch }
+    public static func == (lhs: Version, rhs: Version) -> Bool { lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch == rhs.patch }
 
-    static func < (lhs: Version, rhs: Version) -> Bool {
+    public static func < (lhs: Version, rhs: Version) -> Bool {
 
         switch (lhs, rhs) {
 
