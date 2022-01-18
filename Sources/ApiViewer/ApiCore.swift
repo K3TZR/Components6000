@@ -67,6 +67,7 @@ public enum ApiAction: Equatable {
   case onAppear
   case pickerAction(PickerAction)
   case sheetClosed
+  case openRadio(PickerSelection)
 
   // UI controls
   case button(WritableKeyPath<ApiState, Bool>)
@@ -114,11 +115,11 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
 
     case .clearDefaultButton:
       state.defaultConnection = nil
-      if let discovery = state.discovery {
-        for packet in discovery.packets {
-          discovery.packets[id: packet.id]?.isDefault = false
-        }
-      }
+//      if let discovery = state.discovery {
+//        for packet in discovery.packets {
+//          discovery.packets[id: packet.id]?.isDefault = false
+//        }
+//      }
       return .none
 
     case .clearNowButton:
@@ -142,7 +143,17 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
 
     case .onAppear:
-      listenForPackets(&state)
+      if state.discovery == nil { state.discovery = Discovery.sharedInstance }
+      if state.connectionMode == .local || state.connectionMode == .both {
+        state.alert = listenForLocalPackets(state)
+      }
+      if state.connectionMode == .smartlink || state.connectionMode == .both {
+        let alert = listenForWanPackets(state)
+        if alert != nil {
+          state.alert = alert
+          state.loginState = LoginState(email: state.smartlinkEmail)
+        }
+      }
       return listenForCommands(state.command)
       
     case .sendButton:
@@ -155,33 +166,25 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .startStopButton:
       if state.connectedPacket == nil {
-        // NOT connected, attempt a connection
-        if let packet = identifyDefault(state.defaultConnection, state.discovery!) {
-          // using the default
-          if state.command.connect(packet) {
-            // default connected
-            state.connectedPacket = PickerSelection(packet, nil)
-            if state.clearOnConnect { state.commandMessages.removeAll() }
-          } else {
-            // default failed to open
-            state.connectedPacket = nil
-            state.alert = AlertView(title: "Failed to connect to \(packet.nickname) (default)")
-            // open the Picker
-            state.pickerState = PickerState(pickType: state.isGui ? .radio : .station)
+        // NOT connected, is there a default?
+        if let conn = state.defaultConnection {
+          // YES, try to find it
+          for packet in state.discovery!.packets where conn.source == packet.source.rawValue && conn.serial == packet.serial && conn.station == nil {
+            return Effect( value: .openRadio(PickerSelection(packet.source, packet.serial, conn.station)) )
           }
-        } else {
-          // no default, open the Picker
-          state.pickerState = PickerState(pickType: state.isGui ? .radio : .station)
         }
+        // otherwise, open the Picker
+        state.pickerState = PickerState(pickType: state.isGui ? .radio : .station)
+        return .none
 
       } else {
         // CONNECTED, disconnect
         state.command.disconnect()
         state.connectedPacket = nil
         if state.clearOnDisconnect { state.commandMessages.removeAll() }
+        return .none
       }
-      return .none
-      
+
       // ----------------------------------------------------------------------------
       // MARK: - Picker actions
 
@@ -193,40 +196,38 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // TODO: take into account the clientIndex and isGui
     case let .pickerAction(.connectButton(selection)):
       state.pickerState = nil
-      state.radio = Radio(selection!.packet, connectionType: state.isGui ? .gui : .nonGui, command: state.command, stream: UdpStream())
-      if state.radio != nil {
-        if state.radio!.connect(selection!.packet) {
+      return Effect( value: .openRadio(selection) )
+
+    case .openRadio(let selection):
+      if let packet = identifySelection(selection, state.discovery!) {
+        state.radio = Radio(packet, connectionType: state.isGui ? .gui : .nonGui, command: state.command, stream: UdpStream())
+        if state.radio!.connect(packet) {
           state.connectedPacket = selection
           if state.clearOnConnect { state.commandMessages.removeAll() }
         } else {
-          state.connectedPacket = nil
-          state.alert = AlertView(title: "Failed to connect to Radio \(selection?.packet.nickname ?? "-- Unknown --")")
+          state.alert = AlertView(title: "Failed to connect to Radio \(packet.nickname)")
         }
       } else {
-        state.connectedPacket = nil
-        state.alert = AlertView(title: "Failed to open Radio \(selection?.packet.nickname ?? "-- Unknown --")")
+        state.alert = AlertView(title: "Failed to find selection \(selection.source)")
       }
       return .none
-      
+
+
     case let .pickerAction(.connectResultReceived(index)):
       print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
       
     case let .pickerAction(.testButton(selection)):
-      print("-----> ApiCore: Test, packet = \(selection?.packet.nickname ?? "-- Unknown --")")
+      print("-----> ApiCore: Test for \(selection.source.rawValue), \(selection.serial), \(selection.station ?? "")")
       return .none
       
-    case let .pickerAction(.defaultChanged(selection)):
-      if let selection = selection {
-        // save the dafault
-        state.defaultConnection = DefaultConnection(source: selection.packet.source.rawValue, publicIp: selection.packet.publicIp, clientIndex: selection.clientIndex)
-        // close the picker and connect
-        return Effect(value: .pickerAction(.connectButton(selection)))
-
+    case let .pickerAction(.defaultButton(selection)):
+      if state.defaultConnection == nil {
+        state.defaultConnection = DefaultConnection(selection)
       } else {
         state.defaultConnection = nil
-        return .none
       }
+      return .none
 
     case .pickerAction(_):
       // IGNORE ALL OTHERS
@@ -241,7 +242,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
     case let .loginAction(.loginButton(result)):
-      listenForWanPackets(&state, loginResult: result)
+      state.loginState = nil
+      state.smartlinkEmail = result.email
+      state.alert = listenForWanPackets(state, using: result)
       return .none
       
     case .loginClosed:

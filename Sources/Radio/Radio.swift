@@ -22,7 +22,6 @@ public final class Radio: Equatable {
   public static let kDaxChannels      = ["None", "1", "2", "3", "4", "5", "6", "7", "8"]
   public static let kDaxIqChannels    = ["None", "1", "2", "3", "4"]
   public static let kName             = "xLib6001"
-  public static let kNoError          = "0"
 
   public static let kConnected        = "connected"
   public static let kDisconnected     = "disconnected"
@@ -657,7 +656,7 @@ public final class Radio: Equatable {
   ///   - responseValue:  the response value
   ///   - reply:          the reply
   public func defaultReplyHandler(_ command: String, sequenceNumber: SequenceNumber, responseValue: String, reply: String) {
-    guard responseValue == Radio.kNoError else {
+    guard responseValue == kNoError else {
 
       // ignore non-zero reply from "client program" command
       if !command.hasPrefix("client program ") {
@@ -768,7 +767,7 @@ public final class Radio: Equatable {
   ///   - reply:                  the descriptive text contained in the Reply to the Command
   private func wanValidateReplyHandler(_ command: String, seqNum: UInt, responseValue: String, reply: String) {
     // return status
-    updateState(to: .wanHandleValidated(success: responseValue == Radio.kNoError))
+    updateState(to: .wanHandleValidated(success: responseValue == kNoError))
   }
 
   /// Send commands to configure the connection

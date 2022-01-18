@@ -26,12 +26,6 @@ struct PickerHeaderView: View {
 
       HStack(spacing: 0) {
         Group {
-          Text("Default")
-        }
-        .font(.title2)
-        .frame(width: 95, alignment: .leading)
-
-        Group {
           Text("Type")
           Text("Name")
           Text("Status")

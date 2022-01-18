@@ -16,7 +16,7 @@ import Shared
 public func listenForCommands(_ command: TcpCommand) -> Effect<ApiAction, Never> {
 
   command.commandPublisher
-    .filter { ($0.prefix(1) == "R" && $0.contains("|0|")) == false }
+    .filter { allowToPass($0) }
     .receive(on: DispatchQueue.main)
     .map { text in .commandAction(CommandMessage(text: text, color: lineColor(text))) }
     .eraseToEffect()
@@ -34,4 +34,15 @@ private func lineColor(_ text: Substring) -> Color {
     if text.prefix(2) == "S0" { return Color(.systemOrange) }                       // S0
 
     return Color(.textColor)
+}
+
+private func allowToPass(_ reply: Substring) -> Bool {
+
+  // is it a Reply message
+  if reply.first != "R" { return true }
+  // YES, only pass it if it indicates an error or shows additional data
+  let parts = reply.components(separatedBy: "|")
+  if parts[1] != kNoError {return true}
+  if parts[2] != "" { return true }
+  return false
 }

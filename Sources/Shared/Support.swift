@@ -7,6 +7,8 @@
 
 import Foundation
 
+public let kNoError = "0"
+
 // ----------------------------------------------------------------------------
 // MARK: - Aliases
 

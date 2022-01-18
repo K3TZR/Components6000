@@ -22,13 +22,24 @@ public struct PickerView: View {
     self.store = store
   }
 
+  func noItemsToDisplay(_ viewStore: ViewStore<PickerState, PickerAction>) -> Bool {
+    if viewStore.pickType == .radio {
+      return viewStore.discovery.packets.count == 0
+    } else {
+      for packet in viewStore.discovery.packets where packet.guiClients.count > 0 {
+       return false
+      }
+      return true
+    }
+  }
+
   public var body: some View {
     
     WithViewStore(store) { viewStore in
       VStack(alignment: .leading) {
         PickerHeaderView(pickType: viewStore.pickType)
         Divider()
-        if viewStore.discovery.packets.count == 0 {
+        if noItemsToDisplay(viewStore) {
           Spacer()
           HStack {
             Spacer()
@@ -44,7 +55,7 @@ public struct PickerView: View {
                 action: PickerAction.packet(id:action:)
               )
             ) { packetStore in
-              PacketView(store: packetStore, pickType: viewStore.pickType)
+              PacketView(store: packetStore, pickType: viewStore.pickType, defaultSelection: viewStore.defaultSelection)
             }
           }
         }
@@ -93,6 +104,12 @@ struct PickerView_Previews: PreviewProvider {
       .previewDisplayName("Station Picker")
   }
 }
+
+private func isDefault(_ packet: Packet, _ def: PickerSelection?) -> Bool {
+  guard def != nil else { return false }
+  return packet.source == def!.source && packet.serial == def!.serial
+}
+
 
 // ----------------------------------------------------------------------------
 // MARK: - Test data

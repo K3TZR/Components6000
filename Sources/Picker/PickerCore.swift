@@ -27,34 +27,36 @@ public enum PickerButton: Equatable {
 }
 
 public struct PickerSelection: Equatable {
-  public init(_ packet: Packet, _ clientIndex: Int?) {
-    self.packet = packet
-    self.clientIndex = clientIndex
+  public init(_ source: PacketSource, _ serial: String, _ station: String?) {
+    self.source = source
+    self.serial = serial
+    self.station = station
   }
 
-  public var packet: Packet
-  public var clientIndex: Int?
+  public var source: PacketSource
+  public var serial: String
+  public var station: String?
 }
 
 public struct PickerState: Equatable {
   public init(pickType: PickType = .radio,
-              selectedPacket: PickerSelection? = nil,
-              defaultPacket: Packet? = nil,
+              pickerSelection: PickerSelection? = nil,
+              defaultSelection: PickerSelection? = nil,
               testStatus: Bool = false,
               discovery: Discovery = Discovery.sharedInstance)
   {
-    self.defaultPacket = defaultPacket
+    self.defaultSelection = defaultSelection
     self.discovery = discovery
     self.pickType = pickType
-    self.selectedPacket = selectedPacket
+    self.pickerSelection = pickerSelection
     self.testStatus = testStatus
   }
   
 //  public var connectedPacket: Packet?
-  public var defaultPacket: Packet?
+  public var defaultSelection: PickerSelection?
   public var discovery: Discovery
   public var pickType: PickType
-  public var selectedPacket: PickerSelection?
+  public var pickerSelection: PickerSelection?
   public var testStatus = false
   public var forceUpdate = false
 }
@@ -64,16 +66,16 @@ public enum PickerAction: Equatable {
   
   // UI controls
   case cancelButton
-  case connectButton(PickerSelection?)
-  case testButton(PickerSelection?)
+  case connectButton(PickerSelection)
+  case testButton(PickerSelection)
+  case defaultButton(PickerSelection)
 
   // effect related
   case clientChange(ClientChange)
   case connectResultReceived(Int?)
   case packetChange(PacketChange)
   case testResultReceived(Bool)
-  case defaultChanged(PickerSelection?)
-  
+
   // upstream actions
   case packet(id: UUID, action: PacketAction)
 }
@@ -111,6 +113,14 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
 
     case .connectButton(_):
       // handled downstream
+      return .cancel(ids: PacketSubscriptionId(), ClientSubscriptionId())
+
+    case .defaultButton(let selection):
+      if state.defaultSelection == selection {
+        state.defaultSelection = nil
+      } else {
+        state.defaultSelection = selection
+      }
       return .none
 
     case .onAppear:
@@ -122,9 +132,6 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // handled downstream
       return .none
       
-    case .defaultChanged(_):
-      // handled downstream
-      return .none
 
       // ----------------------------------------------------------------------------
       // MARK: - Effect actions
@@ -148,24 +155,14 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .none
       
       // ----------------------------------------------------------------------------
-      // MARK: - Radio actions
+      // MARK: - Packet actions
 
-    case let .packet(id: id, action: .defaultButton):
-        let thisPacket = state.discovery.packets[id: id]!
-        if thisPacket.isDefault {
-          for packet in state.discovery.packets where packet.id != thisPacket.id {
-            state.discovery.packets[id: packet.id]!.isDefault = false
-          }
-        }
-      // FIXME: this wrong for a non-guiClient
-      return Effect(value: .defaultChanged(PickerSelection(thisPacket, nil)))
+//    case let .packet(id: id, action: .defaultButton(selection)):
+//      state.defaultSelection = selection
+//      return .none
 
-    case let .packet(id: id, action: .selection(isSelected, clientIndex)):
-      if isSelected {
-        state.selectedPacket = PickerSelection(state.discovery.packets[id: id]!, clientIndex)
-      } else {
-        state.selectedPacket = nil
-      }
+    case let .packet(id: id, action: .selection(selection)):
+      state.pickerSelection = selection
       return .none
     }
   }

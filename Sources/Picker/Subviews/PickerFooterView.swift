@@ -18,20 +18,25 @@ struct PickerFooterView: View {
     WithViewStore(store) { viewStore in
 
       HStack(){
-        Button("Test") {viewStore.send(.testButton(viewStore.selectedPacket))}
-        .disabled(viewStore.selectedPacket == nil)
+        Button("Test") {viewStore.send(.testButton(viewStore.pickerSelection!))}
+        .disabled(viewStore.pickerSelection == nil || viewStore.pickerSelection?.source != .smartlink)
         Circle()
           .fill(viewStore.testStatus ? Color.green : Color.red)
           .frame(width: 20, height: 20)
+
+        Spacer()
+        Button("Default") {viewStore.send(.defaultButton(viewStore.pickerSelection!)) }
+        .disabled(viewStore.pickerSelection == nil)
+        .keyboardShortcut(.cancelAction)
 
         Spacer()
         Button("Cancel") {viewStore.send(.cancelButton) }
         .keyboardShortcut(.cancelAction)
 
         Spacer()
-        Button("Connect") {viewStore.send(.connectButton(viewStore.selectedPacket))}
+        Button("Connect") {viewStore.send(.connectButton(viewStore.pickerSelection!))}
         .keyboardShortcut(.defaultAction)
-        .disabled(viewStore.selectedPacket == nil)
+        .disabled(viewStore.pickerSelection == nil)
       }
     }
     .padding(.vertical, 10)
