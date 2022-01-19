@@ -16,9 +16,9 @@ import Shared
 public func listenForCommands(_ command: TcpCommand) -> Effect<ApiAction, Never> {
 
   command.commandPublisher
-    .filter { allowToPass($0) }
+    .filter { allowToPass($0.text) }
     .receive(on: DispatchQueue.main)
-    .map { text in .commandAction(CommandMessage(text: text, color: lineColor(text))) }
+    .map { tcpMessage in .commandAction(CommandMessage(text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
     .cancellable(id: CommandSubscriptionId())
 }

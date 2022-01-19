@@ -102,14 +102,14 @@ extension Equalizer: DynamicModel {
     // if an equalizer was found
     if let equalizer = equalizer {
       // pass the key values to the Equalizer for parsing (dropping the Type)
-      equalizer.parseProperties( Array(properties.dropFirst(1)) )
+      equalizer.parseProperties(radio, Array(properties.dropFirst(1)) )
     }
   }
 
   /// Parse Equalizer key/value pairs
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ properties: KeyValuesArray) {
+  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

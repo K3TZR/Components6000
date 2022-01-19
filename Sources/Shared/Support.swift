@@ -8,11 +8,13 @@
 import Foundation
 
 public let kNoError = "0"
+public let kRemoved = "removed"
 
 // ----------------------------------------------------------------------------
 // MARK: - Aliases
 
 public typealias AntennaPort = String
+public typealias BandId = ObjectId
 public typealias EqualizerId = String
 public typealias GuiClientId = String
 public typealias Handle = UInt32
@@ -29,6 +31,7 @@ public typealias RfGainValue = String
 public typealias SequenceNumber = UInt
 public typealias SliceId = ObjectId
 public typealias StreamId = UInt32
+public typealias TnfId = ObjectId
 public typealias ValuesArray = [String]
 
 public enum ConnectionType: Equatable {

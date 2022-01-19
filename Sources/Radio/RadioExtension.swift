@@ -23,7 +23,17 @@ extension Radio {
     public func requestBandSetting(_ channel: String, callback: ReplyHandler? = nil) {
         // FIXME: need information
     }
-    
+
+  public func remove(_ id: BandId, callback: ReplyHandler? = nil) {
+    // TODO: test this
+
+    // tell the Radio to remove a Stream
+    send("transmit band remove " + "\(id)", replyTo: callback)
+
+    // notify all observers
+    //    NC.post(.bandSettingWillBeRemoved, object: self as Any?)
+  }
+
     // ----------------------------------------------------------------------------
     // MARK: - NetCwStream methods
     
@@ -141,7 +151,28 @@ extension Radio {
             boundClientId = clientId
         }
     }
-    
+
+  // ----------------------------------------------------------------------------
+  // MARK: - Interlock methods
+
+  /// Change the MOX property when an Interlock state change occurs
+  ///
+  /// - Parameter state:            a new Interloack state
+  func interlockStateChange(_ state: String) {
+      let currentMox = mox
+
+      // if PTT_REQUESTED or TRANSMITTING
+      if state == Interlock.States.pttRequested.rawValue || state == Interlock.States.transmitting.rawValue {
+          // and mox not on, turn it on
+          if currentMox == false { mox = true }
+
+          // if READY or UNKEY_REQUESTED
+      } else if state == Interlock.States.ready.rawValue || state == Interlock.States.unKeyRequested.rawValue {
+          // and mox is on, turn it off
+          if currentMox == true { mox = false  }
+      }
+  }
+
     // ----------------------------------------------------------------------------
     // MARK: - Meter methods
     
@@ -461,18 +492,34 @@ extension Radio {
     // ----------------------------------------------------------------------------
     // MARK: - Tnf methods
     
-//    public func requestTnf(at frequency: Hz, callback: ReplyHandler? = nil) {
-//        send("tnf create " + "freq" + "=\(frequency.hzToMhz)", replyTo: callback)
-//    }
-//
-//    public func findTnf(at freq: Hz, minWidth: Hz) -> Tnf? {
-//        // return the Tnfs within the specified Frequency / minimum width (if any)
-//        let filteredTnfs = tnfs.values.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
-//        guard filteredTnfs.count >= 1 else { return nil }
-//
-//        // return the first one
-//        return filteredTnfs[0]
-//    }
+  /// Remove a Tnf
+  /// - Parameters:
+  ///   _ id:                            a TnfId
+  ///   - callback:     ReplyHandler (optional)
+  public func removeTnf(id: TnfId, callback: ReplyHandler? = nil) {
+    send("tnf remove " + " \(id)", replyTo: callback)
+
+    // notify all observers
+//    NC.post(.tnfWillBeRemoved, object: self as Any?)
+
+    // remove it immediately (Tnf does not send status on removal)
+    tnfs[id] = nil
+
+    _log("Tnf, removed: id = \(id)", .debug, #function, #file, #line)
+//    NC.post(.tnfHasBeenRemoved, object: id as Any?)
+  }
+    public func requestTnf(at frequency: Hz, callback: ReplyHandler? = nil) {
+        send("tnf create " + "freq" + "=\(frequency.hzToMhz)", replyTo: callback)
+    }
+
+    public func findTnf(at freq: Hz, minWidth: Hz) -> Tnf? {
+        // return the Tnfs within the specified Frequency / minimum width (if any)
+        let filteredTnfs = tnfs.values.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
+        guard filteredTnfs.count >= 1 else { return nil }
+
+        // return the first one
+        return filteredTnfs[0]
+    }
 
     // ----------------------------------------------------------------------------
     // MARK: - WanServer methods

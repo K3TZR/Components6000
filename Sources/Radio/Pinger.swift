@@ -28,6 +28,7 @@ final public class Pinger {
   private let _radio: Radio
   private var _responseCount = 0
   private var _command: TcpCommand
+  private let _nickname: String
 
   private let kPingInterval    = 1
   private let kResponseCount = 2
@@ -36,9 +37,10 @@ final public class Pinger {
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
 
-  public init(radio: Radio, command: TcpCommand) {
+  public init(radio: Radio, command: TcpCommand, nickname: String) {
     _radio = radio
     _command = command
+    _nickname = nickname
     startPinging()
   }
 
@@ -62,8 +64,11 @@ final public class Pinger {
     }
   }
 
-  public func startPinging() {
-    _log("Pinger: started", .debug, #function, #file, #line)
+  // ----------------------------------------------------------------------------
+  // MARK: - Private methods
+
+  private func startPinging() {
+    _log("Pinger: started pinging \(_nickname)", .debug, #function, #file, #line)
 
     // tell the Radio to expect pings
     _radio.send("keepalive enable")

@@ -20,7 +20,10 @@ struct MessagesView: View {
       ScrollView([.horizontal, .vertical]) {
         LazyVStack(alignment: .leading) {
           ForEach(viewStore.commandMessages) { message in
-            Text(message.text)
+            HStack {
+              if viewStore.showTimes { Text("\(message.timeInterval)") }
+              Text(message.text)
+            }
               .foregroundColor( message.color )
               .frame(maxWidth: .infinity, alignment: .leading)
           }

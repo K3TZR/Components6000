@@ -39,8 +39,34 @@ public final class Radio: Equatable {
 
 
   // Dynamic Model Collections
+//  @Published public var amplifiers = [AmplifierId: Amplifier]()
+  @Published public var bandSettings = [BandId: BandSetting]()
+//  @Published public var daxIqStreams = [DaxIqStreamId: DaxIqStream]()
+//  @Published public var daxMicAudioStreams = [DaxMicStreamId: DaxMicAudioStream]()
+//  @Published public var daxRxAudioStreams = [DaxRxStreamId: DaxRxAudioStream]()
+//  @Published public var daxTxAudioStreams = [DaxTxStreamId: DaxTxAudioStream]()
   @Published public var equalizers = [Equalizer.EqType: Equalizer]()
+//  @Published public var memories = [MemoryId: Memory]()
+//  @Published public var meters = [MeterId: Meter]()
+//  @Published public var panadapters = [PanadapterStreamId: Panadapter]()
+//  @Published public var profiles = [ProfileId: Profile]()
+//  @Published public var remoteRxAudioStreams = [RemoteRxStreamId: RemoteRxAudioStream]()
+//  @Published public var remoteTxAudioStreams = [RemoteTxStreamId: RemoteTxAudioStream]()
+//  @Published public var slices = [SliceId: Slice]()
+  @Published public var tnfs = [TnfId: Tnf]()
+//  @Published public var usbCables = [UsbCableId: UsbCable]()
+//  @Published public var waterfalls = [WaterfallStreamId: Waterfall]()
+//  @Published public var xvtrs = [XvtrId: Xvtr]()
 
+  // Static Models
+//  @Published public private(set) var atu: Atu!
+//  @Published public private(set) var cwx: Cwx!
+//  @Published public private(set) var gps: Gps!
+  @Published public private(set) var interlock: Interlock!
+//  @Published public private(set) var netCwStream: NetCwStream!
+//  @Published public private(set) var transmit: Transmit!
+//  @Published public private(set) var waveform: Waveform!
+//  @Published public private(set) var wanServer: WanServer!
 
 
   @Published public private(set) var antennaList = [AntennaPort]()
@@ -81,7 +107,7 @@ public final class Radio: Equatable {
   @Published public private(set) var locked = false
   @Published public private(set) var macAddress = ""
   @Published public private(set) var micList = [MicrophonePort]()
-  @Published public private(set) var mox = false
+  @Published public internal(set) var mox = false
   @Published public private(set) var muteLocalAudio = false
   @Published public private(set) var netmask = ""
   @Published public private(set) var nickname = ""
@@ -307,7 +333,7 @@ public final class Radio: Equatable {
   private var _command: TcpCommand
   private var _stream: UdpStream
   private var _cancellable: AnyCancellable?
-  private let _log = LogProxy.sharedInstance.log
+  let _log = LogProxy.sharedInstance.log
   private var _packet: Packet
   private var _replyHandlers = [SequenceNumber: ReplyTuple]()
   private var _lowBandwidthConnect = false
@@ -335,6 +361,15 @@ public final class Radio: Equatable {
     _appName = String(bundleIdentifier.suffix(from: bundleIdentifier.index(separator, offsetBy: 1)))
     _domain = String(bundleIdentifier.prefix(upTo: separator))
 
+    // initialize the static models (only one of each is ever created)
+//    atu = Atu()
+//    cwx = Cwx()
+//    gps = Gps()
+    interlock = Interlock()
+//    netCwStream = NetCwStream()
+//    transmit = Transmit()
+//    waveform = Waveform()
+
     // initialize Equalizers
     equalizers[.rxsc] = Equalizer(Equalizer.EqType.rxsc.rawValue)
     equalizers[.txsc] = Equalizer(Equalizer.EqType.txsc.rawValue)
@@ -345,8 +380,6 @@ public final class Radio: Equatable {
         self?.receivedMessage(msg)
       }
   }
-
-  // TODO: Update this
 
   /// Connect to this Radio
   ///
@@ -388,6 +421,7 @@ public final class Radio: Equatable {
   ///
   ///     Scenarios 2 & 4 are typically executed once which then allows the Client to use scenarios 1 & 3
   ///     for all subsequent connections (if the Client has persisted the ClientId)
+  ///
   /// - Parameter params:     a struct of parameters
   /// - Returns:              success / failure
   public func connect(_ packet: Packet) -> Bool {
@@ -426,17 +460,17 @@ public final class Radio: Equatable {
   /// Parse  Command messages from the Radio
   ///
   /// - Parameter msg:        the Message String
-  private func receivedMessage(_ msg: Substring) {
+  private func receivedMessage(_ msg: TcpMessage) {
     // get all except the first character
-    let suffix = String(msg.dropFirst())
+    let suffix = String(msg.text.dropFirst())
 
-    // switch on the first character (message type)
-    switch msg[msg.startIndex] {
+    // switch on the first character of the text
+    switch msg.text[msg.text.startIndex] {
 
     case "H", "h":  connectionHandle = suffix.handle ; _log("Radio: connectionHandle = \(connectionHandle?.hex ?? "nil")", .debug, #function, #file, #line)
-    case "M", "m":  parseMessage( msg.dropFirst() )
-    case "R", "r":  parseReply( msg.dropFirst() )
-    case "S", "s":  parseStatus( msg.dropFirst() )
+    case "M", "m":  parseMessage( msg.text.dropFirst() )
+    case "R", "r":  parseReply( msg.text.dropFirst() )
+    case "S", "s":  parseStatus( msg.text.dropFirst() )
     case "V", "v":  hardwareVersion = suffix ; _log("Radio: hardwareVersion = \(hardwareVersion ?? "unknown")", .debug, #function, #file, #line)
     default:        _log("Radio: unexpected message = \(msg)", .warning, #function, #file, #line)
     }
@@ -465,7 +499,6 @@ public final class Radio: Equatable {
   private func parseReply(_ msg: Substring) {
 
     // TODO: this is a stub for now
-    _log("Radio: reply = \(msg)", .debug, #function, #file, #line)
   }
 
   /// Parse a Status
@@ -505,7 +538,7 @@ public final class Radio: Equatable {
     case .eq:             Equalizer.parseStatus(self, remainder.keyValuesArray())
       //      case .file:           _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
       //      case .gps:            gps.parseProperties(remainder.keyValuesArray(delimiter: "#") )
-      //      case .interlock:      parseInterlock(self, remainder.keyValuesArray(), !remainder.contains(Api.kRemoved))
+    case .interlock:      parseInterlock(self, remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
       //      case .memory:         Memory.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Api.kRemoved))
       //      case .meter:          Meter.parseStatus(self, remainder.keyValuesArray(delimiter: "#"), !remainder.contains(Api.kRemoved))
       //      case .mixer:          _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
@@ -513,7 +546,7 @@ public final class Radio: Equatable {
     case .radio:          parseProperties(remainder.keyValuesArray())
       //      case .slice:          xLib6001.Slice.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Api.kNotInUse))
       //      case .stream:         parseStream(self, remainder)
-      //      case .tnf:            Tnf.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Api.kRemoved))
+    case .tnf:            Tnf.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
       //      case .transmit:       parseTransmit(self, remainder.keyValuesArray(), !remainder.contains(Api.kRemoved))
       //      case .turf:           _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
       //      case .usbCable:       UsbCable.parseStatus(self, remainder.keyValuesArray())
@@ -612,14 +645,13 @@ public final class Radio: Equatable {
 
   /// executed after an IP Address has been obtained
   private func connectionCompletion() {
-    _log("Radio: connectionCompletion for \(_packet.nickname)", .warning, #function, #file, #line)
+    _log("Radio: connectionCompletion for \(_packet.nickname)", .debug, #function, #file, #line)
     sendCommands()
     send("client udpport " + "\(_stream.sendPort)")
 
     if pingerEnabled {
       // start pinging the Radio
-      _pinger = Pinger(radio: self, command: _command)
-      _pinger?.startPinging()
+      _pinger = Pinger(radio: self, command: _command, nickname: _packet.nickname)
     }
 
 
@@ -680,6 +712,24 @@ public final class Radio: Equatable {
     case "version":       parseVersionReply( reply.keyValuesArray(delimiter: "#") )
     default:              break
     }
+  }
+  /// Parse an Interlock status message
+  ///   executed on the parseQ
+  ///
+  /// - Parameters:
+  ///   - radio:          the current Radio class
+  ///   - properties:     a KeyValuesArray
+  ///   - inUse:          false = "to be deleted"
+  private func parseInterlock(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+      // is it a Band Setting?
+      if properties[0].key == "band" {
+          // YES, drop the "band", pass it to BandSetting
+          BandSetting.parseStatus(self, Array(properties.dropFirst()), inUse )
+
+      } else {
+          // NO, pass it to Interlock
+          interlock.parseProperties(self, properties)
+      }
   }
 
   /// Parse the Reply to an Info command
@@ -808,11 +858,7 @@ public final class Radio: Equatable {
   }
 }
 
-
-// ----------------------------------------------------------------------------
-// MARK: - StaticModel extension
-
-extension Radio: StaticModel {
+extension Radio {
   /// Parse a Radio status message
   /// - Parameters:
   ///   - properties:      a KeyValuesArray

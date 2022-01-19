@@ -11,6 +11,11 @@ import Combine
 
 import Shared
 
+public struct TcpMessage {
+  public var timeInterval: TimeInterval
+  public var text: Substring
+}
+
 public struct TcpStatus: Identifiable, Equatable {
   public static func == (lhs: TcpStatus, rhs: TcpStatus) -> Bool {
     lhs.id == rhs.id
@@ -29,7 +34,7 @@ final public class TcpCommand: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  public var commandPublisher = PassthroughSubject<Substring, Never>()
+  public var commandPublisher = PassthroughSubject<TcpMessage, Never>()
   public var statusPublisher = PassthroughSubject<TcpStatus, Never>()
 
   public private(set) var interfaceIpAddress = "0.0.0.0"
@@ -43,6 +48,7 @@ final public class TcpCommand: NSObject {
   var _socket: GCDAsyncSocket!
   var _timeout = 0.0   // seconds
   var _packetSource: PacketSource?
+  var _startTime: Date?
   
   @Atomic(0) var sequenceNumber: Int
   
@@ -156,7 +162,6 @@ extension TcpCommand: GCDAsyncSocketDelegate {
   
   public func socket(_ sock: GCDAsyncSocket, didConnectToHost host: String, port: UInt16) {
     // Connected
-    //        interfaceIpAddress = sock.localHost!
     interfaceIpAddress = host
     
     // is this a Wan connection?
@@ -175,6 +180,7 @@ extension TcpCommand: GCDAsyncSocketDelegate {
                   error: nil)
       )
       // trigger the next read
+      _startTime = Date()
       _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
 
     }

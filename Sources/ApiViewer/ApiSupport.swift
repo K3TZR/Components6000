@@ -54,6 +54,7 @@ public struct CommandMessage: Equatable, Identifiable {
   public var id = UUID()
   var text: Substring
   var color: Color
+  var timeInterval: TimeInterval
 }
 
 // ----------------------------------------------------------------------------
