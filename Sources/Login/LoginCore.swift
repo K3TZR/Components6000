@@ -19,14 +19,19 @@ public struct LoginResult: Equatable {
 
 public struct LoginState: Equatable {
   
-  public init(heading: String = "Smartlink Login") {
+  public init(heading: String = "Smartlink Login", email: String = "", pwd: String = "") {
+    self.email = email
     self.heading = heading
+    self.pwd = pwd
   }
   
+  var email: String
   var heading: String
+  var pwd: String
 }
 
 public enum LoginAction: Equatable {
+  // UI controls
   case cancelButton
   case loginButton(LoginResult)
 }

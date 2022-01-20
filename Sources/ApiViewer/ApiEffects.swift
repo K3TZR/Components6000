@@ -15,9 +15,12 @@ import Shared
 
 public func listenForCommands(_ command: TcpCommand) -> Effect<ApiAction, Never> {
 
+  // subscribe to the publisher of received TcpMessages
   command.commandPublisher
+    // eliminate replies without errors / data
     .filter { allowToPass($0.text) }
     .receive(on: DispatchQueue.main)
+    // convert to CommandMessage format
     .map { tcpMessage in .commandAction(CommandMessage(text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
     .cancellable(id: CommandSubscriptionId())
@@ -36,13 +39,15 @@ private func lineColor(_ text: Substring) -> Color {
     return Color(.textColor)
 }
 
+/// Filter condition
+/// - Parameter reply:   the text of a TcpCommand
+/// - Returns:           a boolean
 private func allowToPass(_ reply: Substring) -> Bool {
-
   // is it a Reply message
   if reply.first != "R" { return true }
   // YES, only pass it if it indicates an error or shows additional data
   let parts = reply.components(separatedBy: "|")
-  if parts[1] != kNoError {return true}
+  if parts[1] != kNoError { return true }
   if parts[2] != "" { return true }
   return false
 }

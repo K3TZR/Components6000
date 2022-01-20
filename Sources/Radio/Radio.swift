@@ -374,6 +374,7 @@ public final class Radio: Equatable {
     equalizers[.rxsc] = Equalizer(Equalizer.EqType.rxsc.rawValue)
     equalizers[.txsc] = Equalizer(Equalizer.EqType.txsc.rawValue)
 
+    // subscribe to the publisher of received TcpCommands
     _cancellable = command.commandPublisher
       .receive(on: _parseQ)
       .sink { [weak self] msg in
@@ -496,9 +497,43 @@ public final class Radio: Equatable {
     // FIXME: Take action on some/all errors?
   }
 
-  private func parseReply(_ msg: Substring) {
+  /// Parse a Reply
+  ///   executed on the parseQ
+  ///
+  /// - Parameters:
+  ///   - commandSuffix:      a Reply Suffix
+  private func parseReply(_ replySuffix: Substring) {
+    // separate it into its components
+    let components = replySuffix.components(separatedBy: "|")
 
-    // TODO: this is a stub for now
+    // ignore incorrectly formatted replies
+    if components.count < 2 {
+      _log("Radio: incomplete reply, r\(replySuffix)", .warning, #function, #file, #line)
+      return
+    }
+    // is there an Object expecting to be notified?
+    if let replyTuple = replyHandlers[ components[0].uValue ] {
+      // YES, an Object is waiting for this reply, send the Command to the Handler on that Object
+      let command = replyTuple.command
+      // was a Handler specified?
+      if let handler = replyTuple.replyTo {
+        // YES, call the Handler
+        handler(command, components[0].sequenceNumber, components[1], (components.count == 3) ? components[2] : "")
+        print("----------> ", command)
+
+      } else {
+        // send it to the default reply handler
+        defaultReplyHandler(replyTuple.command, sequenceNumber: components[0].sequenceNumber, responseValue: components[1], reply: (components.count == 3) ? components[2] : "")
+      }
+      // Remove the object from the notification list
+      replyHandlers[components[0].sequenceNumber] = nil
+
+    } else {
+      // no Object is waiting for this reply, log it if it is a non-zero Reply (i.e a possible error)
+      if components[1] != Shared.kNoError {
+        _log("Radio: unhandled non-zero reply, c\(components[0]), r\(replySuffix), \(flexErrorString(errorCode: components[1]))", .warning, #function, #file, #line)
+      }
+    }
   }
 
   /// Parse a Status
@@ -651,7 +686,7 @@ public final class Radio: Equatable {
 
     if pingerEnabled {
       // start pinging the Radio
-      _pinger = Pinger(radio: self, command: _command, nickname: _packet.nickname)
+      _pinger = Pinger(radio: self, command: _command)
     }
 
 

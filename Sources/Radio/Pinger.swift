@@ -11,7 +11,7 @@ import Foundation
 import TcpCommands
 import Shared
 
-///  Pinger Class implementation
+///  Pinger Actor implementation
 ///
 ///      generates "ping" messages every kPingInterval second(s)
 ///      if no reply is received after kTimeoutInterval
@@ -26,22 +26,19 @@ final public class Pinger {
   private let _pingQ = DispatchQueue(label: "Radio.pingQ")
   private var _pingTimer: DispatchSourceTimer!
   private let _radio: Radio
-  private var _responseCount = 0
   private var _command: TcpCommand
-  private let _nickname: String
 
-  private let kPingInterval    = 1
-  private let kResponseCount = 2
-  private let kTimeoutInterval = 30.0
+  private let kPingInterval = 1
+  private let kTimeoutInterval = 10.0
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
 
-  public init(radio: Radio, command: TcpCommand, nickname: String) {
+  public init(radio: Radio, command: TcpCommand, pingInterval: Int = 1, pingTimeout: Double = 10) {
     _radio = radio
     _command = command
-    _nickname = nickname
-    startPinging()
+    _lastPingRxTime = Date(timeIntervalSinceNow: 0)
+    startPinging(interval: pingInterval, timeout: pingTimeout)
   }
 
   // ----------------------------------------------------------------------------
@@ -49,61 +46,45 @@ final public class Pinger {
 
   public func stopPinging() {
     _pingTimer?.cancel()
-    _responseCount = 0
     _log("Pinger: stopped", .debug, #function, #file, #line)
   }
 
   public func pingReply(_ command: String, seqNum: UInt, responseValue: String, reply: String) {
-    _responseCount += 1
-    // notification can be used to signal that the Radio is now fully initialized
-//    if _responseCount == kResponseCount { NC.post(.tcpPingResponse, object: nil) }
-
-    _pingQ.async { [weak self] in
-      // save the time of the Response
-      self?._lastPingRxTime = Date()
-    }
+    _lastPingRxTime = Date()
   }
 
   // ----------------------------------------------------------------------------
   // MARK: - Private methods
 
-  private func startPinging() {
-    _log("Pinger: started pinging \(_nickname)", .debug, #function, #file, #line)
+  private func startPinging(interval: Int, timeout: Double) {
+    _log("Pinger: started pinging", .debug, #function, #file, #line)
 
     // tell the Radio to expect pings
     _radio.send("keepalive enable")
 
-    // fake the first response
-    _lastPingRxTime = Date(timeIntervalSinceNow: 0)
-
     // create the timer's dispatch source
     _pingTimer = DispatchSource.makeTimerSource(queue: _pingQ)
 
-    // Setup the timer and inform observers
-    _pingTimer.schedule(deadline: DispatchTime.now(), repeating: .seconds(kPingInterval))
-//    NC.post(.tcpPingStarted, object: nil)
+    // Setup the timer
+    _pingTimer.schedule(deadline: DispatchTime.now(), repeating: .seconds(interval))
 
     // set the event handler
-    _pingTimer.setEventHandler { [ unowned self] in
-      // get current datetime
-      let now = Date()
+    _pingTimer.setEventHandler(handler: { self.timerHandler(timeout: timeout) })
 
-      // has it been too long since the last response?
-      if now.timeIntervalSince(self._lastPingRxTime) > kTimeoutInterval {
-        // YES, timeout, inform observers
-//        NC.post(.tcpPingTimeout, object: nil)
-
-        // stop the Pinger
-        let interval = String(format: "%02.1f", now.timeIntervalSince(self._lastPingRxTime))
-        _log("Pinger: timeout, interval = \(interval)", .debug, #function, #file, #line)
-        self.stopPinging()
-
-      } else {
-        // NO, send another Ping
-        _radio.send("ping", replyTo: self.pingReply)
-      }
-    }
     // start the timer
     _pingTimer.resume()
+  }
+
+  private func timerHandler(timeout: Double) {
+    // has it been too long since the last response?
+    if Date().timeIntervalSince(_lastPingRxTime) > timeout {
+      // YES, stop the Pinger
+      _log("Pinger: timeout", .debug, #function, #file, #line)
+      stopPinging()
+
+    } else {
+      // NO, ping again
+      _radio.send("ping", replyTo: self.pingReply)
+    }
   }
 }

@@ -53,7 +53,7 @@ struct PacketView: View {
           .onTapGesture {
             radioSelected.toggle()
             if radioSelected {
-              viewStore.send(.selection(PickerSelection(viewStore.source, viewStore.serial, nil)))
+              viewStore.send(.selection(PickerSelection(viewStore.source, viewStore.serial, nil, viewStore.guiClients)))
             } else {
               viewStore.send(.selection(nil))
             }
@@ -68,7 +68,7 @@ struct PacketView: View {
                 .onTapGesture {
                   if selectedStationIndex != 0 {
                     selectedStationIndex = 0
-                    viewStore.send(.selection(PickerSelection(viewStore.source, viewStore.serial, viewStore.guiClients[selectedStationIndex!].station)))
+                    viewStore.send(.selection(PickerSelection(viewStore.source, viewStore.serial, viewStore.guiClients[selectedStationIndex!].station, viewStore.guiClients)))
                   } else {
                     selectedStationIndex = nil
                     viewStore.send(.selection(nil))
@@ -84,7 +84,7 @@ struct PacketView: View {
                 .onTapGesture {
                   if selectedStationIndex != 1 {
                     selectedStationIndex = 1
-                    viewStore.send(.selection(PickerSelection(viewStore.source, viewStore.serial, viewStore.guiClients[selectedStationIndex!].station)))
+                    viewStore.send(.selection(PickerSelection(viewStore.source, viewStore.serial, viewStore.guiClients[selectedStationIndex!].station, viewStore.guiClients)))
                   } else {
                     selectedStationIndex = nil
                     viewStore.send(.selection(nil))

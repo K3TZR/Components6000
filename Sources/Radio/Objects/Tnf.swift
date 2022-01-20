@@ -17,7 +17,7 @@ import Shared
 ///       tnfs collection on the Radio object.
 ///
 
-public final class Tnf: ObservableObject, Identifiable {
+public final class Tnf: ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Static properties
 
@@ -28,7 +28,7 @@ public final class Tnf: ObservableObject, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
 
-  @Published nonisolated public internal(set) var id: TnfId
+  @Published public internal(set) var id: TnfId
 
   @Published public internal(set) var depth: UInt = 0
   @Published public internal(set) var frequency: Hz = 0

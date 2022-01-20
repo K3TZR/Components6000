@@ -122,7 +122,7 @@ extension Radio {
     // MARK: - Equalizer methods
 
     public func requestEqualizerInfo(_ eqType: String, callback:  ReplyHandler? = nil) {
-        // ask the Radio for the selected Equalizer settings
+        // ask the Radio for an Equalizer's settings
         send("eq " + eqType + " info", replyTo: callback)
     }
 
@@ -500,38 +500,38 @@ extension Radio {
     send("tnf remove " + " \(id)", replyTo: callback)
 
     // notify all observers
-//    NC.post(.tnfWillBeRemoved, object: self as Any?)
+    //    NC.post(.tnfWillBeRemoved, object: self as Any?)
 
     // remove it immediately (Tnf does not send status on removal)
     tnfs[id] = nil
 
     _log("Tnf, removed: id = \(id)", .debug, #function, #file, #line)
-//    NC.post(.tnfHasBeenRemoved, object: id as Any?)
+    //    NC.post(.tnfHasBeenRemoved, object: id as Any?)
   }
-    public func requestTnf(at frequency: Hz, callback: ReplyHandler? = nil) {
-        send("tnf create " + "freq" + "=\(frequency.hzToMhz)", replyTo: callback)
-    }
+  public func requestTnf(at frequency: Hz, callback: ReplyHandler? = nil) {
+    send("tnf create " + "freq" + "=\(frequency.hzToMhz)", replyTo: callback)
+  }
 
-    public func findTnf(at freq: Hz, minWidth: Hz) -> Tnf? {
-        // return the Tnfs within the specified Frequency / minimum width (if any)
-        let filteredTnfs = tnfs.values.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
-        guard filteredTnfs.count >= 1 else { return nil }
+  public func findTnf(at freq: Hz, minWidth: Hz) -> Tnf? {
+    // return the Tnfs within the specified Frequency / minimum width (if any)
+    let filteredTnfs = tnfs.values.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
+    guard filteredTnfs.count >= 1 else { return nil }
 
-        // return the first one
-        return filteredTnfs[0]
-    }
+    // return the first one
+    return filteredTnfs[0]
+  }
 
-    // ----------------------------------------------------------------------------
-    // MARK: - WanServer methods
-    
-//    public func smartlinkConfigure(tcpPort: Int, udpPort: Int, callback: ReplyHandler? = nil) {
-//        send("wan set " + "public_tls_port" + "=\(tcpPort)" + " public_udp_port" + "=\(udpPort)", replyTo: callback)
-//    }
-    
-    // ----------------------------------------------------------------------------
-    // MARK: - Xvtr methods
-    
-//    public func requestXvtr(callback: ReplyHandler? = nil) {
-//        send("xvtr create" , replyTo: callback)
-//    }
+  // ----------------------------------------------------------------------------
+  // MARK: - WanServer methods
+
+  //    public func smartlinkConfigure(tcpPort: Int, udpPort: Int, callback: ReplyHandler? = nil) {
+  //        send("wan set " + "public_tls_port" + "=\(tcpPort)" + " public_udp_port" + "=\(udpPort)", replyTo: callback)
+  //    }
+
+  // ----------------------------------------------------------------------------
+  // MARK: - Xvtr methods
+
+  //    public func requestXvtr(callback: ReplyHandler? = nil) {
+  //        send("xvtr create" , replyTo: callback)
+  //    }
 }
