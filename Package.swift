@@ -20,6 +20,7 @@ let package = Package(
     .library(name: "SecureStorage", targets: ["SecureStorage"]),
     .library(name: "Login", targets: ["Login"]),
     .library(name: "Radio", targets: ["Radio"]),
+    .library(name: "Connection", targets: ["Connection"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
@@ -28,6 +29,13 @@ let package = Package(
     .package(url: "https://github.com/DaveWoodCom/XCGLogger.git", from: "7.0.1"),
   ],
   targets: [
+    .target(
+      name: "Connection",
+      dependencies: [
+        "Picker",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
     .target(
       name: "Radio",
       dependencies: [
