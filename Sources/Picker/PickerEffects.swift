@@ -15,19 +15,19 @@ import Shared
 // ----------------------------------------------------------------------------
 // MARK: - Production effects
 
-public func discoverySubscriptions() -> Effect<PickerAction, Never> {
+public func liveDiscoveryEffect() -> Effect<PickerAction, Never> {
   
   return Effect.concatenate(
     Discovery.sharedInstance.packetPublisher
       .receive(on: DispatchQueue.main)
       .map { update in .packetChange(update) }
       .eraseToEffect()
-      .cancellable(id: PacketSubscriptionId()),
+      .cancellable(id: PacketEffectId()),
     
     Discovery.sharedInstance.clientPublisher
       .receive(on: DispatchQueue.main)
       .map { update in .clientChange(update) }
       .eraseToEffect()
-      .cancellable(id: ClientSubscriptionId())
+      .cancellable(id: ClientEffectId())
   )
 }

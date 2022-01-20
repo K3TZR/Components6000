@@ -69,7 +69,7 @@ public enum ApiAction: Equatable {
   case onAppear
   case pickerAction(PickerAction)
   case sheetClosed
-  case openRadio(PickerSelection)
+//  case openRadio(PickerSelection)
   case connectionAction(ConnectionAction)
   case connectionClosed
 
@@ -114,6 +114,17 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       environment: { _ in ConnectionEnvironment() }
     ),
   Reducer { state, action, environment in
+
+    func openRadio(_ selection: PickerSelection) {
+      state.radio = Radio(selection.packet, connectionType: state.isGui ? .gui : .nonGui, command: state.command, stream: UdpStream())
+      if state.radio!.connect(selection.packet) {
+        state.connectedPacket = selection
+        if state.clearOnConnect { state.commandMessages.removeAll() }
+      } else {
+        state.alert = AlertView(title: "Failed to connect to Radio \(selection.packet.nickname)")
+      }
+    }
+
     switch action {
       
       // ----------------------------------------------------------------------------
@@ -159,13 +170,13 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         state.alert = listenForLocalPackets(state)
       }
       if state.connectionMode == .smartlink || state.connectionMode == .both {
-        let alert = listenForWanPackets(state)
+        let alert = listenForWanPackets(state.discovery!, using: state.smartlinkEmail, forceLogin: state.wanLogin)
         if alert != nil {
           state.alert = alert
           state.loginState = LoginState(email: state.smartlinkEmail)
         }
       }
-      return listenForCommands(state.command)
+      return receiveMessagesEffect(state.command)
       
     case .sendButton:
       _ = state.command.send(state.commandToSend)
@@ -181,11 +192,12 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         if let def = state.defaultConnection {
           // YES, find a matching discovered packet
           for packet in state.discovery!.packets where def.source == packet.source.rawValue && def.serial == packet.serial {
-            return Effect( value: .openRadio(PickerSelection(packet, def.station)) )
+            openRadio(PickerSelection(packet, def.station))
+            return .none
           }
         }
         // otherwise, open the Picker
-        state.pickerState = PickerState(pickType: state.isGui ? .radio : .station)
+        state.pickerState = PickerState(connectionType: state.isGui ? .gui : .nonGui)
         return .none
 
       } else {
@@ -207,23 +219,12 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // TODO: take into account the clientIndex and isGui
     case let .pickerAction(.connectButton(selection)):
       state.pickerState = nil
-      if selection.packet.guiClients.count > 0 {
+      if state.isGui && selection.packet.guiClients.count > 0 {
         state.connectionState = ConnectionState(pickerSelection: selection)
-        return .none
       } else {
-        return Effect( value: .openRadio(selection) )
-      }
-
-    case .openRadio(let selection):
-      state.radio = Radio(selection.packet, connectionType: state.isGui ? .gui : .nonGui, command: state.command, stream: UdpStream())
-      if state.radio!.connect(selection.packet) {
-        state.connectedPacket = selection
-        if state.clearOnConnect { state.commandMessages.removeAll() }
-      } else {
-        state.alert = AlertView(title: "Failed to connect to Radio \(selection.packet.nickname)")
+        openRadio(selection)
       }
       return .none
-
 
     case let .pickerAction(.connectResultReceived(index)):
       print("-----> ApiCore: \(action) NOT IMPLEMENTED")
@@ -253,10 +254,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.loginState = nil
       return .none
       
-    case let .loginAction(.loginButton(result)):
+    case let .loginAction(.loginButton(credentials)):
       state.loginState = nil
-      state.smartlinkEmail = result.email
-      state.alert = listenForWanPackets(state, using: result)
+      state.smartlinkEmail = credentials.email
+      state.alert = listenForWanPackets(state.discovery!, using: credentials)
       return .none
       
     case .loginClosed:
@@ -275,7 +276,8 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case let .connectionAction(.simpleConnect(selection)):
       print("API -----> simpleConnection to \(selection.packet.nickname)")
       state.connectionState = nil
-      return Effect( value: .openRadio(selection) )
+      openRadio(selection)
+      return .none
 
     case let .connectionAction(.disconnectThenConnect(selection, index)):
       print("API -----> DisconnectThenConnect, disconnect \(selection.packet.guiClients[index].station), connect \(selection.packet.nickname), \(selection.station ?? "none")" )

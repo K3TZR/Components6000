@@ -109,8 +109,8 @@ final class WanListener: NSObject, ObservableObject {
   /// Start listening given a Smartlink email
   /// - Parameters:
   ///   - smartlinkEmail:     an email address associated with the Smartlink account
-  func start(using smartlinkEmail: String?, force: Bool) throws {
-    guard force == false else { throw WanListenerError.kFailedToObtainIdToken }
+  func start(using smartlinkEmail: String?, forceLogin: Bool) throws {
+    guard forceLogin == false else { throw WanListenerError.kFailedToObtainIdToken }
     // obtain an ID Token
     if let idToken = _authentication.getValidIdToken(from: _previousIdToken, or: smartlinkEmail) {
       _previousIdToken = idToken

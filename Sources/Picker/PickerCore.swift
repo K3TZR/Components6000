@@ -12,13 +12,8 @@ import Dispatch
 import Discovery
 import Shared
 
-struct PacketSubscriptionId: Hashable {}
-struct ClientSubscriptionId: Hashable {}
-
-public enum PickType: String, Equatable {
-  case station = "Station"
-  case radio = "Radio"
-}
+struct PacketEffectId: Hashable {}
+struct ClientEffectId: Hashable {}
 
 public enum PickerButton: Equatable {
   case test
@@ -37,7 +32,7 @@ public struct PickerSelection: Equatable {
 }
 
 public struct PickerState: Equatable {
-  public init(pickType: PickType = .radio,
+  public init(connectionType: ConnectionType = .gui,
               pickerSelection: PickerSelection? = nil,
               defaultSelection: PickerSelection? = nil,
               testStatus: Bool = false,
@@ -45,7 +40,7 @@ public struct PickerState: Equatable {
   {
     self.defaultSelection = defaultSelection
     self.discovery = discovery
-    self.pickType = pickType
+    self.connectionType = connectionType
     self.pickerSelection = pickerSelection
     self.testStatus = testStatus
   }
@@ -53,7 +48,7 @@ public struct PickerState: Equatable {
 //  public var connectedPacket: Packet?
   public var defaultSelection: PickerSelection?
   public var discovery: Discovery
-  public var pickType: PickType
+  public var connectionType: ConnectionType
   public var pickerSelection: PickerSelection?
   public var testStatus = false
   public var forceUpdate = false
@@ -81,15 +76,15 @@ public enum PickerAction: Equatable {
 public struct PickerEnvironment {
   public init(
     queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
-    subscriptions: @escaping () -> Effect<PickerAction, Never> = discoverySubscriptions
+    discoveryEffect: @escaping () -> Effect<PickerAction, Never> = liveDiscoveryEffect
   )
   {
     self.queue = queue
-    self.subscriptions = subscriptions
+    self.discoveryEffect = discoveryEffect
   }
   
   var queue: () -> AnySchedulerOf<DispatchQueue>
-  var subscriptions: () -> Effect<PickerAction, Never>
+  var discoveryEffect: () -> Effect<PickerAction, Never>
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
@@ -100,18 +95,25 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       ),
   Reducer { state, action, environment in
     switch action {
-      
+
       // ----------------------------------------------------------------------------
-      // MARK: - UI actions
+      // MARK: - Packet actions
+
+    case let .packet(id: id, action: .selection(selection)):
+      state.pickerSelection = selection
+      return .none
+
+      // ----------------------------------------------------------------------------
+      // MARK: - Picker UI actions
 
     case .cancelButton:
       // FIXME: probably should not do this here
       // stop listening for Discovery broadcasts (long-running Effect)
-      return .cancel(ids: PacketSubscriptionId(), ClientSubscriptionId())
+      return .cancel(ids: PacketEffectId(), ClientEffectId())
 
     case .connectButton(_):
       // handled downstream
-      return .cancel(ids: PacketSubscriptionId(), ClientSubscriptionId())
+      return .cancel(ids: PacketEffectId(), ClientEffectId())
 
     case .defaultButton(let selection):
       if state.defaultSelection == selection {
@@ -124,15 +126,14 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     case .onAppear:
       // FIXME: probably should not do this here
       // start listening for Discovery broadcasts (long-running Effect)
-      return environment.subscriptions()
+      return environment.discoveryEffect()
       
     case .testButton(_):
       // handled downstream
       return .none
-      
 
       // ----------------------------------------------------------------------------
-      // MARK: - Effect actions
+      // MARK: - Picker Effect actions
 
     case let .clientChange(update):
       // process a GuiClient change
@@ -150,17 +151,6 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     case let .testResultReceived(result):
       // TODO: Bool versus actual test results???
       state.testStatus = result
-      return .none
-      
-      // ----------------------------------------------------------------------------
-      // MARK: - Packet actions
-
-//    case let .packet(id: id, action: .defaultButton(selection)):
-//      state.defaultSelection = selection
-//      return .none
-
-    case let .packet(id: id, action: .selection(selection)):
-      state.pickerSelection = selection
       return .none
     }
   }

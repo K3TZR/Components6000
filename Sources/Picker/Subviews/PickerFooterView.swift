@@ -51,14 +51,14 @@ struct PickerFooterView_Previews: PreviewProvider {
   static var previews: some View {
     
     PickerFooterView(store: Store(
-      initialState: PickerState(pickType: .radio, testStatus: false),
+      initialState: PickerState(connectionType: .gui, testStatus: false),
       reducer: pickerReducer,
       environment: PickerEnvironment() )
     )
       .previewDisplayName("Test false")
     
     PickerFooterView(store: Store(
-      initialState: PickerState(pickType: .radio, testStatus: true),
+      initialState: PickerState(connectionType: .nonGui, testStatus: true),
       reducer: pickerReducer,
       environment: PickerEnvironment() )
     )

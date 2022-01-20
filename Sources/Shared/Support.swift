@@ -34,9 +34,9 @@ public typealias StreamId = UInt32
 public typealias TnfId = ObjectId
 public typealias ValuesArray = [String]
 
-public enum ConnectionType: Equatable {
-  case gui
-  case nonGui
+public enum ConnectionType: String, Equatable {
+  case gui = "Radio"
+  case nonGui = "Station"
 }
 
 public struct AlertView: Equatable, Identifiable {

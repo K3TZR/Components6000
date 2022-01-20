@@ -13,11 +13,11 @@ import SwiftUI
 import TcpCommands
 import Shared
 
-public func listenForCommands(_ command: TcpCommand) -> Effect<ApiAction, Never> {
+public func receiveMessagesEffect(_ command: TcpCommand) -> Effect<ApiAction, Never> {
 
   // subscribe to the publisher of received TcpMessages
   command.commandPublisher
-    // eliminate replies without errors / data
+    // eliminate replies without errors or data
     .filter { allowToPass($0.text) }
     .receive(on: DispatchQueue.main)
     // convert to CommandMessage format
@@ -30,7 +30,6 @@ public func listenForCommands(_ command: TcpCommand) -> Effect<ApiAction, Never>
 /// - Parameter text:   the text line
 /// - Returns:          a Color
 private func lineColor(_ text: Substring) -> Color {
-
     if text.prefix(1) == "C" { return Color(.systemGreen) }                         // Commands
     if text.prefix(1) == "R" && text.contains("|0|") { return Color(.systemGray) }  // Replies no error
     if text.prefix(1) == "R" && !text.contains("|0|") { return Color(.systemRed) }  // Replies w/error
@@ -43,11 +42,10 @@ private func lineColor(_ text: Substring) -> Color {
 /// - Parameter reply:   the text of a TcpCommand
 /// - Returns:           a boolean
 private func allowToPass(_ reply: Substring) -> Bool {
-  // is it a Reply message
-  if reply.first != "R" { return true }
-  // YES, only pass it if it indicates an error or shows additional data
+  if reply.first != "R" { return true }     // pass if not a Reply
   let parts = reply.components(separatedBy: "|")
-  if parts[1] != kNoError { return true }
-  if parts[2] != "" { return true }
-  return false
+  if parts.count < 3 { return true }        // pass if incomplete
+  if parts[1] != kNoError { return true }   // pass if error of some type
+  if parts[2] != "" { return true }         // pass if additional data present
+  return false                              // otherwise, filter out (i.e. don't pass)
 }

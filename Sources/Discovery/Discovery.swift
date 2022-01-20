@@ -56,9 +56,9 @@ public final class Discovery: Equatable, ObservableObject {
     try _lanListener.start()
   }
 
-  public func startWanListener(smartlinkEmail: String?, force: Bool = false) throws {
+  public func startWanListener(smartlinkEmail: String?, forceLogin: Bool = false) throws {
     guard _wanListener.isListening == false else { return }
-    try _wanListener.start(using: smartlinkEmail, force: force)
+    try _wanListener.start(using: smartlinkEmail, forceLogin: forceLogin)
   }
 
   public func startWanListener(using loginResult: LoginResult) throws {

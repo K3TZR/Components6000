@@ -22,8 +22,11 @@ public struct PickerView: View {
     self.store = store
   }
 
+  /// Determine whether there are items to list
+  /// - Parameter viewStore:     a viewStore
+  /// - Returns:                 a Bool
   func noItemsToDisplay(_ viewStore: ViewStore<PickerState, PickerAction>) -> Bool {
-    if viewStore.pickType == .radio {
+    if viewStore.connectionType == .gui {
       return viewStore.discovery.packets.count == 0
     } else {
       for packet in viewStore.discovery.packets where packet.guiClients.count > 0 {
@@ -37,13 +40,13 @@ public struct PickerView: View {
     
     WithViewStore(store) { viewStore in
       VStack(alignment: .leading) {
-        PickerHeaderView(pickType: viewStore.pickType)
+        PickerHeaderView(connectionType: viewStore.connectionType)
         Divider()
         if noItemsToDisplay(viewStore) {
           Spacer()
           HStack {
             Spacer()
-            Text("----------  NO  \(viewStore.pickType.rawValue)s  FOUND  ----------").foregroundColor(.red)
+            Text("----------  NO  \(viewStore.connectionType.rawValue)s  FOUND  ----------").foregroundColor(.red)
             Spacer()
           }
           Spacer()
@@ -55,7 +58,7 @@ public struct PickerView: View {
                 action: PickerAction.packet(id:action:)
               )
             ) { packetStore in
-              PacketView(store: packetStore, pickType: viewStore.pickType, defaultSelection: viewStore.defaultSelection)
+              PacketView(store: packetStore, connectionType: viewStore.connectionType, defaultSelection: viewStore.defaultSelection)
             }
           }
         }
@@ -63,9 +66,7 @@ public struct PickerView: View {
         PickerFooterView(store: store)
       }
       .frame(minWidth: 700, minHeight: 200, idealHeight: 300, maxHeight: 400)
-      .onAppear {
-        viewStore.send(.onAppear)
-      }
+      .onAppear { viewStore.send(.onAppear) }
     }
   }
 }
@@ -78,7 +79,7 @@ struct PickerView_Previews: PreviewProvider {
 
     PickerView(
       store: Store(
-        initialState: PickerState(pickType: .radio),
+        initialState: PickerState(connectionType: .gui),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
@@ -87,7 +88,7 @@ struct PickerView_Previews: PreviewProvider {
 
     PickerView(
       store: Store(
-        initialState: PickerState(pickType: .radio),
+        initialState: PickerState(connectionType: .gui),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
@@ -96,7 +97,7 @@ struct PickerView_Previews: PreviewProvider {
 
     PickerView(
       store: Store(
-        initialState: PickerState(pickType: .station),
+        initialState: PickerState(connectionType: .nonGui),
         reducer: pickerReducer,
         environment: PickerEnvironment()
       )
@@ -105,10 +106,10 @@ struct PickerView_Previews: PreviewProvider {
   }
 }
 
-private func isDefault(_ packet: Packet, _ def: PickerSelection?) -> Bool {
-  guard def != nil else { return false }
-  return packet == def!.packet
-}
+//private func isDefault(_ packet: Packet, _ def: PickerSelection?) -> Bool {
+//  guard def != nil else { return false }
+//  return packet == def!.packet
+//}
 
 
 // ----------------------------------------------------------------------------

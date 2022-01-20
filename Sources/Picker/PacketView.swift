@@ -15,28 +15,26 @@ import Shared
 
 struct PacketView: View {
   let store: Store<Packet, PacketAction>
-  let pickType: PickType
+  let connectionType: ConnectionType
   let defaultSelection: PickerSelection?
 
   @State var radioSelected = false
-  @State var selectedStationIndex: Int?
+  @State var selectedStation: String?
 
-  func parseStations(_ clients: IdentifiedArrayOf<GuiClient>) -> [String] {
-    switch clients.count {
-    case 1: return [clients[0].station, ""]
-    case 2: return [clients[0].station, clients[1].station]
+  /// Create an array of station fromthe GuiClients array
+  /// - Parameter guiClients:  an array of GuiClients
+  /// - Returns:               an array of station names
+  func parseStations(_ store: ViewStore<Packet, PacketAction>) -> [String] {
+    switch store.guiClients.count {
+    case 1: return [store.guiClients[0].station, ""]
+    case 2: return [store.guiClients[0].station, store.guiClients[1].station]
     default: return ["",""]
     }
   }
 
   func isDefault(_ store: ViewStore<Packet, PacketAction>) -> Bool {
     guard defaultSelection != nil else { return false }
-
-    if let index = selectedStationIndex {
-      return store.source == defaultSelection!.packet.source && store.serial == defaultSelection!.packet.serial && defaultSelection!.station == store.guiClients[index].station
-    } else {
-      return store.source == defaultSelection!.packet.source && store.serial == defaultSelection!.packet.serial && defaultSelection!.station == nil
-    }
+    return store.source == defaultSelection!.packet.source && store.serial == defaultSelection!.packet.serial && defaultSelection!.station == selectedStation
   }
 
   var body: some View {
@@ -58,41 +56,43 @@ struct PacketView: View {
               viewStore.send(.selection(nil))
             }
           }
-          .disabled(pickType == .station)
+          .disabled(connectionType == .nonGui)
           .font(.title3)
           .frame(width: 140, alignment: .leading)
 
           Group {
+            let station = parseStations(viewStore)[0]
             ZStack {
-              Text(parseStations(viewStore.guiClients)[0])
+              Text(station)
                 .onTapGesture {
-                  if selectedStationIndex != 0 {
-                    selectedStationIndex = 0
-                    viewStore.send(.selection(PickerSelection(viewStore.state,  viewStore.guiClients[selectedStationIndex!].station)))
+                  if selectedStation != station {
+                    selectedStation = station
+                    viewStore.send(.selection(PickerSelection(viewStore.state,  station)))
                   } else {
-                    selectedStationIndex = nil
+                    selectedStation = nil
                     viewStore.send(.selection(nil))
                   }
                 }
-                .disabled(pickType == .radio)
+                .disabled(connectionType == .gui)
 
-              Rectangle().fill(selectedStationIndex == 0 ? .gray : .clear).opacity(0.2)
+              Rectangle().fill(selectedStation != nil && selectedStation == station ? .gray : .clear).opacity(0.2)
 
             }
             ZStack {
-              Text(parseStations(viewStore.guiClients)[1])
+              let station = parseStations(viewStore)[1]
+              Text(station)
                 .onTapGesture {
-                  if selectedStationIndex != 1 {
-                    selectedStationIndex = 1
-                    viewStore.send(.selection(PickerSelection(viewStore.state, viewStore.guiClients[selectedStationIndex!].station)))
+                  if selectedStation != station {
+                    selectedStation = station
+                    viewStore.send(.selection(PickerSelection(viewStore.state,  station)))
                   } else {
-                    selectedStationIndex = nil
+                    selectedStation = nil
                     viewStore.send(.selection(nil))
                   }
                 }
-                .disabled(pickType == .radio)
+                .disabled(connectionType == .gui)
 
-              Rectangle().fill(selectedStationIndex == 1 ? .gray : .clear).opacity(0.2)
+              Rectangle().fill(selectedStation != nil && selectedStation == station ? .gray : .clear).opacity(0.2)
             }
           }
           .font(.title3)
@@ -112,7 +112,7 @@ struct PacketView_Previews: PreviewProvider {
       initialState: testPacket1(),
       reducer: packetReducer,
       environment: PacketEnvironment() ),
-               pickType: .radio,
+               connectionType: .gui,
                defaultSelection: nil
     )
     .frame(minWidth: 700)

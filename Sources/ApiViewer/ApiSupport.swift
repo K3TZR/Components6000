@@ -11,6 +11,7 @@ import SwiftUI
 import Login
 import Discovery
 import Picker
+import UdpStreams
 import Shared
 
 // ----------------------------------------------------------------------------
@@ -73,9 +74,9 @@ func listenForLocalPackets(_ state: ApiState) -> AlertView? {
   }
 }
 
-func listenForWanPackets(_ state: ApiState) -> AlertView? {
+func listenForWanPackets(_ discovery: Discovery, using smartlinkEmail: String, forceLogin: Bool = false) -> AlertView? {
   do {
-    try state.discovery?.startWanListener(smartlinkEmail: state.smartlinkEmail, force: state.wanLogin)
+    try discovery.startWanListener(smartlinkEmail: smartlinkEmail, forceLogin: forceLogin)
     return nil
   } catch WanListenerError.kFailedToObtainIdToken {
     return AlertView(title: "Discovery: Wan Logoin required")
@@ -86,9 +87,9 @@ func listenForWanPackets(_ state: ApiState) -> AlertView? {
   }
 }
 
-func listenForWanPackets(_ state: ApiState, using loginResult: LoginResult) -> AlertView? {
+func listenForWanPackets(_ discovery: Discovery, using loginResult: LoginResult) -> AlertView? {
   do {
-    try state.discovery?.startWanListener(using: loginResult)
+    try discovery.startWanListener(using: loginResult)
     return nil
   } catch WanListenerError.kFailedToObtainIdToken {
     return AlertView(title: "Discovery: Wan Listener, Failed to Obtain IdToken")
@@ -97,22 +98,6 @@ func listenForWanPackets(_ state: ApiState, using loginResult: LoginResult) -> A
   } catch {
     return AlertView(title: "Discovery: Wan Listener, unknown error")
   }
-}
-
-//func identifySelection(_ sel: PickerSelection?, _ discovery: Discovery) -> Packet? {
-//  guard sel != nil else { return nil }
-//  for packet in discovery.packets where sel!.source == packet.source && sel!.serial == packet.serial {
-//    return packet
-//  }
-//  return nil
-//}
-
-func identifyDefault(_ conn: DefaultConnection?, _ discovery: Discovery) -> Packet? {
-  guard conn != nil else { return nil }
-  for packet in discovery.packets where conn!.source == packet.source.rawValue && conn!.serial == packet.serial {
-    return packet
-  }
-  return nil
 }
 
 func getDefaultConnection() -> DefaultConnection? {
@@ -139,21 +124,3 @@ func setDefaultConnection(_ conn: DefaultConnection?) {
     }
   }
 }
-
-//func filterMessages(_ messages: IdentifiedArrayOf<CommandMessage>, ) -> IdentifiedArrayOf<CommandMessage> {
-//
-//  // get all except the first character
-//  let suffix = String(text.dropFirst())
-//
-//  // switch on the first character
-//  switch text[text.startIndex] {
-//
-//  case "C":   DispatchQueue.main.async { self.populateMessages(text) }      // Commands
-//  case "H":   DispatchQueue.main.async { self.populateMessages(text) }      // Handle type
-//  case "M":   DispatchQueue.main.async { self.populateMessages(text) }      // Message Type
-//  case "R":   DispatchQueue.main.async { self.parseReplyMessage(suffix) }   // Reply Type
-//  case "S":   DispatchQueue.main.async { self.populateMessages(text) }      // Status type
-//  case "V":   DispatchQueue.main.async { self.populateMessages(text) }      // Version Type
-//  default:    DispatchQueue.main.async { self.populateMessages("Tester: Unknown Message type, \(text[text.startIndex]) ") } // Unknown Type
-//  }
-//}

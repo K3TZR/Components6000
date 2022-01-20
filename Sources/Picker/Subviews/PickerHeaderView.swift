@@ -8,19 +8,21 @@
 import SwiftUI
 import ComposableArchitecture
 
+import Shared
+
 // ----------------------------------------------------------------------------
 // MARK: - View
 
 struct PickerHeaderView: View {
-  let pickType: PickType
+  let connectionType: ConnectionType
 
   var body: some View {
     VStack {
-      Text("Select a \(pickType.rawValue)")
+      Text("Select a \(connectionType.rawValue.uppercased())")
         .font(.title)
         .padding(.bottom, 10)
 
-      Text("Click on a \(pickType == .radio ? "NAME" : "STATION" ) in the list below")
+      Text("Click on a \(connectionType.rawValue.uppercased()) in the list below")
         .font(.title3)
         .padding(.bottom, 10)
 
@@ -45,10 +47,10 @@ struct PickerHeaderView: View {
 
 struct PickerHeaderView_Previews: PreviewProvider {
   static var previews: some View {
-    PickerHeaderView(pickType: .radio)
+    PickerHeaderView(connectionType: .gui)
       .previewDisplayName("Radio Picker")
 
-    PickerHeaderView(pickType: .station)
+    PickerHeaderView(connectionType: .nonGui)
       .previewDisplayName("Station Picker")
   }
 }
