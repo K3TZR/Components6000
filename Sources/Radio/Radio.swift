@@ -519,7 +519,6 @@ public final class Radio: Equatable {
       if let handler = replyTuple.replyTo {
         // YES, call the Handler
         handler(command, components[0].sequenceNumber, components[1], (components.count == 3) ? components[2] : "")
-        print("----------> ", command)
 
       } else {
         // send it to the default reply handler

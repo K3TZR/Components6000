@@ -33,9 +33,9 @@ struct PacketView: View {
     guard defaultSelection != nil else { return false }
 
     if let index = selectedStationIndex {
-      return store.source == defaultSelection!.source && store.serial == defaultSelection!.serial && defaultSelection!.station == store.guiClients[index].station
+      return store.source == defaultSelection!.packet.source && store.serial == defaultSelection!.packet.serial && defaultSelection!.station == store.guiClients[index].station
     } else {
-      return store.source == defaultSelection!.source && store.serial == defaultSelection!.serial && defaultSelection!.station == nil
+      return store.source == defaultSelection!.packet.source && store.serial == defaultSelection!.packet.serial && defaultSelection!.station == nil
     }
   }
 
@@ -53,7 +53,7 @@ struct PacketView: View {
           .onTapGesture {
             radioSelected.toggle()
             if radioSelected {
-              viewStore.send(.selection(PickerSelection(viewStore.source, viewStore.serial, nil, viewStore.guiClients)))
+              viewStore.send(.selection(PickerSelection(viewStore.state, nil)))
             } else {
               viewStore.send(.selection(nil))
             }
@@ -68,7 +68,7 @@ struct PacketView: View {
                 .onTapGesture {
                   if selectedStationIndex != 0 {
                     selectedStationIndex = 0
-                    viewStore.send(.selection(PickerSelection(viewStore.source, viewStore.serial, viewStore.guiClients[selectedStationIndex!].station, viewStore.guiClients)))
+                    viewStore.send(.selection(PickerSelection(viewStore.state,  viewStore.guiClients[selectedStationIndex!].station)))
                   } else {
                     selectedStationIndex = nil
                     viewStore.send(.selection(nil))
@@ -84,7 +84,7 @@ struct PacketView: View {
                 .onTapGesture {
                   if selectedStationIndex != 1 {
                     selectedStationIndex = 1
-                    viewStore.send(.selection(PickerSelection(viewStore.source, viewStore.serial, viewStore.guiClients[selectedStationIndex!].station, viewStore.guiClients)))
+                    viewStore.send(.selection(PickerSelection(viewStore.state, viewStore.guiClients[selectedStationIndex!].station)))
                   } else {
                     selectedStationIndex = nil
                     viewStore.send(.selection(nil))

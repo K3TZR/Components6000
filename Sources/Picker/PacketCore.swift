@@ -10,7 +10,6 @@ import Shared
 
 public enum PacketAction: Equatable {
   // UI actions
-//  case defaultButton(PickerSelection?)
   case selection(PickerSelection?)
 }
 

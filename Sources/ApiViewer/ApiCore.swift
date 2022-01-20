@@ -10,6 +10,7 @@ import Dispatch
 
 import Login
 import Picker
+import Connection
 import Discovery
 import TcpCommands
 import UdpStreams
@@ -43,7 +44,8 @@ public struct ApiState: Equatable {
   public var filteredCommandMessages = IdentifiedArrayOf<CommandMessage>()
   public var pickerState: PickerState? = nil
   public var update = false
-    
+  public var connectionState: ConnectionState?
+
   public init() {
     clearOnConnect = UserDefaults.standard.bool(forKey: "clearOnConnect")
     clearOnDisconnect = UserDefaults.standard.bool(forKey: "clearOnDisconnect")
@@ -68,6 +70,8 @@ public enum ApiAction: Equatable {
   case pickerAction(PickerAction)
   case sheetClosed
   case openRadio(PickerSelection)
+  case connectionAction(ConnectionAction)
+  case connectionClosed
 
   // UI controls
   case button(WritableKeyPath<ApiState, Bool>)
@@ -102,6 +106,13 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       action: /ApiAction.pickerAction,
       environment: { _ in PickerEnvironment() }
     ),
+  connectionReducer
+    .optional()
+    .pullback(
+      state: \ApiState.connectionState,
+      action: /ApiAction.connectionAction,
+      environment: { _ in ConnectionEnvironment() }
+    ),
   Reducer { state, action, environment in
     switch action {
       
@@ -115,11 +126,11 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
 
     case .clearDefaultButton:
       state.defaultConnection = nil
-//      if let discovery = state.discovery {
-//        for packet in discovery.packets {
-//          discovery.packets[id: packet.id]?.isDefault = false
-//        }
-//      }
+      //      if let discovery = state.discovery {
+      //        for packet in discovery.packets {
+      //          discovery.packets[id: packet.id]?.isDefault = false
+      //        }
+      //      }
       return .none
 
     case .clearNowButton:
@@ -137,7 +148,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .logViewButton:
       // handled by Root
       return .none
-    
+
     case let .modePicker(mode):
       state.connectionMode = mode
       return .none
@@ -167,10 +178,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .startStopButton:
       if state.connectedPacket == nil {
         // NOT connected, is there a default?
-        if let conn = state.defaultConnection {
-          // YES, try to find it
-          for packet in state.discovery!.packets where conn.source == packet.source.rawValue && conn.serial == packet.serial && conn.station == nil {
-            return Effect( value: .openRadio(PickerSelection(packet.source, packet.serial, conn.station)) )
+        if let def = state.defaultConnection {
+          // YES, find a matching discovered packet
+          for packet in state.discovery!.packets where def.source == packet.source.rawValue && def.serial == packet.serial {
+            return Effect( value: .openRadio(PickerSelection(packet, def.station)) )
           }
         }
         // otherwise, open the Picker
@@ -196,19 +207,20 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // TODO: take into account the clientIndex and isGui
     case let .pickerAction(.connectButton(selection)):
       state.pickerState = nil
-      return Effect( value: .openRadio(selection) )
+      if selection.packet.guiClients.count > 0 {
+        state.connectionState = ConnectionState(pickerSelection: selection)
+        return .none
+      } else {
+        return Effect( value: .openRadio(selection) )
+      }
 
     case .openRadio(let selection):
-      if let packet = identifySelection(selection, state.discovery!) {
-        state.radio = Radio(packet, connectionType: state.isGui ? .gui : .nonGui, command: state.command, stream: UdpStream())
-        if state.radio!.connect(packet) {
-          state.connectedPacket = selection
-          if state.clearOnConnect { state.commandMessages.removeAll() }
-        } else {
-          state.alert = AlertView(title: "Failed to connect to Radio \(packet.nickname)")
-        }
+      state.radio = Radio(selection.packet, connectionType: state.isGui ? .gui : .nonGui, command: state.command, stream: UdpStream())
+      if state.radio!.connect(selection.packet) {
+        state.connectedPacket = selection
+        if state.clearOnConnect { state.commandMessages.removeAll() }
       } else {
-        state.alert = AlertView(title: "Failed to find selection \(selection.source)")
+        state.alert = AlertView(title: "Failed to connect to Radio \(selection.packet.nickname)")
       }
       return .none
 
@@ -218,7 +230,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
     case let .pickerAction(.testButton(selection)):
-      print("-----> ApiCore: Test for \(selection.source.rawValue), \(selection.serial), \(selection.station ?? "")")
+      print("-----> ApiCore: Test for \(selection.packet.source.rawValue), \(selection.packet.serial), \(selection.station ?? "")")
       return .none
       
     case let .pickerAction(.defaultButton(selection)):
@@ -251,7 +263,25 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.loginState = nil
       print("-----> ApiViewer: Login closed")
       return .none
-      
+
+      // ----------------------------------------------------------------------------
+      // MARK: - Connection actions
+
+    case .connectionAction(.cancelButton):
+      print("API -----> cancelButton")
+      state.connectionState = nil
+      return .none
+
+    case let .connectionAction(.simpleConnect(selection)):
+      print("API -----> simpleConnection to \(selection.packet.nickname)")
+      state.connectionState = nil
+      return Effect( value: .openRadio(selection) )
+
+    case let .connectionAction(.disconnectThenConnect(selection, index)):
+      print("API -----> DisconnectThenConnect, disconnect \(selection.packet.guiClients[index].station), connect \(selection.packet.nickname), \(selection.station ?? "none")" )
+      state.connectionState = nil
+      return .none
+
       // ----------------------------------------------------------------------------
       // MARK: - Alert actions
       
@@ -265,6 +295,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case let .commandAction(message):
       state.commandMessages.append(message)
       state.update.toggle()
+      return .none
+
+    case .connectionClosed:
+      state.connectionState = nil
       return .none
     }
   }

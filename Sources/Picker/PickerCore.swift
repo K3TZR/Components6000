@@ -27,17 +27,13 @@ public enum PickerButton: Equatable {
 }
 
 public struct PickerSelection: Equatable {
-  public init(_ source: PacketSource, _ serial: String, _ station: String?, _ guiClients: IdentifiedArrayOf<GuiClient>) {
-    self.source = source
-    self.serial = serial
+  public init(_ packet: Packet, _ station: String?) {
+    self.packet = packet
     self.station = station
-    self.guiClients = guiClients
   }
 
-  public var source: PacketSource
-  public var serial: String
+  public var packet: Packet
   public var station: String?
-  public var guiClients: IdentifiedArrayOf<GuiClient>
 }
 
 public struct PickerState: Equatable {

@@ -9,6 +9,7 @@ import SwiftUI
 import ComposableArchitecture
 
 import Login
+import Connection
 import Picker
 import Shared
 
@@ -67,6 +68,19 @@ public struct ApiView: View {
                         action: ApiAction.loginAction
                        ),
             then: LoginView.init(store:)
+          )
+        }
+      )
+      .sheet(
+        isPresented: viewStore.binding(
+          get: { $0.connectionState != nil },
+          send: ApiAction.connectionClosed),
+        content: {
+          IfLetStore(
+            store.scope(state: \.connectionState,
+                        action: ApiAction.connectionAction
+                       ),
+            then: ConnectionView.init(store:)
           )
         }
       )

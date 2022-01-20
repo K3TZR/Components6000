@@ -21,8 +21,8 @@ struct CommandSubscriptionId: Hashable {}
 public struct DefaultConnection: Codable, Equatable {
 
   public init(_ selection: PickerSelection) {
-    self.source = selection.source.rawValue
-    self.serial = selection.serial
+    self.source = selection.packet.source.rawValue
+    self.serial = selection.packet.serial
     self.station = selection.station
   }
 
@@ -99,13 +99,13 @@ func listenForWanPackets(_ state: ApiState, using loginResult: LoginResult) -> A
   }
 }
 
-func identifySelection(_ sel: PickerSelection?, _ discovery: Discovery) -> Packet? {
-  guard sel != nil else { return nil }
-  for packet in discovery.packets where sel!.source == packet.source && sel!.serial == packet.serial {
-    return packet
-  }
-  return nil
-}
+//func identifySelection(_ sel: PickerSelection?, _ discovery: Discovery) -> Packet? {
+//  guard sel != nil else { return nil }
+//  for packet in discovery.packets where sel!.source == packet.source && sel!.serial == packet.serial {
+//    return packet
+//  }
+//  return nil
+//}
 
 func identifyDefault(_ conn: DefaultConnection?, _ discovery: Discovery) -> Packet? {
   guard conn != nil else { return nil }

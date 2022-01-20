@@ -107,7 +107,7 @@ struct PickerView_Previews: PreviewProvider {
 
 private func isDefault(_ packet: Packet, _ def: PickerSelection?) -> Bool {
   guard def != nil else { return false }
-  return packet.source == def!.source && packet.serial == def!.serial
+  return packet == def!.packet
 }
 
 

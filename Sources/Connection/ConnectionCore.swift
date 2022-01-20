@@ -22,28 +22,26 @@ public struct ConnectionState: Equatable {
 public enum ConnectionAction: Equatable {
   // UI controls
   case cancelButton
-  case simpleConnect
-//  case disconnectThenConnect(PickerSelection, PickerSelection)
-  case disconnectThenConnect
+  case simpleConnect(PickerSelection)
+  case disconnectThenConnect(PickerSelection, Int)
 }
 
 public struct ConnectionEnvironment {
+
+  public init() {}
 }
 
-let connectionReducer = Reducer<ConnectionState, ConnectionAction, ConnectionEnvironment>
+public let connectionReducer = Reducer<ConnectionState, ConnectionAction, ConnectionEnvironment>
   { state, action, environment in
 
     switch action {
-    case .disconnectThenConnect:
-      print("-----> DisconnectThenConnect")
+    case let .disconnectThenConnect(selection, indexToDisconnect):
       return .none
 
-    case .simpleConnect:
-      print("-----> simpleConnection")
+    case .simpleConnect(let selection):
       return .none
 
     case .cancelButton:
-      print("-----> cancelButton")
       return .none
     }
   }

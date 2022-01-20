@@ -19,7 +19,7 @@ struct PickerFooterView: View {
 
       HStack(){
         Button("Test") {viewStore.send(.testButton(viewStore.pickerSelection!))}
-        .disabled(viewStore.pickerSelection == nil || viewStore.pickerSelection?.source != .smartlink)
+        .disabled(viewStore.pickerSelection == nil || viewStore.pickerSelection?.packet.source != .smartlink)
         Circle()
           .fill(viewStore.testStatus ? Color.green : Color.red)
           .frame(width: 20, height: 20)

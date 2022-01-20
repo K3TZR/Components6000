@@ -65,6 +65,7 @@ let package = Package(
       dependencies: [
         "Login",
         "Picker",
+        "Connection",
         "Discovery",
         "TcpCommands",
         "UdpStreams",
