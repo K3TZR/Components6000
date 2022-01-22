@@ -22,6 +22,10 @@ extension Radio {
       case forced
       case wanValidationFailed      = "wan_validation_failed"
   }
+  enum DisplayTokens: String {
+      case panadapter               = "pan"
+      case waterfall
+  }
   enum FilterSharpnessTokens: String {
     case cw
     case digital

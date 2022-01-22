@@ -21,6 +21,7 @@ public let kRemoved = "removed"
 // ----------------------------------------------------------------------------
 // MARK: - Aliases
 
+public typealias AmplifierId = Handle
 public typealias AntennaPort = String
 public typealias BandId = ObjectId
 public typealias EqualizerId = String
@@ -30,8 +31,14 @@ public typealias Hz = Int
 public typealias IdToken = String
 public typealias KeyValuesArray = [(key:String, value:String)]
 public typealias MHz = Double
+public typealias MemoryId = ObjectId
+public typealias MeterId = ObjectId
+public typealias MeterName  = String
 public typealias MicrophonePort = String
 public typealias ObjectId = UInt16
+public typealias PanadapterStreamId = StreamId
+public typealias ProfileId = String
+public typealias ProfileName = String
 public typealias RadioId = String
 public typealias ReplyHandler = (_ command: String, _ seqNumber: SequenceNumber, _ responseValue: String, _ reply: String) -> Void
 public typealias ReplyTuple = (replyTo: ReplyHandler?, command: String)
@@ -40,7 +47,10 @@ public typealias SequenceNumber = UInt
 public typealias SliceId = ObjectId
 public typealias StreamId = UInt32
 public typealias TnfId = ObjectId
+public typealias UsbCableId = String
 public typealias ValuesArray = [String]
+public typealias WaterfallStreamId = StreamId
+public typealias XvtrId = ObjectId
 
 public enum ConnectionType: String, Equatable {
   case gui = "Radio"
@@ -161,6 +171,14 @@ public extension String {
     array = array.map { $0.trimmingCharacters(in: .whitespaces) }
     
     return array
+  }
+
+  /// Replace spaces with a specified value
+  /// - Parameters:
+  ///   - value:      the String to replace spaces
+  /// - Returns:      the adjusted String
+  func replacingSpaces(with value: String = "\u{007F}") -> String {
+      return self.replacingOccurrences(of: " ", with: value)
   }
 }
 
@@ -285,6 +303,53 @@ public extension UInt16 {
 public extension UInt32 {
   var hex: String { return String(format: "0x%08X", self) }
   func toHex(_ format: String = "0x%08X") -> String { String(format: format, self) }
+}
+
+extension String {
+  /// Replace spaces and equal signs in a CWX Macro with alternate characters
+  /// - Returns:      the String after processing
+  public func fix(spaceReplacement: String = "\u{007F}", equalsReplacement: String = "*") -> String {
+    var newString: String = ""
+    var quotes = false
+    
+    // We could have spaces inside quotes, so we have to convert them to something else for key/value parsing.
+    // We could also have an equal sign '=' (for Prosign BT) inside the quotes, so we're converting to a '*' so that the split on "="
+    // will still work.  This will prevent the character '*' from being stored in a macro.  Using the ascii byte for '=' will not work.
+    for char in self {
+      if char == "\"" {
+        quotes = !quotes
+        
+      } else if char == " " && quotes {
+        newString += spaceReplacement
+        
+      } else if char == "=" && quotes {
+        newString += equalsReplacement
+        
+      } else {
+        newString.append(char)
+      }
+    }
+    return newString
+  }
+  
+  /// Undo any changes made to a Cwx Macro string by the fix method    ///
+  /// - Returns:          the String after undoing the fixString changes
+  public func unfix(spaceReplacement: String = "\u{007F}", equalsReplacement: String = "*") -> String {
+    var newString: String = ""
+    
+    for char in self {
+      if char == Character(spaceReplacement) {
+        newString += " "
+        
+      } else if char == Character(equalsReplacement) {
+        newString += "="
+        
+      } else {
+        newString.append(char)
+      }
+    }
+    return newString
+  }
 }
 
 // ----------------------------------------------------------------------------

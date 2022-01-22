@@ -117,29 +117,29 @@ extension Radio {
     // Known Message Types, in alphabetical order
     switch token {
 
-      //      case .amplifier:      Amplifier.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Api.kRemoved))
-      //      case .atu:            atu.parseProperties(remainder.keyValuesArray() )
+    case .amplifier:      Amplifier.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
+    case .atu:            atu.parseProperties(remainder.keyValuesArray() )
     case .client:         parseClient(self, remainder.keyValuesArray(), !remainder.contains(Shared.kDisconnected))
-      //      case .cwx:            cwx.parseProperties(remainder.fix().keyValuesArray() )
-      //      case .display:        parseDisplay(self, remainder.keyValuesArray(), !remainder.contains(Api.kRemoved))
+    case .cwx:            cwx.parseProperties(remainder.fix().keyValuesArray() )
+    case .display:        parseDisplay(self, remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
     case .eq:             Equalizer.parseStatus(self, remainder.keyValuesArray())
-      //      case .file:           _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
-      //      case .gps:            gps.parseProperties(remainder.keyValuesArray(delimiter: "#") )
+    case .file:           _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
+    case .gps:            gps.parseProperties(remainder.keyValuesArray(delimiter: "#") )
     case .interlock:      parseInterlock(self, remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
-      //      case .memory:         Memory.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Api.kRemoved))
-      //      case .meter:          Meter.parseStatus(self, remainder.keyValuesArray(delimiter: "#"), !remainder.contains(Api.kRemoved))
-      //      case .mixer:          _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
-      //      case .profile:        Profile.parseStatus(self, remainder.keyValuesArray(delimiter: "="))
+    case .memory:         Memory.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
+    case .meter:          Meter.parseStatus(self, remainder.keyValuesArray(delimiter: "#"), !remainder.contains(Shared.kRemoved))
+    case .mixer:          _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
+    case .profile:        Profile.parseStatus(self, remainder.keyValuesArray(delimiter: "="))
     case .radio:          parseProperties(remainder.keyValuesArray())
-      //      case .slice:          xLib6001.Slice.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Api.kNotInUse))
+    case .slice:          Slice.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Shared.kNotInUse))
       //      case .stream:         parseStream(self, remainder)
     case .tnf:            Tnf.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
-      //      case .transmit:       parseTransmit(self, remainder.keyValuesArray(), !remainder.contains(Api.kRemoved))
-      //      case .turf:           _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
-      //      case .usbCable:       UsbCable.parseStatus(self, remainder.keyValuesArray())
-      //      case .wan:            parseProperties(remainder.keyValuesArray())
-      //      case .waveform:       waveform.parseProperties(remainder.keyValuesArray())
-      //      case .xvtr:           Xvtr.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Api.kNotInUse))
+    case .transmit:       parseTransmit(self, remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
+    case .turf:           _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
+    case .usbCable:       UsbCable.parseStatus(self, remainder.keyValuesArray())
+    case .wan:            wan.parseProperties(self, remainder.keyValuesArray())
+    case .waveform:       waveform.parseProperties(remainder.keyValuesArray())
+    case .xvtr:           Xvtr.parseStatus(self, remainder.keyValuesArray(), !remainder.contains(Shared.kNotInUse))
     default: _log("Radio: TODO, \(token) parsing NOT IMPLEMENTED", .warning, #function, #file, #line)
     }
     // is this status message the first for our handle?
@@ -168,6 +168,22 @@ extension Radio {
           default:                    break
           }
       }
+  }
+
+  /// Parse a Display status message
+  /// - Parameters:
+  ///   - keyValues:      a KeyValuesArray
+  ///   - radio:          the current Radio class
+  ///   - queue:          a parse Queue for the object
+  ///   - inUse:          false = "to be deleted"
+  private func parseDisplay(_ radio: Radio, _ keyValues: KeyValuesArray, _ inUse: Bool = true) {
+    switch keyValues[0].key {
+      
+    case DisplayTokens.panadapter.rawValue:  Panadapter.parseStatus(radio, keyValues, inUse)
+    case DisplayTokens.waterfall.rawValue:   Waterfall.parseStatus(radio, keyValues, inUse)
+      
+    default:  _log("Radio, unknown display type: \(keyValues[0].key)", .warning, #function, #file, #line)
+    }
   }
 
   func parseConnection(properties: KeyValuesArray, handle: Handle) {
@@ -309,6 +325,23 @@ extension Radio {
       case .screensaver:      radioScreenSaver = property.value
       case .softwareVersion:  softwareVersion = property.value
       }
+    }
+  }
+
+  /// Parse a Transmit status message
+  /// - Parameters:
+  ///   - radio:          the current Radio class
+  ///   - properties:     a KeyValuesArray
+  ///   - inUse:          false = "to be deleted"
+  private func parseTransmit(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+    // is it a Band Setting?
+    if properties[0].key == "band" {
+      // YES, drop the "band", pass it to BandSetting
+      BandSetting.parseStatus(self, Array(properties.dropFirst()), inUse )
+      
+    } else {
+      // NO, pass it to Transmit
+      transmit.parseProperties(properties)
     }
   }
 

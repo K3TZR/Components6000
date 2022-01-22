@@ -32,33 +32,34 @@ public final class Radio: Equatable {
 
 
   // Dynamic Model Collections
-//  @Published public var amplifiers = [AmplifierId: Amplifier]()
+  @Published public var amplifiers = [AmplifierId: Amplifier]()
   @Published public var bandSettings = [BandId: BandSetting]()
 //  @Published public var daxIqStreams = [DaxIqStreamId: DaxIqStream]()
 //  @Published public var daxMicAudioStreams = [DaxMicStreamId: DaxMicAudioStream]()
 //  @Published public var daxRxAudioStreams = [DaxRxStreamId: DaxRxAudioStream]()
 //  @Published public var daxTxAudioStreams = [DaxTxStreamId: DaxTxAudioStream]()
   @Published public var equalizers = [Equalizer.EqType: Equalizer]()
-//  @Published public var memories = [MemoryId: Memory]()
-//  @Published public var meters = [MeterId: Meter]()
-//  @Published public var panadapters = [PanadapterStreamId: Panadapter]()
-//  @Published public var profiles = [ProfileId: Profile]()
+  @Published public var memories = [MemoryId: Memory]()
+  @Published public var meters = [MeterId: Meter]()
+  @Published public var panadapters = [PanadapterStreamId: Panadapter]()
+  @Published public var profiles = [ProfileId: Profile]()
 //  @Published public var remoteRxAudioStreams = [RemoteRxStreamId: RemoteRxAudioStream]()
 //  @Published public var remoteTxAudioStreams = [RemoteTxStreamId: RemoteTxAudioStream]()
-//  @Published public var slices = [SliceId: Slice]()
+  @Published public var slices = [SliceId: Slice]()
   @Published public var tnfs = [TnfId: Tnf]()
-//  @Published public var usbCables = [UsbCableId: UsbCable]()
-//  @Published public var waterfalls = [WaterfallStreamId: Waterfall]()
-//  @Published public var xvtrs = [XvtrId: Xvtr]()
+  @Published public var usbCables = [UsbCableId: UsbCable]()
+  @Published public var waterfalls = [WaterfallStreamId: Waterfall]()
+  @Published public var xvtrs = [XvtrId: Xvtr]()
 
   // Static Models
-//  @Published public private(set) var atu: Atu!
-//  @Published public private(set) var cwx: Cwx!
-//  @Published public private(set) var gps: Gps!
+  @Published public private(set) var atu: Atu!
+  @Published public private(set) var cwx: Cwx!
+  @Published public private(set) var gps: Gps!
   @Published public private(set) var interlock: Interlock!
 //  @Published public private(set) var netCwStream: NetCwStream!
-//  @Published public private(set) var transmit: Transmit!
-//  @Published public private(set) var waveform: Waveform!
+  @Published public private(set) var transmit: Transmit!
+  @Published public private(set) var wan: Wan!
+  @Published public private(set) var waveform: Waveform!
 //  @Published public private(set) var wanServer: WanServer!
 
 
@@ -249,13 +250,14 @@ public final class Radio: Equatable {
     _domain = String(bundleIdentifier.prefix(upTo: separator))
 
     // initialize the static models (only one of each is ever created)
-//    atu = Atu()
-//    cwx = Cwx()
-//    gps = Gps()
+    atu = Atu()
+    cwx = Cwx()
+    gps = Gps()
     interlock = Interlock()
 //    netCwStream = NetCwStream()
-//    transmit = Transmit()
-//    waveform = Waveform()
+    transmit = Transmit()
+    wan = Wan()
+    waveform = Waveform()
 
     // initialize Equalizers
     equalizers[.rxsc] = Equalizer(Equalizer.EqType.rxsc.rawValue)
