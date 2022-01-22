@@ -13,6 +13,7 @@ import Discovery
 import Picker
 import UdpStreams
 import Shared
+import TcpCommands
 
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums used by ApiViewer
@@ -53,6 +54,7 @@ public enum ConnectionMode: String {
 
 public struct CommandMessage: Equatable, Identifiable {
   public var id = UUID()
+  var direction: TcpMessageDirection
   var text: String
   var color: Color
   var timeInterval: TimeInterval

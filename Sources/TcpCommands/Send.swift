@@ -24,7 +24,7 @@ extension TcpCommand {
       // send it, no timeout, tag = segNum
       self._socket.write(command.data(using: String.Encoding.utf8, allowLossyConversion: false)!, withTimeout: -1, tag: assignedNumber)
 
-      sentPublisher.send(TcpMessage(timeInterval: Date().timeIntervalSince( _startTime!), text: String(command.dropLast())))
+      sentPublisher.send(TcpMessage(timeInterval: Date().timeIntervalSince( _startTime!), direction: .sent, text: String(command.dropLast())))
 
       // atomically increment the Sequence Number
       $sequenceNumber.mutate { $0 += 1}

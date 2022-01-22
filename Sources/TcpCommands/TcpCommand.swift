@@ -11,8 +11,14 @@ import Combine
 
 import Shared
 
+public enum TcpMessageDirection {
+  case received
+  case sent
+}
+
 public struct TcpMessage {
   public var timeInterval: TimeInterval
+  public var direction: TcpMessageDirection
   public var text: String
 }
 

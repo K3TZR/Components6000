@@ -312,7 +312,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // MARK: - Command actions
 
     case let .commandAction(message):
-      if message.text.contains("ping") && state.showPings == false { return .none }
+      if message.direction == .sent && message.text.contains("ping") && state.showPings == false { return .none }
       state.commandMessages.append(message)
       state.update.toggle()
       return .none
