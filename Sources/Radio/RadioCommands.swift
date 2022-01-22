@@ -145,12 +145,12 @@ extension Radio {
 //        return nil
 //    }
 //
-    public func bindGuiClient(_ clientId: String?, callback:  ReplyHandler? = nil) {
-        if let clientId = clientId {
-            send("client bind client_id=" + clientId, replyTo: callback)
-            boundClientId = clientId
-        }
+  public func bindGuiClient(_ clientId: String?, callback:  ReplyHandler? = nil) {
+    if let clientId = clientId, _connectionType == .nonGui {
+      send("client bind client_id=" + clientId, replyTo: callback)
     }
+    boundClientId = clientId
+  }
 
   // ----------------------------------------------------------------------------
   // MARK: - Interlock methods

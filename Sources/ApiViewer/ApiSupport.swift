@@ -53,7 +53,7 @@ public enum ConnectionMode: String {
 
 public struct CommandMessage: Equatable, Identifiable {
   public var id = UUID()
-  var text: Substring
+  var text: String
   var color: Color
   var timeInterval: TimeInterval
 }

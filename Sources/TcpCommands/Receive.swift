@@ -18,7 +18,7 @@ extension TcpCommand {
   public func socket(_ sock: GCDAsyncSocket, didRead data: Data, withTag tag: Int) {
     // publish the received data, remove the EOL
     if let text = String(data: data, encoding: .ascii)?.dropLast() {
-      commandPublisher.send(TcpMessage(timeInterval: Date().timeIntervalSince( _startTime!), text: text))
+      receivedPublisher.send(TcpMessage(timeInterval: Date().timeIntervalSince( _startTime!), text: String(text)))
     }
     // trigger the next read
     _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)

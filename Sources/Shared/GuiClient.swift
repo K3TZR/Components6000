@@ -17,7 +17,7 @@ public enum ClientAction {
 public struct ClientChange: Equatable {
   public var action: ClientAction
   public var client: GuiClient
-
+  
   public init(_ action: ClientAction, client: GuiClient) {
     self.action = action
     self.client = client
@@ -27,11 +27,10 @@ public struct ClientChange: Equatable {
 public struct GuiClient: Equatable, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
-
-  public var id: Handle { clientHandle }
-
-  public var clientHandle: Handle = 0
+  public var id: Handle { handle }
+  
   public var clientId: GuiClientId?
+  public var handle: Handle = 0
   public var host = ""
   public var ip = ""
   public var isLocalPtt = false
@@ -42,11 +41,11 @@ public struct GuiClient: Equatable, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
-  public init(clientHandle: Handle, station: String, program: String,
+  public init(handle: Handle, station: String, program: String,
               clientId: GuiClientId? = nil, host: String = "", ip: String = "",
               isLocalPtt: Bool = false, isThisClient: Bool = false) {
     
-    self.clientHandle = clientHandle
+    self.handle = handle
     self.clientId = clientId
     self.host = host
     self.ip = ip
@@ -55,8 +54,8 @@ public struct GuiClient: Equatable, Identifiable {
     self.program = program
     self.station = station
   }
-
+  
   public static func == (lhs: GuiClient, rhs: GuiClient) -> Bool {
-    lhs.clientHandle == rhs.clientHandle
-  }  
+    lhs.handle == rhs.handle
+  }
 }

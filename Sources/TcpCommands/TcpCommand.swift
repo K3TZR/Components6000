@@ -13,7 +13,7 @@ import Shared
 
 public struct TcpMessage {
   public var timeInterval: TimeInterval
-  public var text: Substring
+  public var text: String
 }
 
 public struct TcpStatus: Identifiable, Equatable {
@@ -34,7 +34,8 @@ final public class TcpCommand: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  public var commandPublisher = PassthroughSubject<TcpMessage, Never>()
+  public var receivedPublisher = PassthroughSubject<TcpMessage, Never>()
+  public var sentPublisher = PassthroughSubject<TcpMessage, Never>()
   public var statusPublisher = PassthroughSubject<TcpStatus, Never>()
 
   public private(set) var interfaceIpAddress = "0.0.0.0"

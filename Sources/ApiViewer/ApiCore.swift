@@ -115,14 +115,41 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     ),
   Reducer { state, action, environment in
 
-    func openRadio(_ selection: PickerSelection) {
-      state.radio = Radio(selection.packet, connectionType: state.isGui ? .gui : .nonGui, command: state.command, stream: UdpStream())
+    func checkConnectionStatus(_ selection: PickerSelection) {
+      if state.isGui && selection.packet.guiClients.count > 0 {
+        // check for other stations, may need a disconnect
+        state.connectionState = ConnectionState(pickerSelection: selection)
+      } else {
+        // simple open, no pending disconnect
+        openRadio(selection, nil)
+      }
+    }
+
+
+    func openRadio(_ selection: PickerSelection, _ disconnectHandle: Handle?) {
+      state.radio = Radio(selection.packet, connectionType: state.isGui ? .gui : .nonGui, command: state.command, stream: UdpStream(), disconnectHandle: disconnectHandle)
       if state.radio!.connect(selection.packet) {
         state.connectedPacket = selection
+        state.alert = isVersionCompatible(Version(selection.packet.version))
         if state.clearOnConnect { state.commandMessages.removeAll() }
       } else {
         state.alert = AlertView(title: "Failed to connect to Radio \(selection.packet.nickname)")
       }
+    }
+
+    /// Determine if the Radio Firmware version is compatable
+    func isVersionCompatible(_ radioVersion: Version) -> AlertView? {
+      if Shared.kVersionSupported >= radioVersion  {
+        return nil
+      } else {
+        return AlertView(title:
+                                """
+                                Radio may be incompatible:
+                                
+                                Radio version is \(radioVersion.string)
+                                App supports <= \(kVersionSupported.string)
+                                """)
+        }
     }
 
     switch action {
@@ -176,7 +203,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
           state.loginState = LoginState(email: state.smartlinkEmail)
         }
       }
-      return receiveMessagesEffect(state.command)
+      return messagesEffects(state.command)
       
     case .sendButton:
       _ = state.command.send(state.commandToSend)
@@ -192,7 +219,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         if let def = state.defaultConnection {
           // YES, find a matching discovered packet
           for packet in state.discovery!.packets where def.source == packet.source.rawValue && def.serial == packet.serial {
-            openRadio(PickerSelection(packet, def.station))
+            checkConnectionStatus(PickerSelection(packet, def.station))
             return .none
           }
         }
@@ -219,11 +246,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // TODO: take into account the clientIndex and isGui
     case let .pickerAction(.connectButton(selection)):
       state.pickerState = nil
-      if state.isGui && selection.packet.guiClients.count > 0 {
-        state.connectionState = ConnectionState(pickerSelection: selection)
-      } else {
-        openRadio(selection)
-      }
+      checkConnectionStatus(selection)
       return .none
 
     case let .pickerAction(.connectResultReceived(index)):
@@ -273,15 +296,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.connectionState = nil
       return .none
 
-    case let .connectionAction(.simpleConnect(selection)):
-      print("API -----> simpleConnection to \(selection.packet.nickname)")
+    case let .connectionAction(.connect(selection, disconnectHandle)):
       state.connectionState = nil
-      openRadio(selection)
-      return .none
-
-    case let .connectionAction(.disconnectThenConnect(selection, index)):
-      print("API -----> DisconnectThenConnect, disconnect \(selection.packet.guiClients[index].station), connect \(selection.packet.nickname), \(selection.station ?? "none")" )
-      state.connectionState = nil
+      openRadio(selection, disconnectHandle)
       return .none
 
       // ----------------------------------------------------------------------------
@@ -295,6 +312,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // MARK: - Command actions
 
     case let .commandAction(message):
+      if message.text.contains("ping") && state.showPings == false { return .none }
       state.commandMessages.append(message)
       state.update.toggle()
       return .none

@@ -7,7 +7,15 @@
 
 import Foundation
 
+// ----------------------------------------------------------------------------
+// MARK: - Constants
+
+public let kVersionSupported = Version("3.2.34")
+
+public let kConnected = "connected"
+public let kDisconnected = "disconnected"
 public let kNoError = "0"
+public let kNotInUse = "in_use=0"
 public let kRemoved = "removed"
 
 // ----------------------------------------------------------------------------
@@ -40,7 +48,7 @@ public enum ConnectionType: String, Equatable {
 }
 
 public struct AlertView: Equatable, Identifiable {
-
+  
   public init(
     title: String
   )
@@ -55,15 +63,15 @@ public struct AlertView: Equatable, Identifiable {
 // MARK: - Extensions
 
 extension FileManager {
-
+  
   public static func appFolder(for bundleIdentifier: String) -> URL {
     let fileManager = FileManager.default
     let urls = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask )
     let appFolderUrl = urls.first!.appendingPathComponent( bundleIdentifier )
-
+    
     // does the folder exist?
     if !fileManager.fileExists( atPath: appFolderUrl.path ) {
-
+      
       // NO, create it
       do {
         try fileManager.createDirectory( at: appFolderUrl, withIntermediateDirectories: true, attributes: nil)
@@ -76,13 +84,13 @@ extension FileManager {
 }
 
 public extension Bool {
-    var as1or0Int: Int { self ? 1 : 0 }
-    var as1or0: String { self ? "1" : "0" }
-    var asTrueFalse: String { self ? "True" : "False" }
-    var asTF: String { self ? "T" : "F" }
-    var asOnOff: String { self ? "on" : "off" }
-    var asPassFail: String { self ? "PASS" : "FAIL" }
-    var asYesNo: String { self ? "YES" : "NO" }
+  var as1or0Int: Int { self ? 1 : 0 }
+  var as1or0: String { self ? "1" : "0" }
+  var asTrueFalse: String { self ? "True" : "False" }
+  var asTF: String { self ? "T" : "F" }
+  var asOnOff: String { self ? "on" : "off" }
+  var asPassFail: String { self ? "PASS" : "FAIL" }
+  var asYesNo: String { self ? "YES" : "NO" }
 }
 
 public extension String {
@@ -101,7 +109,7 @@ public extension String {
   var tValue          : Bool            { self.lowercased() == "true" ? true : false }
   var uValue          : UInt            { UInt(self) ?? 0 }
   var uValue32        : UInt32          { UInt32(self) ?? 0 }
-
+  
   /// Parse a String of <key=value>'s separated by the given Delimiter
   /// - Parameters:
   ///   - delimiter:          the delimiter between key values (defaults to space)
@@ -157,92 +165,101 @@ public extension String {
 }
 
 public extension CGFloat {
-    /// Force a CGFloat to be within a min / max value range
-    /// - Parameters:
-    ///   - min:        min CGFloat value
-    ///   - max:        max CGFloat value
-    /// - Returns:      adjusted value
-    func bracket(_ min: CGFloat, _ max: CGFloat) -> CGFloat {
-
-        var value = self
-        if self < min { value = min }
-        if self > max { value = max }
-        return value
-    }
-
-    /// Create a CGFloat from a String
-    /// - Parameters:
-    ///   - string:     a String
-    ///
-    /// - Returns:      CGFloat value of String or 0
-    init(_ string: String) {
-        self = CGFloat(Float(string) ?? 0)
-    }
-
-    /// Format a String with the value of a CGFloat
-    /// - Parameters:
-    ///   - width:      number of digits before the decimal point
-    ///   - precision:  number of digits after the decimal point
-    ///   - divisor:    divisor
-    /// - Returns:      a String representation of the CGFloat
-    private func floatToString(width: Int, precision: Int, divisor: CGFloat) -> String {
-        return String(format: "%\(width).\(precision)f", self / divisor)
-    }
+  /// Force a CGFloat to be within a min / max value range
+  /// - Parameters:
+  ///   - min:        min CGFloat value
+  ///   - max:        max CGFloat value
+  /// - Returns:      adjusted value
+  func bracket(_ min: CGFloat, _ max: CGFloat) -> CGFloat {
+    
+    var value = self
+    if self < min { value = min }
+    if self > max { value = max }
+    return value
+  }
+  
+  /// Create a CGFloat from a String
+  /// - Parameters:
+  ///   - string:     a String
+  ///
+  /// - Returns:      CGFloat value of String or 0
+  init(_ string: String) {
+    self = CGFloat(Float(string) ?? 0)
+  }
+  
+  /// Format a String with the value of a CGFloat
+  /// - Parameters:
+  ///   - width:      number of digits before the decimal point
+  ///   - precision:  number of digits after the decimal point
+  ///   - divisor:    divisor
+  /// - Returns:      a String representation of the CGFloat
+  private func floatToString(width: Int, precision: Int, divisor: CGFloat) -> String {
+    return String(format: "%\(width).\(precision)f", self / divisor)
+  }
 }
 
 /// Struct to hold a Semantic Version number
 ///     with provision for a Build Number
 ///
 public struct Version {
-    var major: Int = 1
-    var minor: Int = 0
-    var patch: Int = 0
-    var build: Int = 1
-
-    public init(_ versionString: String = "1.0.0") {
-        let components = versionString.components(separatedBy: ".")
-        switch components.count {
-        case 3:
-            major = Int(components[0]) ?? 1
-            minor = Int(components[1]) ?? 0
-            patch = Int(components[2]) ?? 0
-            build = 1
-        case 4:
-            major = Int(components[0]) ?? 1
-            minor = Int(components[1]) ?? 0
-            patch = Int(components[2]) ?? 0
-            build = Int(components[3]) ?? 1
-        default:
-            major = 1
-            minor = 0
-            patch = 0
-            build = 1
-        }
+  var major: Int = 1
+  var minor: Int = 0
+  var patch: Int = 0
+  var build: Int = 1
+  
+  public init(_ versionString: String = "1.0.0") {
+    let components = versionString.components(separatedBy: ".")
+    switch components.count {
+    case 3:
+      major = Int(components[0]) ?? 1
+      minor = Int(components[1]) ?? 0
+      patch = Int(components[2]) ?? 0
+      build = 1
+    case 4:
+      major = Int(components[0]) ?? 1
+      minor = Int(components[1]) ?? 0
+      patch = Int(components[2]) ?? 0
+      build = Int(components[3]) ?? 1
+    default:
+      major = 1
+      minor = 0
+      patch = 0
+      build = 1
     }
-
-    public init() {
-        // only useful for Apps & Frameworks (which have a Bundle), not Packages
-        let versions = Bundle.main.infoDictionary!["CFBundleShortVersionString"] as? String ?? "?"
-        let build   = Bundle.main.infoDictionary![kCFBundleVersionKey as String] as? String ?? "?"
-        self.init(versions + ".\(build)")
+  }
+  
+  public init() {
+    // only useful for Apps & Frameworks (which have a Bundle), not Packages
+    let versions = Bundle.main.infoDictionary!["CFBundleShortVersionString"] as? String ?? "?"
+    let build   = Bundle.main.infoDictionary![kCFBundleVersionKey as String] as? String ?? "?"
+    self.init(versions + ".\(build)")
+  }
+  
+  public var longString: String { "\(major).\(minor).\(patch) (\(build))" }
+  public var string: String { "\(major).\(minor).\(patch)" }
+  
+  public static func == (lhs: Version, rhs: Version) -> Bool { lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch == rhs.patch }
+  
+  public static func < (lhs: Version, rhs: Version) -> Bool {
+    switch (lhs, rhs) {
+      
+    case (let lhs, let rhs) where lhs == rhs: return false
+    case (let lhs, let rhs) where lhs.major < rhs.major: return true
+    case (let lhs, let rhs) where lhs.major == rhs.major && lhs.minor < rhs.minor: return true
+    case (let lhs, let rhs) where lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch < rhs.patch: return true
+    default: return false
     }
-
-    public var longString: String { "\(major).\(minor).\(patch) (\(build))" }
-    public var string: String { "\(major).\(minor).\(patch)" }
-
-    public static func == (lhs: Version, rhs: Version) -> Bool { lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch == rhs.patch }
-
-    public static func < (lhs: Version, rhs: Version) -> Bool {
-
-        switch (lhs, rhs) {
-
-        case (let lhs, let rhs) where lhs == rhs: return false
-        case (let lhs, let rhs) where lhs.major < rhs.major: return true
-        case (let lhs, let rhs) where lhs.major == rhs.major && lhs.minor < rhs.minor: return true
-        case (let lhs, let rhs) where lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch < rhs.patch: return true
-        default: return false
-        }
+  }
+  public static func >= (lhs: Version, rhs: Version) -> Bool {
+    switch (lhs, rhs) {
+      
+    case (let lhs, let rhs) where lhs == rhs: return true
+    case (let lhs, let rhs) where lhs.major > rhs.major: return true
+    case (let lhs, let rhs) where lhs.major == rhs.major && lhs.minor > rhs.minor: return true
+    case (let lhs, let rhs) where lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch > rhs.patch: return true
+    default: return false
     }
+  }
 }
 
 extension Version {
@@ -252,22 +269,22 @@ extension Version {
   public var isGreaterThanV22: Bool { major >= 2 && minor >= 2 }
   public var isV2: Bool { major == 2 && minor < 5 }
   public var isV1: Bool { major == 1 }
-
+  
   public var isNewApi: Bool { isV3 || isV2NewApi }
   public var isOldApi: Bool { isV1 || isV2 }
 }
 
 public extension Int {
-    var hzToMhz: String { String(format: "%02.6f", Double(self) / 1_000_000.0) }
+  var hzToMhz: String { String(format: "%02.6f", Double(self) / 1_000_000.0) }
 }
 public extension UInt16 {
-    var hex: String { return String(format: "0x%04X", self) }
-    func toHex(_ format: String = "0x%04X") -> String { String(format: format, self) }
+  var hex: String { return String(format: "0x%04X", self) }
+  func toHex(_ format: String = "0x%04X") -> String { String(format: format, self) }
 }
 
 public extension UInt32 {
-    var hex: String { return String(format: "0x%08X", self) }
-    func toHex(_ format: String = "0x%08X") -> String { String(format: format, self) }
+  var hex: String { return String(format: "0x%08X", self) }
+  func toHex(_ format: String = "0x%08X") -> String { String(format: format, self) }
 }
 
 // ----------------------------------------------------------------------------
