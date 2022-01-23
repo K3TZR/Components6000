@@ -11,6 +11,7 @@ import ComposableArchitecture
 import Login
 import Connection
 import Picker
+import LogViewer
 import Shared
 
 // ----------------------------------------------------------------------------
@@ -26,6 +27,8 @@ public struct ApiView: View {
   public var body: some View {
         
     WithViewStore(self.store) { viewStore in
+      
+      if viewStore.viewType == .api {
       VStack(alignment: .leading) {
         TopButtonsView(store: store)
         SendView(store: store)
@@ -84,6 +87,18 @@ public struct ApiView: View {
           )
         }
       )
+      } else {
+        LogView(store: Store(
+          initialState: LogState(domain: viewStore.domain, appName: viewStore.appName, backName: "Api View", fontSize: viewStore.fontSize),
+          reducer: logReducer,
+          environment: LogEnvironment()
+        )
+        )
+          .toolbar {
+            Button("Api View") { viewStore.send(.apiViewButton) }
+          }
+
+      }
     }
   }
 }
@@ -95,7 +110,7 @@ struct ApiView_Previews: PreviewProvider {
   static var previews: some View {
     ApiView(
       store: Store(
-        initialState: ApiState(),
+        initialState: ApiState(domain: "net.k3tzr", appName: "Api6000"),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )

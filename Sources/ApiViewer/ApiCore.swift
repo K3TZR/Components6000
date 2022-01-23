@@ -15,7 +15,13 @@ import Discovery
 import TcpCommands
 import UdpStreams
 import Radio
+import XCGWrapper
 import Shared
+
+public enum ViewType: Equatable {
+  case api
+  case log
+}
 
 public struct ApiState: Equatable {
   // State held in User Defaults
@@ -32,6 +38,8 @@ public struct ApiState: Equatable {
   public var smartlinkEmail: String { didSet { UserDefaults.standard.set(smartlinkEmail, forKey: "smartlinkEmail") } }
 
   // normal state
+  public var appName: String
+  public var domain: String
   public var radio: Radio?
   public var clearNow = false
   public var command = TcpCommand()
@@ -45,8 +53,12 @@ public struct ApiState: Equatable {
   public var pickerState: PickerState? = nil
   public var update = false
   public var connectionState: ConnectionState?
+  public var viewType: ViewType = .api
+  public var xcgWrapper: XCGWrapper?
 
-  public init() {
+  public init(domain: String, appName: String) {
+    self.domain = domain
+    self.appName = appName
     clearOnConnect = UserDefaults.standard.bool(forKey: "clearOnConnect")
     clearOnDisconnect = UserDefaults.standard.bool(forKey: "clearOnDisconnect")
     clearOnSend = UserDefaults.standard.bool(forKey: "clearOnSend")
@@ -80,6 +92,7 @@ public enum ApiAction: Equatable {
   case commandTextfield(String)
   case fontSizeStepper(CGFloat)
   case logViewButton
+  case apiViewButton
   case modePicker(ConnectionMode)
   case sendButton
   case startStopButton
@@ -125,7 +138,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       }
     }
 
-
     func openRadio(_ selection: PickerSelection, _ disconnectHandle: Handle?) {
       state.radio = Radio(selection.packet, connectionType: state.isGui ? .gui : .nonGui, command: state.command, stream: UdpStream(), disconnectHandle: disconnectHandle)
       if state.radio!.connect(selection.packet) {
@@ -137,7 +149,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       }
     }
 
-    /// Determine if the Radio Firmware version is compatable
     func isVersionCompatible(_ radioVersion: Version) -> AlertView? {
       if Shared.kVersionSupported >= radioVersion  {
         return nil
@@ -156,6 +167,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
       // ----------------------------------------------------------------------------
       // MARK: - UI actions
+
+    case .apiViewButton:
+      state.viewType = .api
+      return .none
 
     case let .button(keyPath):
       state[keyPath: keyPath].toggle()
@@ -184,7 +199,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
     case .logViewButton:
-      // handled by Root
+      state.viewType = .log
       return .none
 
     case let .modePicker(mode):
@@ -192,18 +207,24 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
 
     case .onAppear:
-      if state.discovery == nil { state.discovery = Discovery.sharedInstance }
-      if state.connectionMode == .local || state.connectionMode == .both {
-        state.alert = listenForLocalPackets(state)
-      }
-      if state.connectionMode == .smartlink || state.connectionMode == .both {
-        let alert = listenForWanPackets(state.discovery!, using: state.smartlinkEmail, forceLogin: state.wanLogin)
-        if alert != nil {
-          state.alert = alert
-          state.loginState = LoginState(email: state.smartlinkEmail)
+      if state.xcgWrapper == nil { state.xcgWrapper = XCGWrapper() }
+      if state.discovery == nil {
+        state.discovery = Discovery.sharedInstance
+        if state.connectionMode == .local || state.connectionMode == .both {
+          state.alert = listenForLocalPackets(state)
         }
+        if state.connectionMode == .smartlink || state.connectionMode == .both {
+          let alert = listenForWanPackets(state.discovery!, using: state.smartlinkEmail, forceLogin: state.wanLogin)
+          if alert != nil {
+            state.alert = alert
+            state.loginState = LoginState(email: state.smartlinkEmail)
+          }
+        }
+        return messagesEffects(state.command)
+        
+      } else {
+        return .none
       }
-      return messagesEffects(state.command)
       
     case .sendButton:
       _ = state.command.send(state.commandToSend)
