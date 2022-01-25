@@ -12,16 +12,31 @@ import Combine
 
 import Shared
 
+public enum UdpStatusType {
+  case didBind
+  case didUnBind
+  case failedToBind
+  case readError
+}
+
+
 public struct UdpStatus: Identifiable, Equatable {
   public static func == (lhs: UdpStatus, rhs: UdpStatus) -> Bool {
     lhs.id == rhs.id
   }
-  
+
+  public init(_ statusType: UdpStatusType, receivePort: UInt16, sendPort: UInt16, error: Error? = nil) {
+    self.statusType = statusType
+    self.receivePort = receivePort
+    self.sendPort = sendPort
+    self.error = error
+  }
+
   public var id = UUID()
-  var error: Error?
-  var host = ""
-  var isBound = false
-  var port: UInt16 = 0
+  public var statusType: UdpStatusType = .didUnBind
+  public var receivePort: UInt16 = 0
+  public var sendPort: UInt16 = 0
+  public var error: Error?
 }
 
 ///  UDP Stream Class implementation
@@ -128,10 +143,14 @@ final public class UdpStream: NSObject {
       sendIp = packet.publicIp
       _isBound = true
       
+      statusPublisher.send(UdpStatus( .didBind, receivePort: _receivePort, sendPort: sendPort, error: nil))
+
       // a UDP bind has been established
       beginReceiving()
+    
+    } else {
+      statusPublisher.send(UdpStatus( .failedToBind, receivePort: _receivePort, sendPort: sendPort, error: nil))
     }
-    statusPublisher.send(UdpStatus(error: nil, host: sendIp, isBound: success, port: _receivePort))
     return success
   }
   
@@ -143,7 +162,7 @@ final public class UdpStream: NSObject {
       
     } catch let error {
       // read error
-      statusPublisher.send(UdpStatus(error: error, host: sendIp, isBound: true, port: _receivePort))
+      statusPublisher.send(UdpStatus( .readError, receivePort: _receivePort, sendPort: sendPort, error: error ))
     }
   }
   
@@ -156,8 +175,7 @@ final public class UdpStream: NSObject {
     
     _isRegistered = false
     
-    // notify the delegate
-    // TODO: publish ???
+    statusPublisher.send(UdpStatus( .didUnBind, receivePort: _receivePort, sendPort: sendPort, error: nil ))
   }
   
   /// Register UDP client handle

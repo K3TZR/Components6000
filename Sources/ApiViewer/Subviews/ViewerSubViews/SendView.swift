@@ -25,13 +25,13 @@ struct SendView: View {
           .keyboardShortcut(.defaultAction)
 
           HStack(spacing: 0) {
-            Button("X") { viewStore.send(.commandTextfield("")) }
-            .frame(width: 17, height: 17)
-            .cornerRadius(20)
-            .disabled(viewStore.connectedPacket == nil)
+            Image(systemName: "x.circle").foregroundColor(viewStore.radio == nil ? .gray : nil)
+              .onTapGesture {
+                viewStore.send(.commandToSend(""))
+              }.disabled(viewStore.radio == nil)
             TextField("Command to send", text: viewStore.binding(
               get: \.commandToSend,
-              send: { value in .commandTextfield(value) } ))
+              send: { value in .commandToSend(value) } ))
           }
         }
         .disabled(viewStore.connectedPacket == nil)
@@ -50,7 +50,7 @@ struct SendView_Previews: PreviewProvider {
   static var previews: some View {
     SendView(
       store: Store(
-        initialState: ApiState(),
+        initialState: ApiState(domain: "net.k3tzr", appName: "Api6000"),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )

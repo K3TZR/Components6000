@@ -44,7 +44,7 @@ struct BottomButtonsView_Previews: PreviewProvider {
   static var previews: some View {
     BottomButtonsView(
       store: Store(
-        initialState: ApiState(),
+        initialState: ApiState(domain: "net.k3tzr", appName: "Api6000"),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )

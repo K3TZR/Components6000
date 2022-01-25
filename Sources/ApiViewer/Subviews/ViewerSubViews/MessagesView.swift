@@ -32,7 +32,8 @@ struct MessagesView: View {
         .frame(alignment: .leading)
       }
       .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
-      .frame(minHeight: 100, alignment: .leading)
+      .frame(maxWidth: .infinity, minHeight: 100, alignment: .leading)
+      .padding()
     }
   }
 }
@@ -44,7 +45,7 @@ struct MessagesView_Previews: PreviewProvider {
   static var previews: some View {
     MessagesView(
       store: Store(
-        initialState: ApiState(),
+        initialState: ApiState(domain: "net.k3tzr", appName: "Api6000"),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )

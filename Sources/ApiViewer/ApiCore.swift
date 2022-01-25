@@ -184,7 +184,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
                           disconnectHandle: disconnectHandle,
                           testerModeEnabled: true)
       if state.radio!.connect(selection.packet) {
-        state.connectedPacket = selection
+//        state.connectedPacket = selection
         state.alert = isVersionCompatible(Version(selection.packet.version))
         if state.clearOnConnect { state.commandMessages.removeAll() }
       } else {
@@ -289,7 +289,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
     case .startStopButton:
-      if state.connectedPacket == nil {
+      if state.radio == nil {
         // NOT connected, is there a default?
         if let def = state.defaultConnection {
           // YES, find a matching discovered packet
@@ -304,8 +304,8 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         
       } else {
         // CONNECTED, disconnect
-        state.command.disconnect()
-        state.connectedPacket = nil
+        state.radio!.disconnect()
+//        state.connectedPacket = nil
         state.radio = nil
         if state.clearOnDisconnect { state.commandMessages.removeAll() }
         return .none
