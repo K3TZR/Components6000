@@ -70,6 +70,7 @@ let package = Package(
         "TcpCommands",
         "UdpStreams",
         "Radio",
+        "LogViewer",
         "XCGWrapper",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]

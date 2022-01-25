@@ -220,22 +220,22 @@ extension Radio {
     }
     var handleWasFound = false
     // find the guiClient with the specified handle
-    for (i, guiClient) in _packet.guiClients.enumerated() where guiClient.handle == handle {
+    for (i, guiClient) in packet.guiClients.enumerated() where guiClient.handle == handle {
       handleWasFound = true
 
       // update any fields that are present
-      if clientId != "" { _packet.guiClients[id: handle]?.clientId = clientId }
-      if program  != "" { _packet.guiClients[id: handle]?.program = program }
-      if station  != "" { _packet.guiClients[id: handle]?.station = station }
-      _packet.guiClients[id: handle]?.isLocalPtt = isLocalPtt
+      if clientId != "" { packet.guiClients[id: handle]?.clientId = clientId }
+      if program  != "" { packet.guiClients[id: handle]?.program = program }
+      if station  != "" { packet.guiClients[id: handle]?.station = station }
+      packet.guiClients[id: handle]?.isLocalPtt = isLocalPtt
 
-      guiClientWasEdited(handle, _packet.guiClients[i])
+      guiClientWasEdited(handle, packet.guiClients[i])
     }
 
     if handleWasFound == false {
       // GuiClient with the specified handle was not found, add it
       let client = GuiClient(handle: handle, station: station, program: program, clientId: clientId, isLocalPtt: isLocalPtt, isThisClient: handle == connectionHandle)
-      _packet.guiClients.append(client)
+      packet.guiClients.append(client)
 
       // log and notify of GuiClient update
       _log("Radio: guiClient added, \(handle.hex), \(station), \(program), \(clientId)", .info, #function, #file, #line)

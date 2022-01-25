@@ -22,6 +22,7 @@ public final class Radio: Equatable {
   public static let kDaxChannels      = ["None", "1", "2", "3", "4", "5", "6", "7", "8"]
   public static let kDaxIqChannels    = ["None", "1", "2", "3", "4"]
 
+  public var packet: Packet
   public var pingerEnabled = true
   public var radioState: RadioState = .clientDisconnected
   public var connectionHandle: Handle?
@@ -34,17 +35,17 @@ public final class Radio: Equatable {
   // Dynamic Model Collections
   @Published public var amplifiers = [AmplifierId: Amplifier]()
   @Published public var bandSettings = [BandId: BandSetting]()
-//  @Published public var daxIqStreams = [DaxIqStreamId: DaxIqStream]()
-//  @Published public var daxMicAudioStreams = [DaxMicStreamId: DaxMicAudioStream]()
-//  @Published public var daxRxAudioStreams = [DaxRxStreamId: DaxRxAudioStream]()
-//  @Published public var daxTxAudioStreams = [DaxTxStreamId: DaxTxAudioStream]()
+  @Published public var daxIqStreams = [DaxIqStreamId: DaxIqStream]()
+  @Published public var daxMicAudioStreams = [DaxMicStreamId: DaxMicAudioStream]()
+  @Published public var daxRxAudioStreams = [DaxRxStreamId: DaxRxAudioStream]()
+  @Published public var daxTxAudioStreams = [DaxTxStreamId: DaxTxAudioStream]()
   @Published public var equalizers = [Equalizer.EqType: Equalizer]()
   @Published public var memories = [MemoryId: Memory]()
   @Published public var meters = [MeterId: Meter]()
   @Published public var panadapters = [PanadapterStreamId: Panadapter]()
   @Published public var profiles = [ProfileId: Profile]()
-//  @Published public var remoteRxAudioStreams = [RemoteRxStreamId: RemoteRxAudioStream]()
-//  @Published public var remoteTxAudioStreams = [RemoteTxStreamId: RemoteTxAudioStream]()
+  @Published public var remoteRxAudioStreams = [RemoteRxStreamId: RemoteRxAudioStream]()
+  @Published public var remoteTxAudioStreams = [RemoteTxStreamId: RemoteTxAudioStream]()
   @Published public var slices = [SliceId: Slice]()
   @Published public var tnfs = [TnfId: Tnf]()
   @Published public var usbCables = [UsbCableId: UsbCable]()
@@ -210,7 +211,10 @@ public final class Radio: Equatable {
   // MARK: - Internal properties
 
   let _appName: String
-  var _cancellable: AnyCancellable?
+  var _cancellableCommandData: AnyCancellable?
+  var _cancellableCommandStatus: AnyCancellable?
+  var _cancellableStreamData: AnyCancellable?
+  var _cancellableStreamStatus: AnyCancellable?
   var _clientId: String?
   var _clientInitialized = false
   var _command: TcpCommand
@@ -220,7 +224,7 @@ public final class Radio: Equatable {
   let _log = LogProxy.sharedInstance.log
   var _lowBandwidthConnect = false
   var _lowBandwidthDax = false
-  var _packet: Packet
+  var _metersAreStreaming = false
   var _params: ConnectionParams!
   let _parseQ = DispatchQueue(label: "Radio.parseQ", qos: .userInteractive)
   var _pinger: Pinger?
@@ -229,12 +233,13 @@ public final class Radio: Equatable {
   var _replyHandlers = [SequenceNumber: ReplyTuple]()
   var _stationName: String?
   var _stream: UdpStream
+  var _testerModeEnabled: Bool
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
 
-  public init(_ packet: Packet, connectionType: ConnectionType, command: TcpCommand, stream: UdpStream, stationName: String? = nil, programName: String? = nil, lowBandwidthConnect: Bool = false, lowBandwidthDax: Bool = false, disconnectHandle: Handle? = nil) {
-    _packet = packet
+  public init(_ packet: Packet, connectionType: ConnectionType, command: TcpCommand, stream: UdpStream, stationName: String? = nil, programName: String? = nil, lowBandwidthConnect: Bool = false, lowBandwidthDax: Bool = false, disconnectHandle: Handle? = nil, testerModeEnabled: Bool = false) {
+    self.packet = packet
     _connectionType = connectionType
     _command = command
     _stream = stream
@@ -243,6 +248,7 @@ public final class Radio: Equatable {
     _stationName = stationName
     _programName = programName
     _disconnectHandle = disconnectHandle
+    _testerModeEnabled = testerModeEnabled
 
     let bundleIdentifier = Bundle.main.bundleIdentifier ?? "net.k3tzr.Radio"
     let separator = bundleIdentifier.lastIndex(of: ".")!
@@ -263,12 +269,32 @@ public final class Radio: Equatable {
     equalizers[.rxsc] = Equalizer(Equalizer.EqType.rxsc.rawValue)
     equalizers[.txsc] = Equalizer(Equalizer.EqType.txsc.rawValue)
 
-    // subscribe to the publisher of received TcpCommands
-    _cancellable = command.receivedPublisher
+    // subscribe to the publisher of TcpCommands received messages
+    _cancellableCommandData = command.receivedPublisher
       .receive(on: _parseQ)
       .sink { [weak self] msg in
         self?.receivedMessage(msg)
       }
+
+    _cancellableCommandStatus = command.statusPublisher
+      .receive(on: _parseQ)
+      .sink { [weak self] status in
+        self?.tcpStatus(status)
+      }
+
+    // subscribe to the publisher of UdpStreams data
+    _cancellableStreamData = stream.streamPublisher
+      .receive(on: _parseQ)
+      .sink { [weak self] vita in
+        self?.vitaParser(vita)
+      }
+
+    // subscribe to the publisher of UdpStreams status
+//    _cancellableStreamStatus = stream.statusPublisher
+//      .receive(on: _parseQ)
+//      .sink { [weak self] status in
+//        self?.streamStatus(status)
+//      }
   }
 
   /// Connect to this Radio
@@ -330,17 +356,54 @@ public final class Radio: Equatable {
   ///   - flag:           use "D"iagnostic form
   ///   - callback:       a callback function (if any)
   public func send(_ command: String, diagnostic flag: Bool = false, replyTo callback: ReplyHandler? = nil) {
+    
+    // tell TcpCommands to send the command
+    let sequenceNumber = _command.send(command, diagnostic: flag)
+    
+    // register to be notified when reply received
+    addReplyHandler( sequenceNumber, replyTuple: (replyTo: callback, command: command) )
+  }
 
-      // tell the TcpManager to send the command
-      let sequenceNumber = _command.send(command, diagnostic: flag)
-
-      // register to be notified when reply received
-      addReplyHandler( sequenceNumber, replyTuple: (replyTo: callback, command: command) )
+  /// Send data to the Radio (hardware)
+  /// - Parameters:
+  ///   - data:        data
+  public func send(_ data: Data) {
+    // tell UdpStreams to send the data
+    _stream.send(data)
+  }
+  
+  /// Determine if status is for this client
+  /// - Parameters:
+  ///   - properties:     a KeyValuesArray
+  ///   - clientHandle:   the handle of ???
+  /// - Returns:          true if a mtch
+  public func isForThisClient(_ properties: KeyValuesArray, connectionHandle: Handle?) -> Bool {
+    var clientHandle : Handle = 0
+    
+    guard connectionHandle != nil else { return false }
+    
+    // allow a Tester app to see all Streams
+    guard _testerModeEnabled == false else { return true }
+    
+    // find the handle property
+    for property in properties.dropFirst(2) where property.key == "client_handle" {
+      clientHandle = property.value.handle ?? 0
+    }
+    return clientHandle == connectionHandle
   }
 
   // ----------------------------------------------------------------------------
-  // MARK: - Private methods
+  // MARK: - Internal methods
 
+  func tcpStatus(_ status: TcpStatus) {
+    switch status.statusType {
+      
+    case .didConnect:     updateState(to: .tcpConnected(host: status.host, port: status.port))
+    case .didSecure:      break
+    case .didDisconnect:  updateState(to: .tcpDisconnected(reason: status.reason ?? ""))
+    }
+  }
+  
   /// Change the state of the Radio
   /// - Parameter newState: the new
   func updateState(to newState: RadioState) {
@@ -353,23 +416,23 @@ public final class Radio: Equatable {
       _log("Radio: TCP connected to \(host), port \(port)", .debug, #function, #file, #line)
 //      NC.post(.tcpDidConnect, object: nil)
 
-      if _packet.source == .smartlink {
-        _log("Radio: Api Validate Wan handle = \(_packet.wanHandle)", .debug, #function, #file, #line)
-        send("wan validate handle=" + _packet.wanHandle, replyTo: wanValidateReplyHandler)
+      if packet.source == .smartlink {
+        _log("Radio: Validate Wan handle = \(packet.wanHandle)", .debug, #function, #file, #line)
+        send("wan validate handle=" + packet.wanHandle, replyTo: wanValidateReplyHandler)
 
       } else {
         // bind a UDP port for the Streams
-        if _stream.bind(_packet) == false { _command.disconnect() }
+        if _stream.bind(packet) == false { _command.disconnect() }
 
         // FIXME: clientHandle is not used by bind????
       }
 
     case .wanHandleValidated (let success):
       if success {
-        _log("Radio: Api Wan handle validated", .debug, #function, #file, #line)
-        if _stream.bind(_packet) == false { _command.disconnect() }
+        _log("Radio: Wan handle validated", .debug, #function, #file, #line)
+        if _stream.bind(packet) == false { _command.disconnect() }
       } else {
-        _log("Radio: Api Wan handle validation FAILED", .debug, #function, #file, #line)
+        _log("Radio: Wan handle validation FAILED", .debug, #function, #file, #line)
         _command.disconnect()
       }
 
@@ -377,7 +440,7 @@ public final class Radio: Equatable {
       _log("Radio: UDP bound, receive port = \(receivePort), send port = \(sendPort)", .debug, #function, #file, #line)
 
       // if a Wan connection, register
-      if _packet.source == .smartlink { _stream.register(clientHandle: connectionHandle) }
+      if packet.source == .smartlink { _stream.register(clientHandle: connectionHandle) }
 
       // a UDP port has been bound, inform observers
 //      NC.post(.udpDidBind, object: nil)
@@ -412,7 +475,7 @@ public final class Radio: Equatable {
 
   /// executed after an IP Address has been obtained
   func connectionCompletion() {
-    _log("Radio: connectionCompletion for \(_packet.nickname)", .debug, #function, #file, #line)
+    _log("Radio: connectionCompletion for \(packet.nickname)", .debug, #function, #file, #line)
 
     // normal connection?
     if _disconnectHandle == nil {
@@ -420,7 +483,7 @@ public final class Radio: Equatable {
       sendCommands()
 
       // set the UDP port for a Local connection
-      if _packet.source == .local { send("client udpport " + "\(_stream.sendPort)") }
+      if packet.source == .local { send("client udpport " + "\(_stream.sendPort)") }
 
       // start pinging the Radio
       if pingerEnabled { _pinger = Pinger(radio: self, command: _command) }
@@ -437,7 +500,7 @@ public final class Radio: Equatable {
       // reconnect
       _disconnectHandle = nil
       _clientInitialized = false
-      _ = _command.connect(_packet)
+      _ = _command.connect(packet)
     }
   }
   
@@ -465,14 +528,49 @@ public final class Radio: Equatable {
     requestLowBandwidthDax(_lowBandwidthDax)
   }
 
-//  /// Determine if the Radio Firmware version is compatable
-//  private func checkVersion() {
-//      // get the Radio Version
-//    let radioVersion = Version(softwareVersion)
-//
-//      if kVersionSupported < radioVersion  {
-//          _log("Radio: may need to be downgraded, Radio version = \(radioVersion.longString), App supports version = \(kVersionSupported.string)", .warning, #function, #file, #line)
-////          NC.post(.radioDowngrade, object: (apiVersion: kVersionSupported.string, radioVersion: radioVersion.string))
-//      }
-//  }
+  /// Process received UDP Vita packets
+  ///   arrives on the udpReceiveQ
+  ///
+  /// - Parameter vitaPacket:       a Vita packet
+  public func vitaParser(_ vitaPacket: Vita) {
+      // Pass the stream to the appropriate object
+      switch (vitaPacket.classCode) {
+      
+      case .meter:
+          // unlike other streams, the Meter stream contains multiple Meters
+          // and is processed by a class method on the Meter object
+          Meter.vitaProcessor(vitaPacket, radio: self)
+          if _metersAreStreaming == false {
+              _metersAreStreaming = true
+              // log the start of the stream
+              _log("Radio, Meter Stream started", .info, #function, #file, #line)
+          }
+
+      case .panadapter:
+          if let object = panadapters[vitaPacket.streamId]          { object.vitaProcessor(vitaPacket) }
+          
+      case .waterfall:
+          if let object = waterfalls[vitaPacket.streamId]           { object.vitaProcessor(vitaPacket) }
+          
+      case .daxAudio:
+          if let object = daxRxAudioStreams[vitaPacket.streamId]    { object.vitaProcessor(vitaPacket)}
+          if let object = daxMicAudioStreams[vitaPacket.streamId]   { object.vitaProcessor(vitaPacket) }
+          if let object = remoteRxAudioStreams[vitaPacket.streamId] { object.vitaProcessor(vitaPacket) }
+          
+      case .daxReducedBw:
+          if let object = daxRxAudioStreams[vitaPacket.streamId]    { object.vitaProcessor(vitaPacket) }
+          if let object = daxMicAudioStreams[vitaPacket.streamId]   { object.vitaProcessor(vitaPacket) }
+          
+      case .opus:
+          if let object = remoteRxAudioStreams[vitaPacket.streamId] { object.vitaProcessor(vitaPacket) }
+          
+      case .daxIq24, .daxIq48, .daxIq96, .daxIq192:
+          if let object = daxIqStreams[vitaPacket.streamId]         { object.vitaProcessor(vitaPacket) }
+          
+      default:
+          // log the error
+          _log("Radio, unknown Vita class code: \(vitaPacket.classCode.description()) Stream Id = \(vitaPacket.streamId.hex)", .error, #function, #file, #line)
+      }
+  }
+
 }

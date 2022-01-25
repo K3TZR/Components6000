@@ -69,7 +69,7 @@ public class Vita {
   var trailerPresent                        : Bool = false                        // Trailer present
   var tsiType                               : TsiTypes = .utc                     // Integer timestamp type
   var tsfType                               : TsfTypes = .sampleCount             // Fractional timestamp type
-  var sequence                              : Int = 0                             // Mod 16 packet sequence number
+  public var sequence                       : Int = 0                             // Mod 16 packet sequence number
   var integerTimestamp                      : UInt32 = 0                          // Integer portion
   var fracTimeStampMsb                      : UInt32 = 0                          // fractional portion - MSB 32 bits
   var fracTimeStampLsb                      : UInt32 = 0                          // fractional portion -LSB 32 bits
@@ -381,7 +381,7 @@ extension Vita {
     case daxAudio       = 0x03e3
     case discovery      = 0xffff
     
-    func description() -> String {
+    public func description() -> String {
       switch self {
       case .meter:        return "Meter"
       case .panadapter:   return "Panadapter"

@@ -31,7 +31,7 @@ final public class UdpStream: NSObject {
   // MARK: - Public properties
   
   public var statusPublisher = PassthroughSubject<UdpStatus, Never>()
-  public var streamPublisher = PassthroughSubject<String, Never>()
+  public var streamPublisher = PassthroughSubject<Vita, Never>()
 
   public var sendIp = ""
   public var sendPort: UInt16 = 4991 // default port number
@@ -73,7 +73,7 @@ final public class UdpStream: NSObject {
     _socket.setIPv4Enabled(true)
     _socket.setIPv6Enabled(false)
 
-    _log("Stream: UDP socket initialized", .debug, #function, #file, #line)
+    _log("UdpStream: socket initialized", .debug, #function, #file, #line)
   }
   
   // ----------------------------------------------------------------------------
@@ -177,7 +177,7 @@ final public class UdpStream: NSObject {
 
         // send a Registration command
         let cmd = "client udp_register handle=" + clientHandle!.hex
-        self.sendData(cmd.data(using: String.Encoding.ascii, allowLossyConversion: false)!)
+        self.send(cmd.data(using: String.Encoding.ascii, allowLossyConversion: false)!)
 
         // pause
         usleep(self.kRegistrationDelay)

@@ -46,6 +46,7 @@ public func flexErrorString(errorCode: String) -> String {
   case 0x10000001...0x10000003: errorString = FlexErrors(rawValue: number )!.toString()
   case 0x31000001...0x31000009: errorString = FlexErrors(rawValue: number )!.toString()
   case 0x50000001...0x500000A3: errorString = FlexErrors(rawValue: number )!.toString()
+  case 0x500000BE...0x500000BE: errorString = FlexErrors(rawValue: number )!.toString()
   case 0x50001000...0x50001017: errorString = FlexErrors(rawValue: number )!.toString()
   case 0xE2000000:              errorString = FlexErrors(rawValue: number )!.toString()
   case 0xF3000001...0xF3000004: errorString = FlexErrors(rawValue: number )!.toString()
@@ -234,6 +235,8 @@ enum FlexErrors: UInt32 {
   case SL_CWX_UNTERMINATED_INLINE_CMD                 = 0x500000A1
   case SL_CWX_INVALID_INLINE_CMD                      = 0x500000A2
   case SL_INVALID_SUBSCRIPTION                        = 0x500000A3
+
+  case SL_INVALID_BINDING                             = 0x500000BE
   
   case SL_RESP_UNKNOWN                                = 0x50001000
   
@@ -461,6 +464,8 @@ enum FlexErrors: UInt32 {
     case .SL_CWX_UNTERMINATED_INLINE_CMD:     return ""                                 // 0x500000A1
     case .SL_CWX_INVALID_INLINE_CMD:          return ""                                 // 0x500000A2
     case .SL_INVALID_SUBSCRIPTION:            return ""                                 // 0x500000A3
+
+    case .SL_INVALID_BINDING:                 return "GUI Client bound to another Gui Client"      // 0x500000BE
       
     case .SL_RESP_UNKNOWN:                    return "Response unknown"                 // 0x50001000
       

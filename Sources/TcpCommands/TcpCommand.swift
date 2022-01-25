@@ -11,6 +11,12 @@ import Combine
 
 import Shared
 
+public enum TcpStatusType {
+  case didConnect
+  case didSecure
+  case didDisconnect
+}
+
 public enum TcpMessageDirection {
   case received
   case sent
@@ -27,11 +33,20 @@ public struct TcpStatus: Identifiable, Equatable {
     lhs.id == rhs.id
   }
   
+  public init(_ statusType: TcpStatusType, host: String, port: UInt16, error: Error? = nil, reason: String? = nil) {
+    self.statusType = statusType
+    self.host = host
+    self.port = port
+    self.error = error
+    self.reason = reason
+  }
+  
   public var id = UUID()
-  var isConnected = false
-  var host = ""
-  var port: UInt16 = 0
-  var error: Error?
+  public var statusType: TcpStatusType = .didDisconnect
+  public var host = ""
+  public var port: UInt16 = 0
+  public var error: Error?
+  public var reason: String?
 }
 
 ///  Tcp Command Class implementation
@@ -144,7 +159,7 @@ extension TcpCommand: GCDAsyncSocketDelegate {
     // TLS connection complete
     _log("TcpCommand: TLS socket did secure", .debug, #function, #file, #line)
     statusPublisher.send(
-      TcpStatus(isConnected: true,
+      TcpStatus(.didSecure,
                 host: sock.connectedHost ?? "",
                 port: sock.connectedPort,
                 error: nil)
@@ -160,7 +175,7 @@ extension TcpCommand: GCDAsyncSocketDelegate {
   public func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
     _log("TcpCommand: socket disconnected \(err == nil ? "" : "with error")", .debug, #function, #file, #line)
     statusPublisher.send(
-      TcpStatus(isConnected: false,
+      TcpStatus(.didDisconnect,
                 host: "",
                 port: 0,
                 error: err)
@@ -181,7 +196,7 @@ extension TcpCommand: GCDAsyncSocketDelegate {
       // NO, we're connected
       _log("TcpCommand: socket connected to Local \(host) on port \(port)", .debug, #function, #file, #line)
       statusPublisher.send(
-        TcpStatus(isConnected: true,
+        TcpStatus(.didConnect,
                   host: host,
                   port: port,
                   error: nil)
@@ -189,7 +204,6 @@ extension TcpCommand: GCDAsyncSocketDelegate {
       // trigger the next read
       _startTime = Date()
       _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
-
     }
   }
 }

@@ -32,7 +32,7 @@ public struct ApiView: View {
       VStack(alignment: .leading) {
         TopButtonsView(store: store)
         SendView(store: store)
-        //        FiltersView(tester: tester)
+        FiltersView(store: store)
         
         Divider().background(Color(.red))
         

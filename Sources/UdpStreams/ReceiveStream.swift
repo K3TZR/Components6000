@@ -21,8 +21,8 @@ extension UdpStream: GCDAsyncUdpSocketDelegate {
         // a VITA packet was received therefore registration was successful
         self?._isRegistered = true
         
-        // TODO: publish?
-        
+        // publish
+        self?.streamPublisher.send(vita)
         
       } else {
         self?._log("UdpStream: Unable to decode Vita packet", .warning, #function, #file, #line)

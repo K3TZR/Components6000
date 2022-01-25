@@ -23,6 +23,32 @@ public enum ViewType: Equatable {
   case log
 }
 
+public enum ObjectsFilter: String, CaseIterable {
+  case core
+  case coreNoMeters = "core w/o meters"
+  case amplifiers
+  case bandSettings = "band settings"
+  case interlock
+  case memories
+  case meters
+  case streams
+  case transmit
+  case tnfs
+  case waveforms
+  case xvtrs
+}
+public enum MessagesFilter: String, CaseIterable {
+  case none
+  case prefix
+  case includes
+  case excludes
+  case command
+  case status
+  case reply
+  case S0
+}
+
+
 public struct ApiState: Equatable {
   // State held in User Defaults
   public var clearOnConnect: Bool { didSet { UserDefaults.standard.set(clearOnConnect, forKey: "clearOnConnect") } }
@@ -36,7 +62,10 @@ public struct ApiState: Equatable {
   public var showTimes: Bool { didSet { UserDefaults.standard.set(showTimes, forKey: "showTimes") } }
   public var showPings: Bool { didSet { UserDefaults.standard.set(showPings, forKey: "showPings") } }
   public var smartlinkEmail: String { didSet { UserDefaults.standard.set(smartlinkEmail, forKey: "smartlinkEmail") } }
-
+  public var objectsFilterBy: ObjectsFilter { didSet { UserDefaults.standard.set(objectsFilterBy.rawValue, forKey: "objectsFilterBy") } }
+  public var messagesFilterBy: MessagesFilter { didSet { UserDefaults.standard.set(messagesFilterBy.rawValue, forKey: "messagesFilterBy") } }
+  public var messagesFilterByText: String { didSet { UserDefaults.standard.set(messagesFilterByText, forKey: "messagesFilterByText") } }
+  
   // normal state
   public var appName: String
   public var domain: String
@@ -55,21 +84,25 @@ public struct ApiState: Equatable {
   public var connectionState: ConnectionState?
   public var viewType: ViewType = .api
   public var xcgWrapper: XCGWrapper?
-
-  public init(domain: String, appName: String) {
-    self.domain = domain
+  
+  public init(domain: String, appName: String, radio: Radio? = nil) {
     self.appName = appName
     clearOnConnect = UserDefaults.standard.bool(forKey: "clearOnConnect")
     clearOnDisconnect = UserDefaults.standard.bool(forKey: "clearOnDisconnect")
     clearOnSend = UserDefaults.standard.bool(forKey: "clearOnSend")
     connectionMode = ConnectionMode(rawValue: UserDefaults.standard.string(forKey: "connectionMode") ?? "both") ?? .both
     defaultConnection = getDefaultConnection()
+    self.domain = domain
     fontSize = UserDefaults.standard.double(forKey: "fontSize") == 0 ? 12 : UserDefaults.standard.double(forKey: "fontSize")
     isGui = UserDefaults.standard.bool(forKey: "isGui")
-    wanLogin = UserDefaults.standard.bool(forKey: "wanLogin")
-    showTimes = UserDefaults.standard.bool(forKey: "showTimes")
+    messagesFilterBy = MessagesFilter(rawValue: UserDefaults.standard.string(forKey: "messagesFilterBy") ?? "none") ?? .none
+    messagesFilterByText = UserDefaults.standard.string(forKey: "messagesFilterByText") ?? ""
+    objectsFilterBy = ObjectsFilter(rawValue: UserDefaults.standard.string(forKey: "objectsFilterBy") ?? "core") ?? .core
+    self.radio = radio
     showPings = UserDefaults.standard.bool(forKey: "showPings")
+    showTimes = UserDefaults.standard.bool(forKey: "showTimes")
     smartlinkEmail = UserDefaults.standard.string(forKey: "smartlinkEmail") ?? ""
+    wanLogin = UserDefaults.standard.bool(forKey: "wanLogin")
   }
 }
 
@@ -81,22 +114,25 @@ public enum ApiAction: Equatable {
   case onAppear
   case pickerAction(PickerAction)
   case sheetClosed
-//  case openRadio(PickerSelection)
+  //  case openRadio(PickerSelection)
   case connectionAction(ConnectionAction)
   case connectionClosed
-
+  
   // UI controls
   case button(WritableKeyPath<ApiState, Bool>)
   case clearDefaultButton
   case clearNowButton
-  case commandTextfield(String)
+  case commandToSend(String)
   case fontSizeStepper(CGFloat)
   case logViewButton
   case apiViewButton
   case modePicker(ConnectionMode)
   case sendButton
   case startStopButton
-
+  case objectsFilterBy(ObjectsFilter)
+  case messagesFilterBy(MessagesFilter)
+  case messagesFilterByText(String)
+  
 }
 
 public struct ApiEnvironment {
@@ -127,7 +163,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       environment: { _ in ConnectionEnvironment() }
     ),
   Reducer { state, action, environment in
-
+    
     func checkConnectionStatus(_ selection: PickerSelection) {
       if state.isGui && selection.packet.guiClients.count > 0 {
         // check for other stations, may need a disconnect
@@ -137,9 +173,16 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         openRadio(selection, nil)
       }
     }
-
+    
     func openRadio(_ selection: PickerSelection, _ disconnectHandle: Handle?) {
-      state.radio = Radio(selection.packet, connectionType: state.isGui ? .gui : .nonGui, command: state.command, stream: UdpStream(), disconnectHandle: disconnectHandle)
+      state.radio = Radio(selection.packet,
+                          connectionType: state.isGui ? .gui : .nonGui,
+                          command: state.command,
+                          stream: UdpStream(),
+                          stationName: "Api6000",
+                          programName: "Api6000",
+                          disconnectHandle: disconnectHandle,
+                          testerModeEnabled: true)
       if state.radio!.connect(selection.packet) {
         state.connectedPacket = selection
         state.alert = isVersionCompatible(Version(selection.packet.version))
@@ -148,7 +191,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         state.alert = AlertView(title: "Failed to connect to Radio \(selection.packet.nickname)")
       }
     }
-
+    
     func isVersionCompatible(_ radioVersion: Version) -> AlertView? {
       if Shared.kVersionSupported >= radioVersion  {
         return nil
@@ -160,23 +203,23 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
                                 Radio version is \(radioVersion.string)
                                 App supports <= \(kVersionSupported.string)
                                 """)
-        }
+      }
     }
-
+    
     switch action {
       
       // ----------------------------------------------------------------------------
       // MARK: - UI actions
-
+      
     case .apiViewButton:
       state.viewType = .api
       return .none
-
+      
     case let .button(keyPath):
       state[keyPath: keyPath].toggle()
       if keyPath == \.wanLogin { state.alert = AlertView(title: "Takes effect when App restarted") }
       return .none
-
+      
     case .clearDefaultButton:
       state.defaultConnection = nil
       //      if let discovery = state.discovery {
@@ -185,13 +228,13 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       //        }
       //      }
       return .none
-
+      
     case .clearNowButton:
       state.commandMessages.removeAll()
       return .none
-
-    case let .commandTextfield(value):
-      state.commandToSend = value
+      
+    case let .commandToSend(text):
+      state.commandToSend = text
       return .none
       
     case let .fontSizeStepper(size):
@@ -201,11 +244,22 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .logViewButton:
       state.viewType = .log
       return .none
-
+      
+    case let .messagesFilterBy(choice):
+      state.messagesFilterBy = choice
+      return.none
+      
+    case let .messagesFilterByText(text):
+      state.messagesFilterByText = text
+      return.none
+      
     case let .modePicker(mode):
       state.connectionMode = mode
       return .none
-
+      
+    case let .objectsFilterBy(filterBy):
+      return.none
+      
     case .onAppear:
       if state.xcgWrapper == nil { state.xcgWrapper = XCGWrapper() }
       if state.discovery == nil {
@@ -229,7 +283,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .sendButton:
       _ = state.command.send(state.commandToSend)
       return .none
-
+      
     case .sheetClosed:
       state.pickerState = nil
       return .none
@@ -247,29 +301,30 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         // otherwise, open the Picker
         state.pickerState = PickerState(connectionType: state.isGui ? .gui : .nonGui)
         return .none
-
+        
       } else {
         // CONNECTED, disconnect
         state.command.disconnect()
         state.connectedPacket = nil
+        state.radio = nil
         if state.clearOnDisconnect { state.commandMessages.removeAll() }
         return .none
       }
-
+      
       // ----------------------------------------------------------------------------
       // MARK: - Picker actions
-
+      
     case .pickerAction(.cancelButton):
       state.pickerState = nil
       if state.clearOnDisconnect { state.commandMessages.removeAll() }
       return .none
-
+      
       // TODO: take into account the clientIndex and isGui
     case let .pickerAction(.connectButton(selection)):
       state.pickerState = nil
       checkConnectionStatus(selection)
       return .none
-
+      
     case let .pickerAction(.connectResultReceived(index)):
       print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
@@ -285,14 +340,14 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         state.defaultConnection = nil
       }
       return .none
-
+      
     case .pickerAction(_):
       // IGNORE ALL OTHERS
       return .none
       
       // ----------------------------------------------------------------------------
       // MARK: - Login actions
-
+      
     case .loginAction(.cancelButton):
       print("-----> Login: Cancel button")
       state.loginState = nil
@@ -308,36 +363,36 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.loginState = nil
       print("-----> ApiViewer: Login closed")
       return .none
-
+      
       // ----------------------------------------------------------------------------
       // MARK: - Connection actions
-
+      
     case .connectionAction(.cancelButton):
       print("API -----> cancelButton")
       state.connectionState = nil
       return .none
-
+      
     case let .connectionAction(.connect(selection, disconnectHandle)):
       state.connectionState = nil
       openRadio(selection, disconnectHandle)
       return .none
-
+      
       // ----------------------------------------------------------------------------
       // MARK: - Alert actions
       
     case .alertDismissed:
       state.alert = nil
       return .none
-
+      
       // ----------------------------------------------------------------------------
       // MARK: - Command actions
-
+      
     case let .commandAction(message):
       if message.direction == .sent && message.text.contains("ping") && state.showPings == false { return .none }
       state.commandMessages.append(message)
       state.update.toggle()
       return .none
-
+      
     case .connectionClosed:
       state.connectionState = nil
       return .none
