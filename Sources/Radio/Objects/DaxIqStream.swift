@@ -29,7 +29,7 @@ public final class DaxIqStream: ObservableObject, Identifiable {
   @Published public internal(set) var clientHandle: Handle = 0
   @Published public internal(set) var ip = ""
   @Published public internal(set) var isActive = false
-  @Published public internal(set) var isStreaming = false
+  var _isStreaming = false
   @Published public internal(set) var pan: PanadapterStreamId = 0
   @Published public internal(set) var rate = 0
   
@@ -165,8 +165,8 @@ extension DaxIqStream {
   /// - Parameters:
   ///   - vita:       a Vita struct
   func vitaProcessor(_ vita: Vita) {
-    if isStreaming == false {
-      DispatchQueue.main.async { self.isStreaming = true }
+    if _isStreaming == false {
+      _isStreaming = true
       // log the start of the stream
       _log("DaxIq Stream started: \(id.hex)", .info, #function, #file, #line)
     }

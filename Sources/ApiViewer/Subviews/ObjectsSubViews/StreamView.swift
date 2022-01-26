@@ -13,7 +13,6 @@ import Shared
 struct StreamView: View {
   let store: Store<ApiState, ApiAction>
   
-  
   var body: some View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
@@ -33,7 +32,6 @@ struct StreamView: View {
                 Text("Handle \(stream.clientHandle.hex)")
                 Text("Compression \(stream.compression)")
                 Text("Ip \(stream.ip)")
-                Text("Streaming \(stream.isStreaming ? "Y" : "N")")
               }
               .foregroundColor(.red)
             }
@@ -45,7 +43,6 @@ struct StreamView: View {
                 Text(stream.id.hex)
                 Text("Handle \(stream.clientHandle.hex)")
                 Text("Compression \(stream.compression)")
-                Text("Streaming \(stream.isStreaming ? "Y" : "N")")
               }
               .foregroundColor(.orange)
             }
@@ -93,13 +90,12 @@ struct StreamView: View {
                 Text("Channel \(stream.channel)")
                 Text("Ip \(stream.ip)")
                 Text("Pan \(stream.pan.hex)")
-                Text("Streaming \(stream.isStreaming ? "Y" : "N")")
               }
               .foregroundColor(.purple)
             }
           }
         }
-        .padding(.leading, 20)
+//        .padding(.leading, 20)
       }
     }
   }

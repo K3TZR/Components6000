@@ -16,14 +16,15 @@ struct ObjectsView: View {
   
   var body: some View {
     WithViewStore(self.store) { viewStore in
-      VStack {
-        RadioView(store: store)
-        if viewStore.isGui == true { GuiClientView(store: store) }
-        if viewStore.isGui == false { NonGuiClientView(store: store) }
+      ScrollView([.horizontal, .vertical]) {
+        LazyVStack {
+          RadioView(store: store)
+          if viewStore.isGui == true { GuiClientsView(store: store) }
+          if viewStore.isGui == false { NonGuiClientView(store: store) }
+        }
+        .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
+        .frame(minWidth: 4000, maxWidth: .infinity, alignment: .leading)
       }
-      .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
-      .frame(maxWidth: .infinity, minHeight: 100, alignment: .leading)
-      .padding()
     }
   }
 }
@@ -31,15 +32,49 @@ struct ObjectsView: View {
 // ----------------------------------------------------------------------------
 // MARK: - Preview
 
+import Radio
+import TcpCommands
+import UdpStreams
+import Shared
+
 struct ObjectsView_Previews: PreviewProvider {
+
   static var previews: some View {
     ObjectsView(
       store: Store(
-        initialState: ApiState(domain: "net.k3tzr", appName: "Api6000"),
+        initialState: ApiState(
+          domain: "net.k3tzr",
+          appName: "Api6000",
+          isGui: false,
+          radio: Radio(testPacket,
+                       connectionType: .gui,
+                       command: TcpCommand(),
+                       stream: UdpStream())
+        ),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
     )
       .frame(minWidth: 975)
+      .previewDisplayName("----- Non Gui -----")
+
+
+    ObjectsView(
+      store: Store(
+        initialState: ApiState(
+          domain: "net.k3tzr",
+          appName: "Api6000",
+          isGui: true,
+          radio: Radio(testPacket,
+                       connectionType: .gui,
+                       command: TcpCommand(),
+                       stream: UdpStream())
+        ),
+        reducer: apiReducer,
+        environment: ApiEnvironment()
+      )
+    )
+      .frame(minWidth: 975)
+      .previewDisplayName("----- Gui -----")
   }
 }

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import ComposableArchitecture
+import simd
 
 // ----------------------------------------------------------------------------
 // MARK: - View
@@ -15,7 +16,7 @@ struct MessagesView: View {
   let store: Store<ApiState, ApiAction>
 
   var body: some View {
-
+    
     WithViewStore(self.store) { viewStore in
       ScrollView([.horizontal, .vertical]) {
         LazyVStack(alignment: .leading) {
@@ -24,16 +25,12 @@ struct MessagesView: View {
               if viewStore.showTimes { Text("\(message.timeInterval)") }
               Text(message.text)
             }
-              .foregroundColor( message.color )
-              .frame(maxWidth: .infinity, alignment: .leading)
+            .foregroundColor( message.color )
           }
-          .frame(minWidth: 4000, maxWidth: .infinity, alignment: .leading)
         }
-        .frame(alignment: .leading)
+        .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
+        .frame(minWidth: 12000, maxWidth: .infinity, alignment: .leading)
       }
-      .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
-      .frame(maxWidth: .infinity, minHeight: 100, alignment: .leading)
-      .padding()
     }
   }
 }

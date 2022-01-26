@@ -58,7 +58,10 @@ public struct PickerView: View {
                 action: PickerAction.packet(id:action:)
               )
             ) { packetStore in
-              PacketView(store: packetStore, connectionType: viewStore.connectionType, defaultSelection: viewStore.defaultSelection)
+              PacketView(store: packetStore,
+                         connectionType: viewStore.connectionType,
+                         defaultSelection: viewStore.defaultSelection
+              )
             }
           }
         }

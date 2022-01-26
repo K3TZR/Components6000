@@ -31,7 +31,8 @@ struct WaterfallView: View {
               Text("Duration \(waterfall.lineDuration)")
             }
           }
-        }.frame(maxWidth: .infinity, alignment: .leading)
+        }
+//        .frame(maxWidth: .infinity, alignment: .leading)
       }
     }
   }

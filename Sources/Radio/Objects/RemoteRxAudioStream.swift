@@ -43,7 +43,7 @@ public final class RemoteRxAudioStream: ObservableObject, Identifiable {
   @Published public internal(set) var clientHandle: Handle = 0
   @Published public internal(set) var compression = ""
   @Published public internal(set) var ip = ""
-  @Published public internal(set) var isStreaming = false
+  var _isStreaming = false
   
   // ------------------------------------------------------------------------------
   // MARK: - Public properties
@@ -163,8 +163,8 @@ extension RemoteRxAudioStream: DynamicModelWithStream {
     
     // FIXME: This assumes Opus encoded audio
     
-    if isStreaming == false {
-      isStreaming = true
+    if _isStreaming == false {
+      _isStreaming = true
       // log the start of the stream
       _log("RemoteRxAudio Stream started: \(id.hex)", .info, #function, #file, #line)
     }

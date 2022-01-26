@@ -26,8 +26,8 @@ struct SliceView: View {
               HStack(spacing: 20) {
                 Text("Slice").frame(width: 100, alignment: .trailing)
                 Text(String(format: "% 3d", slice.id))
-                Text("Frequency \(slice.frequency)")
-                Text("Mode \(slice.mode)")
+                Text("\(slice.frequency)")
+                Text("\(slice.mode)")
                 Text("FilterLow \(slice.filterLow)")
                 Text("FilterHigh \(slice.filterHigh)")
                 Text("Active \(slice.active ? "Y" : "N")")

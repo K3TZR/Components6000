@@ -37,6 +37,7 @@ final class LanListener: NSObject, ObservableObject {
   // MARK: - Private properties
   
   private var _cancellables = Set<AnyCancellable>()
+  private let _formatter = DateFormatter()
   private let _udpQ = DispatchQueue(label: "DiscoveryListener" + ".udpQ")
   private var _udpSocket: GCDAsyncUdpSocket!
 
@@ -48,6 +49,9 @@ final class LanListener: NSObject, ObservableObject {
   init(_ discovery: Discovery, port: UInt16 = 4992) {
     super.init()
     _discovery = discovery
+    
+    _formatter.timeZone = .current
+    _formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
 
     // create a Udp socket and set options
     _udpSocket = GCDAsyncUdpSocket( delegate: self, delegateQueue: _udpQ )
@@ -68,9 +72,8 @@ final class LanListener: NSObject, ObservableObject {
       // setup a timer to watch for Radio timeouts
       Timer.publish(every: checkInterval, on: .main, in: .default)
         .autoconnect()
-        .sink { now in
-          self.remove(condition: { $0.source == .local && abs($0.lastSeen.timeIntervalSince(now)) > timeout } )
-          
+        .sink { [self] now in
+          remove(condition: { $0.source == .local && abs($0.lastSeen.timeIntervalSince(now)) > timeout } )
         }
         .store(in: &_cancellables)
 
@@ -98,7 +101,7 @@ final class LanListener: NSObject, ObservableObject {
     for packet in _discovery!.packets where condition(packet) { 
       let removedPacket = _discovery?.packets.remove(id: packet.id)
       _discovery!.packetPublisher.send(PacketChange(.deleted, packet: removedPacket!))
-      _log("Discovery: Lan Listener packet removed, lastSeen = \(removedPacket!.lastSeen)", .debug, #function, #file, #line)
+      self._log("Discovery: Lan Listener packet removed, interval = \(abs(removedPacket!.lastSeen.timeIntervalSince(Date())))", .debug, #function, #file, #line)
     }
   }
 }

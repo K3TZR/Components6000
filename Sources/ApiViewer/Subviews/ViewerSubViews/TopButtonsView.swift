@@ -21,10 +21,10 @@ struct TopButtonsView: View {
 
     WithViewStore(self.store) { viewStore in
       HStack(spacing: 30) {
-        Button(viewStore.connectedPacket == nil ? "Start" : "Stop") {
+        Button(viewStore.radio == nil ? "Start" : "Stop") {
           viewStore.send(.startStopButton)
         }
-        .keyboardShortcut(viewStore.connectedPacket == nil ? .defaultAction : .cancelAction)
+        .keyboardShortcut(viewStore.radio == nil ? .defaultAction : .cancelAction)
 
         HStack(spacing: 20) {
           Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .button(\.isGui)))

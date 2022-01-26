@@ -19,7 +19,7 @@ struct AtuView: View {
       if viewStore.radio != nil {
         let atu = viewStore.radio!.atu!
         HStack(spacing: 20) {
-          Text("ATU -> ").frame(width: 140, alignment: .leading)
+          Text("ATU -> ").frame(width: 75, alignment: .leading)
           Text("").frame(width: 120, alignment: .leading)
           Text("Enabled \(atu.enabled ? "Y" : "N")")
           Text("Status \(atu.status)")

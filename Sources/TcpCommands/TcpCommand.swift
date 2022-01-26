@@ -109,9 +109,9 @@ final public class TcpCommand: NSObject {
     // identify the port
     switch (packet.source, packet.requiresHolePunch) {
       
-    case (.smartlink, true):  portToUse = packet.negotiatedHolePunchPort  // isWan w/hole punch
-    case (.smartlink, false): portToUse = packet.publicTlsPort!           // isWan
-    default:                  portToUse = packet.port                     // local
+    case (.smartlink, true):  portToUse = packet.negotiatedHolePunchPort
+    case (.smartlink, false): portToUse = packet.publicTlsPort!
+    default:                  portToUse = packet.port                     
     }
     // attempt a connection
     do {

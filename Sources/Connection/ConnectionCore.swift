@@ -22,8 +22,7 @@ public struct ConnectionState: Equatable {
 public enum ConnectionAction: Equatable {
   // UI controls
   case cancelButton
-  case simpleConnect(PickerSelection)
-  case disconnectThenConnect(PickerSelection, Int)
+  case connect(PickerSelection, Handle?)
 }
 
 public struct ConnectionEnvironment {
@@ -35,10 +34,7 @@ public let connectionReducer = Reducer<ConnectionState, ConnectionAction, Connec
   { state, action, environment in
 
     switch action {
-    case let .disconnectThenConnect(selection, indexToDisconnect):
-      return .none
-
-    case .simpleConnect(let selection):
+    case let .connect(selection, disconnectHandle):
       return .none
 
     case .cancelButton:

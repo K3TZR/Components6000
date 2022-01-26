@@ -32,7 +32,8 @@ struct PanadapterView: View {
             WaterfallView(store: store, panadapterId: panadapter.id)
             SliceView(store: store, panadapterId: panadapter.id, showMeters: showMeters)
           }
-        }.frame(maxWidth: .infinity, alignment: .leading)
+        }
+//        .frame(maxWidth: .infinity, alignment: .leading)
       }
     }
   }

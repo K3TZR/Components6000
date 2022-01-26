@@ -39,7 +39,7 @@ public final class Panadapter: ObservableObject, Identifiable {
   @Published public internal(set) var delegate: StreamHandler?
   @Published public internal(set) var fillLevel: Int = 0
   @Published public internal(set) var freqValues = [LegendValue]()
-  @Published public internal(set) var isStreaming = false
+  var _isStreaming = false
   @Published public internal(set) var maxBw: Hz = 0
   @Published public internal(set) var minBw: Hz = 0
   @Published public internal(set) var preamp = ""
@@ -361,8 +361,8 @@ extension Panadapter: DynamicModelWithStream {
   /// - Parameters:
   ///   - vita:        a Vita struct
   func vitaProcessor(_ vita: Vita) {
-    if isStreaming == false {
-      DispatchQueue.main.async { self.isStreaming = true }
+    if _isStreaming == false {
+      _isStreaming = true
       // log the start of the stream
       _log("Panadapter: Stream started, \(id.hex)", .info, #function, #file, #line)
     }

@@ -33,7 +33,7 @@ public final class Waterfall: ObservableObject, Identifiable {
   @Published public internal(set) var colorGain = 0
   @Published public internal(set) var delegate: StreamHandler?
   @Published public internal(set) var gradientIndex = 0
-  @Published public internal(set) var isStreaming = false
+  var _isStreaming = false
   @Published public internal(set) var lineDuration = 0
   @Published public internal(set) var panadapterId: PanadapterStreamId?
   
@@ -208,8 +208,8 @@ extension Waterfall {
   /// - Parameters:
   ///   - vita:       a Vita struct
   func vitaProcessor(_ vita: Vita) {
-    if isStreaming == false {
-      DispatchQueue.main.async { self.isStreaming = true }
+    if _isStreaming == false {
+      _isStreaming = true
       // log the start of the stream
       _log("Waterfall Stream started: \(id.hex)", .info, #function, #file, #line)
     }

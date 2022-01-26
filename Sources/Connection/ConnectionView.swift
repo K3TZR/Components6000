@@ -29,16 +29,16 @@ public struct ConnectionView: View {
         Text("Choose an Action").font(.title)
         Text("for Radio <\(viewStore.pickerSelection.packet.nickname)>")
         Divider()
-        Button( action: { viewStore.send(.disconnectThenConnect(viewStore.pickerSelection, 0)) })
+        Button( action: { viewStore.send(.connect(viewStore.pickerSelection, viewStore.pickerSelection.packet.guiClients[0].handle)) })
         { Text("Close " + viewStore.pickerSelection.packet.guiClients[0].station.uppercased() + " Station").frame(width: 150) }
 
         if viewStore.pickerSelection.packet.guiClients.count == 1 {
-          Button( action: { viewStore.send(.simpleConnect(viewStore.pickerSelection)) })
+          Button( action: { viewStore.send(.connect(viewStore.pickerSelection, nil)) })
           { Text("MultiFlex connect").frame(width: 150) }
         }
 
         if viewStore.pickerSelection.packet.guiClients.count == 2 {
-          Button( action: { viewStore.send(.disconnectThenConnect(viewStore.pickerSelection, 1)) })
+          Button( action: { viewStore.send(.connect(viewStore.pickerSelection, viewStore.pickerSelection.packet.guiClients[0].handle)) })
           { Text("Close " + viewStore.pickerSelection.packet.guiClients[1].station.uppercased() + " Station").frame(width: 150) }
         }
 
@@ -87,17 +87,10 @@ private func testPickerSelection2() -> PickerSelection {
 private func testPacket1() -> Packet {
   var packet = Packet()
   packet.nickname = "Dougs 6700"
-//  packet.status = "Available"
   packet.source = .local
   packet.serial = "5678-9012-3456-7890"
-//  packet.publicIp = "40.0.2.278"
-//  packet.guiClientHandles = ""
-//  packet.guiClientPrograms = ""
-//  packet.guiClientStations = ""
-//  packet.guiClientHosts = ""
-//  packet.guiClientIps = ""
   packet.guiClients = [
-    GuiClient(clientHandle: 1, station: "iPad", program: "SmartSDR-iOS"),
+    GuiClient(handle: 1, station: "iPad", program: "SmartSDR-iOS"),
   ]
   return packet
 }
@@ -105,18 +98,11 @@ private func testPacket1() -> Packet {
 private func testPacket2() -> Packet {
   var packet = Packet()
   packet.nickname = "Dougs 6500"
-//  packet.status = "In Use"
   packet.source = .local
   packet.serial = "1234-5678-9012-3456"
-//  packet.publicIp = "10.0.1.200"
-//  packet.guiClientHandles = "1,2"
-//  packet.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
-//  packet.guiClientStations = "Windows,iPad"
-//  packet.guiClientHosts = ""
-//  packet.guiClientIps = "192.168.1.200,192.168.1.201"
   packet.guiClients = [
-    GuiClient(clientHandle: 1, station: "Windows", program: "SmartSDR-Windows"),
-    GuiClient(clientHandle: 2, station: "iPad", program: "SmartSDR-iOS")
+    GuiClient(handle: 1, station: "Windows", program: "SmartSDR-Windows"),
+    GuiClient(handle: 2, station: "iPad", program: "SmartSDR-iOS")
   ]
   return packet
 }

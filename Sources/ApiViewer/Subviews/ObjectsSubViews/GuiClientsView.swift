@@ -10,13 +10,12 @@ import ComposableArchitecture
 
 import Shared
 
-struct GuiClientView: View {
+struct GuiClientsView: View {
   let store: Store<ApiState, ApiAction>
   
   var body: some View {
     WithViewStore(self.store) { viewStore in
       
-      //      if !guiIsEnabled { NonGuiView(tester: tester, radio: radio) }
       if viewStore.radio != nil {
         ForEach(viewStore.radio!.packet.guiClients, id: \.id) { guiClient in
           Divider().background(Color(.red))
@@ -29,7 +28,8 @@ struct GuiClientView: View {
             Text("Program \(guiClient.program)")
           }
           GuiClientSubView(store: store, handle: guiClient.handle)
-        }.frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
       }
     }
   }
@@ -50,7 +50,7 @@ struct GuiClientSubView: View {
 
       case .coreNoMeters:
         StreamView(store: store)
-        PanadapterView(store: store, handle: handle, showMeters: true)
+        PanadapterView(store: store, handle: handle, showMeters: false)
 
       case .amplifiers:       AmplifierView(store: store)
       case .bandSettings:     BandSettingsView(store: store)

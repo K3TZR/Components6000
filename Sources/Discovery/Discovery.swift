@@ -91,7 +91,7 @@ public final class Discovery: Equatable, ObservableObject {
 
         // publish and Log
         packetPublisher.send(PacketChange(.updated, packet: newPacket))
-        _log("Discovery: packet updated, \(newPacket.serial), \(newPacket.source.rawValue)", .debug, #function, #file, #line)
+        _log("Discovery: \(newPacket.source.rawValue) packet updated, \(newPacket.serial)", .debug, #function, #file, #line)
 
         return
       
@@ -105,7 +105,7 @@ public final class Discovery: Equatable, ObservableObject {
     // NO, not seen before, parse the GuiClient fields
     newPacket = parseGuiClients(newPacket)
 
-    _log("Discovery: packet added, \(newPacket.serial), \(newPacket.source.rawValue)", .debug, #function, #file, #line)
+    _log("Discovery: \(newPacket.source.rawValue) packet added, \(newPacket.serial)", .debug, #function, #file, #line)
 
     // add it and publish
     packets.append(newPacket)
@@ -135,7 +135,7 @@ public final class Discovery: Equatable, ObservableObject {
       if let handle = handles[i].handle, stations[i] != "", programs[i] != "" , ips[i] != "" {
         
         updatedPacket.guiClients.append(
-          GuiClient(clientHandle: handle,
+          GuiClient(handle: handle,
                     station: stations[i],
                     program: programs[i],
                     ip: ips[i])
@@ -150,7 +150,7 @@ public final class Discovery: Equatable, ObservableObject {
     for guiClient in newPacket.guiClients {
       if oldPacket == nil || oldPacket?.guiClients[id: guiClient.id] == nil {
         clientPublisher.send(ClientChange(.added, client: guiClient))
-        _log("Discovery: guiClient added, \(guiClient.station)", .debug, #function, #file, #line)
+        _log("Discovery: \(newPacket.source.rawValue) guiClient added, \(guiClient.station)", .debug, #function, #file, #line)
         
         let newStation = Packet(source: newPacket.source)
         var packetCopy = newPacket
@@ -168,7 +168,7 @@ public final class Discovery: Equatable, ObservableObject {
     for guiClient in oldPacket.guiClients {
       if newPacket.guiClients[id: guiClient.id] == nil {
         clientPublisher.send(ClientChange(.deleted, client: guiClient))
-        _log("Discovery: guiClient deleted, \(guiClient.station)", .debug, #function, #file, #line)
+        _log("Discovery: \(newPacket.source.rawValue) guiClient deleted, \(guiClient.station)", .debug, #function, #file, #line)
         
         for station in stations where station.guiClientStations == guiClient.station {
           stations.remove(station)

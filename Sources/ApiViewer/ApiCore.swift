@@ -73,7 +73,6 @@ public struct ApiState: Equatable {
   public var clearNow = false
   public var command = TcpCommand()
   public var commandToSend = ""
-  public var connectedPacket: PickerSelection? = nil
   public var discovery: Discovery? = nil
   public var alert: AlertView?
   public var loginState: LoginState? = nil
@@ -85,7 +84,13 @@ public struct ApiState: Equatable {
   public var viewType: ViewType = .api
   public var xcgWrapper: XCGWrapper?
   
-  public init(domain: String, appName: String, radio: Radio? = nil) {
+  public init(
+    domain: String,
+    appName: String,
+    isGui: Bool = UserDefaults.standard.bool(forKey: "isGui"),
+    radio: Radio? = nil
+  )
+  {
     self.appName = appName
     clearOnConnect = UserDefaults.standard.bool(forKey: "clearOnConnect")
     clearOnDisconnect = UserDefaults.standard.bool(forKey: "clearOnDisconnect")
@@ -94,7 +99,7 @@ public struct ApiState: Equatable {
     defaultConnection = getDefaultConnection()
     self.domain = domain
     fontSize = UserDefaults.standard.double(forKey: "fontSize") == 0 ? 12 : UserDefaults.standard.double(forKey: "fontSize")
-    isGui = UserDefaults.standard.bool(forKey: "isGui")
+    self.isGui = isGui
     messagesFilterBy = MessagesFilter(rawValue: UserDefaults.standard.string(forKey: "messagesFilterBy") ?? "none") ?? .none
     messagesFilterByText = UserDefaults.standard.string(forKey: "messagesFilterByText") ?? ""
     objectsFilterBy = ObjectsFilter(rawValue: UserDefaults.standard.string(forKey: "objectsFilterBy") ?? "core") ?? .core
@@ -117,7 +122,8 @@ public enum ApiAction: Equatable {
   //  case openRadio(PickerSelection)
   case connectionAction(ConnectionAction)
   case connectionClosed
-  
+//  case client(id: Handle, action: GuiClientAction)
+
   // UI controls
   case button(WritableKeyPath<ApiState, Bool>)
   case clearDefaultButton
@@ -148,6 +154,13 @@ public struct ApiEnvironment {
 
 // swiftlint:disable trailing_closure
 public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
+//  guiClientReducer
+//    .optional()
+//    .pullback(
+//      state: \ApiState.guiClientState,
+//      action: /ApiAction.guiClientAction,
+//      environment: { _ in GuiClientEnvironment() }
+//    ),
   pickerReducer
     .optional()
     .pullback(
@@ -206,8 +219,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       }
     }
     
-    switch action {
-      
+    switch action {      
       // ----------------------------------------------------------------------------
       // MARK: - UI actions
       
@@ -215,7 +227,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.viewType = .api
       return .none
       
-    case let .button(keyPath):
+    case .button(let keyPath):
       state[keyPath: keyPath].toggle()
       if keyPath == \.wanLogin { state.alert = AlertView(title: "Takes effect when App restarted") }
       return .none
@@ -233,11 +245,11 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.commandMessages.removeAll()
       return .none
       
-    case let .commandToSend(text):
+    case .commandToSend(let text):
       state.commandToSend = text
       return .none
       
-    case let .fontSizeStepper(size):
+    case .fontSizeStepper(let size):
       state.fontSize = size
       return .none
       
@@ -245,19 +257,20 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.viewType = .log
       return .none
       
-    case let .messagesFilterBy(choice):
+    case .messagesFilterBy(let choice):
       state.messagesFilterBy = choice
       return.none
       
-    case let .messagesFilterByText(text):
+    case .messagesFilterByText(let text):
       state.messagesFilterByText = text
       return.none
       
-    case let .modePicker(mode):
+    case .modePicker(let mode):
       state.connectionMode = mode
       return .none
       
-    case let .objectsFilterBy(filterBy):
+    case .objectsFilterBy(let filterBy):
+      state.objectsFilterBy = filterBy
       return.none
       
     case .onAppear:
@@ -320,20 +333,20 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
       // TODO: take into account the clientIndex and isGui
-    case let .pickerAction(.connectButton(selection)):
+    case .pickerAction(.connectButton(let selection)):
       state.pickerState = nil
       checkConnectionStatus(selection)
       return .none
       
-    case let .pickerAction(.connectResultReceived(index)):
+    case .pickerAction(.connectResultReceived(let index)):
       print("-----> ApiCore: \(action) NOT IMPLEMENTED")
       return .none
       
-    case let .pickerAction(.testButton(selection)):
+    case .pickerAction(.testButton(let selection)):
       print("-----> ApiCore: Test for \(selection.packet.source.rawValue), \(selection.packet.serial), \(selection.station ?? "")")
       return .none
       
-    case let .pickerAction(.defaultButton(selection)):
+    case .pickerAction(.defaultButton(let selection)):
       if state.defaultConnection == nil {
         state.defaultConnection = DefaultConnection(selection)
       } else {
@@ -353,7 +366,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.loginState = nil
       return .none
       
-    case let .loginAction(.loginButton(credentials)):
+    case .loginAction(.loginButton(let credentials)):
       state.loginState = nil
       state.smartlinkEmail = credentials.email
       state.alert = listenForWanPackets(state.discovery!, using: credentials)
@@ -372,7 +385,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.connectionState = nil
       return .none
       
-    case let .connectionAction(.connect(selection, disconnectHandle)):
+    case .connectionAction(.connect(let selection, let disconnectHandle)):
       state.connectionState = nil
       openRadio(selection, disconnectHandle)
       return .none
@@ -396,6 +409,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .connectionClosed:
       state.connectionState = nil
       return .none
+    
+//    case .client(id: let id, action: let action):
+//      return .none
     }
   }
 )
