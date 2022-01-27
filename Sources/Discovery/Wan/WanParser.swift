@@ -268,7 +268,8 @@ extension WanListener {
       case .upnpUdpPortWorking:         result.upnpUdpPortWorking = property.value.tValue
       }
     }
-    // publish test result
-    DispatchQueue.main.async { self.testResult = result }
+    _log("Discovery: smartlink test \(result.success ? "success" : "failure")", result.success ? .debug : .warning, #function, #file, #line)
+    // publish the result
+    _discovery?.testPublisher.send(result)
   }
 }

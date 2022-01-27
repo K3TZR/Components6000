@@ -7,6 +7,7 @@
 
 import SwiftUI
 import ComposableArchitecture
+import Discovery
 
 // ----------------------------------------------------------------------------
 // MARK: - View
@@ -21,7 +22,7 @@ struct PickerFooterView: View {
         Button("Test") {viewStore.send(.testButton(viewStore.pickerSelection!))}
         .disabled(viewStore.pickerSelection == nil || viewStore.pickerSelection?.packet.source != .smartlink)
         Circle()
-          .fill(viewStore.testStatus ? Color.green : Color.red)
+          .fill(viewStore.testResult?.success ?? false ? Color.green : Color.red)
           .frame(width: 20, height: 20)
 
         Spacer()
@@ -51,17 +52,43 @@ struct PickerFooterView_Previews: PreviewProvider {
   static var previews: some View {
     
     PickerFooterView(store: Store(
-      initialState: PickerState(connectionType: .gui, testStatus: false),
+      initialState: PickerState(connectionType: .gui, testResult: testResultFail),
       reducer: pickerReducer,
       environment: PickerEnvironment() )
     )
       .previewDisplayName("Test false")
     
     PickerFooterView(store: Store(
-      initialState: PickerState(connectionType: .nonGui, testStatus: true),
+      initialState: PickerState(connectionType: .nonGui, testResult: testResultSuccess1),
       reducer: pickerReducer,
       environment: PickerEnvironment() )
     )
-      .previewDisplayName("Test true")
+      .previewDisplayName("Test true (FORWARDING)")
+
+    PickerFooterView(store: Store(
+      initialState: PickerState(connectionType: .nonGui, testResult: testResultSuccess2),
+      reducer: pickerReducer,
+      environment: PickerEnvironment() )
+    )
+      .previewDisplayName("Test true (UPNP)")
   }
+}
+
+
+var testResultFail: SmartlinkTestResult {
+  SmartlinkTestResult()
+}
+
+var testResultSuccess1: SmartlinkTestResult {
+  var result = SmartlinkTestResult()
+  result.forwardTcpPortWorking = true
+  result.forwardUdpPortWorking = true
+  return result
+}
+
+var testResultSuccess2: SmartlinkTestResult {
+  var result = SmartlinkTestResult()
+  result.upnpTcpPortWorking = true
+  result.upnpUdpPortWorking = true
+  return result
 }

@@ -31,3 +31,14 @@ public func liveDiscoveryEffect() -> Effect<PickerAction, Never> {
       .cancellable(id: ClientEffectId())
   )
 }
+
+public func TestEffect() -> Effect<PickerAction, Never> {
+  
+  Effect(
+    Discovery.sharedInstance.testPublisher
+      .receive(on: DispatchQueue.main)
+      .map { result in .testResultReceived(result) }
+      .eraseToEffect()
+      .cancellable(id: TestEffectId())
+  )
+}

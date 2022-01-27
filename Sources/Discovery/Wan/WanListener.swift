@@ -17,25 +17,41 @@ public enum WanListenerError: Error {
   case kFailedToConnect
 }
 
-public struct SmartlinkTestResult {
+public struct SmartlinkTestResult: Equatable {
+  public var upnpTcpPortWorking = false
+  public var upnpUdpPortWorking = false
+  public var forwardTcpPortWorking = false
+  public var forwardUdpPortWorking = false
+  public var natSupportsHolePunch = false
+  public var radioSerial = ""
   
-  public var upnpTcpPortWorking         = false
-  public var upnpUdpPortWorking         = false
-  public var forwardTcpPortWorking      = false
-  public var forwardUdpPortWorking      = false
-  public var natSupportsHolePunch       = false
-  public var radioSerial                = ""
+  public init() {}
   
-  public func string() -> String {
-    return """
-    UPnP Ports:
-    \tTCP:\t\t\(upnpTcpPortWorking.asPassFail)
-    \tUDP:\t\(upnpUdpPortWorking.asPassFail)
-    Forwarded Ports:
-    \tTCP:\t\t\(forwardTcpPortWorking.asPassFail)
-    \tUDP:\t\(forwardUdpPortWorking.asPassFail)
-    Hole Punch Supported:\t\(natSupportsHolePunch.asYesNo)
-    """
+  // format the result as a String
+  public var result: String {
+        """
+        Forward Tcp Port:\t\t\(forwardTcpPortWorking)
+        Forward Udp Port:\t\t\(forwardUdpPortWorking)
+        UPNP Tcp Port:\t\t\(upnpTcpPortWorking)
+        UPNP Udp Port:\t\t\(upnpUdpPortWorking)
+        Nat Hole Punch:\t\t\(natSupportsHolePunch)
+        """
+  }
+  
+  // result was Success / Failure
+  public var success: Bool {
+    (
+      forwardTcpPortWorking == true &&
+      forwardUdpPortWorking == true &&
+      upnpTcpPortWorking == false &&
+      upnpUdpPortWorking == false &&
+      natSupportsHolePunch  == false) ||
+    (
+      forwardTcpPortWorking == false &&
+      forwardUdpPortWorking == false &&
+      upnpTcpPortWorking == true &&
+      upnpUdpPortWorking == true &&
+      natSupportsHolePunch  == false)
   }
 }
 
@@ -45,16 +61,17 @@ public struct SmartlinkTestResult {
 final class WanListener: NSObject, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
-
+  
   public private(set) var isListening: Bool = false
-
+  
   @Published public var callsign: String?
   @Published public var handle: Handle?
-//  @Published public private(set) var isListening: Bool = false
   @Published public var publicIp: String?
   @Published public var serial: String?
   @Published public var testResult: SmartlinkTestResult?
   @Published public var userName: String?
+  
+  static let kTimeout: Double = 5.0
   
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
@@ -78,20 +95,20 @@ final class WanListener: NSObject, ObservableObject {
   private let _socketQ = DispatchQueue(label: "WanListener.socketQ")
   private var _timeout = 0.0                // seconds
   private var _user: String?
-
+  
   let _log = LogProxy.sharedInstance.log
   
   private let kSmartlinkHost = "smartlink.flexradio.com"
   private let kSmartlinkPort: UInt16 = 443
   private let kAppName = "Components6000.Discovery"
   private let kPlatform = "macOS"
-
+  
   // ------------------------------------------------------------------------------
   // MARK: - Initialization
   
-  convenience init(_ discovery: Discovery, timeout: Double = 5.0) {
+  convenience init(_ discovery: Discovery, timeout: Double = kTimeout) {
     self.init()
-
+    
     _timeout = timeout
     _discovery = discovery
     
@@ -99,10 +116,10 @@ final class WanListener: NSObject, ObservableObject {
     _tcpSocket = GCDAsyncSocket(delegate: self, delegateQueue: _socketQ)
     _tcpSocket.isIPv4PreferredOverIPv6 = true
     _tcpSocket.isIPv6Enabled = false
-
+    
     _log("Discovery: Wan Listener TCP Socket initialized", .debug, #function, #file, #line)
   }
-
+  
   // ------------------------------------------------------------------------------
   // MARK: - Internal methods
   
@@ -121,7 +138,7 @@ final class WanListener: NSObject, ObservableObject {
       } catch {
         throw WanListenerError.kFailedToConnect
       }
-
+      
     } else {
       throw WanListenerError.kFailedToObtainIdToken
     }
@@ -146,13 +163,21 @@ final class WanListener: NSObject, ObservableObject {
     }
   }
   
+  /// Send a command to the server using TLS
+  /// - Parameter cmd:                command text
+  func sendTlsCommand(_ cmd: String, timeout: TimeInterval = kTimeout, tag: Int = 1) {
+    // send the specified command to the SmartLink server using TLS
+    let command = cmd + "\n"
+    _tcpSocket.write(command.data(using: String.Encoding.utf8, allowLossyConversion: false)!, withTimeout: timeout, tag: 0)
+  }
+  
   /// stop the listener
   func stop() {
     _cancellables.removeAll()
     _tcpSocket.disconnect()
     DispatchQueue.main.async { self.isListening = false }
   }
-
+  
   // ------------------------------------------------------------------------------
   // MARK: - Private methods
   
@@ -168,12 +193,12 @@ final class WanListener: NSObject, ObservableObject {
       try _tcpSocket.connect(toHost: kSmartlinkHost, onPort: kSmartlinkPort, withTimeout: _timeout)
       _log("Discovery: Wan Listener TCP Socket connection initiated", .debug, #function, #file, #line)
       DispatchQueue.main.async { self.isListening = true }
-
+      
     } catch _ {
       throw WanListenerError.kFailedToConnect
     }
   }
-
+  
   /// Ping the SmartLink server
   private func startPinging() {
     // setup a timer to watch for Radio timeouts
@@ -185,15 +210,7 @@ final class WanListener: NSObject, ObservableObject {
       }
       .store(in: &_cancellables)
     _log("Discovery: Wan Listener started pinging smartlink server", .debug, #function, #file, #line)
-
-  }
-  
-  /// Send a command to the server using TLS
-  /// - Parameter cmd:                command text
-  private func sendTlsCommand(_ cmd: String, timeout: TimeInterval, tag: Int = 0) {
-    // send the specified command to the SmartLink server using TLS
-    let command = cmd + "\n"
-    _tcpSocket.write(command.data(using: String.Encoding.utf8, allowLossyConversion: false)!, withTimeout: timeout, tag: 0)
+    
   }
 }
 
@@ -218,25 +235,25 @@ extension WanListener: GCDAsyncSocketDelegate {
     _currentPort = port
     
     _log("Discovery: Wan Listener TCP Socket connection established", .debug, #function, #file, #line)
-
+    
     // initiate a secure (TLS) connection to the Smartlink server
     var tlsSettings = [String : NSObject]()
     tlsSettings[kCFStreamSSLPeerName as String] = kSmartlinkHost as NSObject
     _tcpSocket.startTLS(tlsSettings)
-
+    
     _log("Discovery: Wan Listener TLS Socket connection initiated", .debug, #function, #file, #line)
-
+    
     DispatchQueue.main.async { self.isListening = true }
   }
   
   public func socketDidSecure(_ sock: GCDAsyncSocket) {
     _log("Discovery: Wan Listener TLS Socket did secure", .debug, #function, #file, #line)
-
+    
     // start pinging SmartLink server
     startPinging()
     
     // register the Application / token pair with the SmartLink server
-    sendTlsCommand("application register appName=\(kAppName) platform=\(kPlatform) token=\(_idToken!)", timeout: _timeout, tag: 1)
+    sendTlsCommand("application register appName=\(kAppName) platform=\(kPlatform) token=\(_idToken!)", timeout: _timeout, tag: 0)
     
     // start reading
     DispatchQueue.main.async { self.isListening = true }
@@ -258,9 +275,9 @@ extension WanListener: GCDAsyncSocketDelegate {
     // Disconnected from the Smartlink server
     let error = (err == nil ? "" : " with error: " + err!.localizedDescription)
     _log("Discovery: Wan Listener TCP socket disconnected \(error) from: Host=\(_currentHost ?? "nil") Port=\(_currentPort)",
-                  err == nil ? .debug : .warning,
-                  #function, #file, #line)
-
+         err == nil ? .debug : .warning,
+         #function, #file, #line)
+    
     DispatchQueue.main.async { self.isListening = false }
     _currentHost = ""
     _currentPort = 0

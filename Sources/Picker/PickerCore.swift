@@ -8,12 +8,14 @@
 import Combine
 import ComposableArchitecture
 import Dispatch
+import AppKit
 
 import Discovery
 import Shared
 
 struct PacketEffectId: Hashable {}
 struct ClientEffectId: Hashable {}
+struct TestEffectId: Hashable {}
 
 public enum PickerButton: Equatable {
   case test
@@ -35,14 +37,14 @@ public struct PickerState: Equatable {
   public init(connectionType: ConnectionType = .gui,
               pickerSelection: PickerSelection? = nil,
               defaultSelection: PickerSelection? = nil,
-              testStatus: Bool = false,
+              testResult: SmartlinkTestResult? = nil,
               discovery: Discovery = Discovery.sharedInstance)
   {
     self.defaultSelection = defaultSelection
     self.discovery = discovery
     self.connectionType = connectionType
     self.pickerSelection = pickerSelection
-    self.testStatus = testStatus
+    self.testResult = testResult
   }
   
 //  public var connectedPacket: Packet?
@@ -50,7 +52,7 @@ public struct PickerState: Equatable {
   public var discovery: Discovery
   public var connectionType: ConnectionType
   public var pickerSelection: PickerSelection?
-  public var testStatus = false
+  public var testResult: SmartlinkTestResult?
   public var forceUpdate = false
 }
 
@@ -65,9 +67,9 @@ public enum PickerAction: Equatable {
 
   // effect related
   case clientChange(ClientChange)
-  case connectResultReceived(Int?)
+//  case connectResultReceived(SmartlinkTestResult?)
   case packetChange(PacketChange)
-  case testResultReceived(Bool)
+  case testResultReceived(SmartlinkTestResult)
 
   // upstream actions
   case packet(id: UUID, action: PacketAction)
@@ -128,30 +130,34 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // start listening for Discovery broadcasts (long-running Effect)
       return environment.discoveryEffect()
       
-    case .testButton(_):
-      // handled downstream
-      return .none
+    case .testButton(let selection):
+      state.testResult = nil
+      // try to send a Test
+      if state.discovery.smartlinkTest(selection.packet.serial) {
+        // SENT, wait for response
+        return TestEffect()
+      
+      } else {
+        // NOT SENT, alert
+        NSSound.beep()
+        return .none
+      }
 
       // ----------------------------------------------------------------------------
       // MARK: - Picker Effect actions
 
-    case let .clientChange(update):
+    case .clientChange(let update):
       // process a GuiClient change
       return .none
       
-    case let .connectResultReceived(result):
-      // TODO
-      return .none
-      
-    case let .packetChange(update):
+    case .packetChange(let update):
       // process a DiscoveryPacket change
       state.forceUpdate.toggle()
       return .none
       
-    case let .testResultReceived(result):
-      // TODO: Bool versus actual test results???
-      state.testStatus = result
-      return .none
+    case .testResultReceived(let result):
+      state.testResult = result
+      return .cancel(ids: TestEffectId())
     }
   }
 )

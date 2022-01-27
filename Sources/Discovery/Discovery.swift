@@ -27,6 +27,7 @@ public final class Discovery: Equatable, ObservableObject {
   
   public var clientPublisher = PassthroughSubject<ClientChange, Never>()
   public var packetPublisher = PassthroughSubject<PacketChange, Never>()
+  public var testPublisher = PassthroughSubject<SmartlinkTestResult, Never>()
 
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
@@ -66,6 +67,20 @@ public final class Discovery: Equatable, ObservableObject {
     try _wanListener.start(using: loginResult )
   }
 
+  public func smartlinkTest(_ serial: String) -> Bool {
+    if _wanListener.isListening {
+      _log("Discovery: smartLink test initiated to serial number: \(serial)", .debug, #function, #file, #line)
+      
+      // send a command to SmartLink to test the connection for the specified Radio
+      _wanListener.sendTlsCommand("application test_connection serial=\(serial)")
+      return true
+
+    } else {
+      _log("Discovery: Wan Listener not active, Test message not sent", .warning, #function, #file, #line)
+      return false
+    }
+  }
+  
   // ----------------------------------------------------------------------------
   // MARK: - Internal methods
   
