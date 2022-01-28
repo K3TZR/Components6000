@@ -52,7 +52,7 @@ public enum ConnectionMode: String {
   case both
 }
 
-public struct CommandMessage: Equatable, Identifiable {
+public struct Message: Equatable, Identifiable {
   public var id = UUID()
   var direction: TcpMessageDirection
   var text: String
@@ -126,3 +126,5 @@ func setDefaultConnection(_ conn: DefaultConnection?) {
     }
   }
 }
+
+

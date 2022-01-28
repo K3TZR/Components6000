@@ -51,7 +51,7 @@ public struct ApiView: View {
       .sheet(
         isPresented: viewStore.binding(
           get: { $0.pickerState != nil },
-          send: ApiAction.sheetClosed),
+          send: ApiAction.pickerSheetClosed),
         content: {
           IfLetStore(
             store.scope(state: \.pickerState,
@@ -64,7 +64,7 @@ public struct ApiView: View {
       .sheet(
         isPresented: viewStore.binding(
           get: { $0.loginState != nil },
-          send: ApiAction.loginClosed),
+          send: ApiAction.loginSheetClosed),
         content: {
           IfLetStore(
             store.scope(state: \.loginState,
@@ -77,7 +77,7 @@ public struct ApiView: View {
       .sheet(
         isPresented: viewStore.binding(
           get: { $0.connectionState != nil },
-          send: ApiAction.connectionClosed),
+          send: ApiAction.connectionSheetClosed),
         content: {
           IfLetStore(
             store.scope(state: \.connectionState,

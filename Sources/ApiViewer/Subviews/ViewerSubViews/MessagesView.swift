@@ -19,8 +19,8 @@ struct MessagesView: View {
     
     WithViewStore(self.store) { viewStore in
       ScrollView([.horizontal, .vertical]) {
-        LazyVStack(alignment: .leading) {
-          ForEach(viewStore.commandMessages) { message in
+        VStack(alignment: .leading) {
+          ForEach(viewStore.filteredMessages.reversed(), id: \.id) { message in
             HStack {
               if viewStore.showTimes { Text("\(message.timeInterval)") }
               Text(message.text)

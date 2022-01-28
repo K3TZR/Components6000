@@ -109,12 +109,12 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // MARK: - Picker UI actions
 
     case .cancelButton:
-      // FIXME: probably should not do this here
-      // stop listening for Discovery broadcasts (long-running Effect)
+      // stop subscribing to Discovery broadcasts
       return .cancel(ids: PacketEffectId(), ClientEffectId())
 
     case .connectButton(_):
       // handled downstream
+      // stop subscribing to Discovery broadcasts
       return .cancel(ids: PacketEffectId(), ClientEffectId())
 
     case .defaultButton(let selection):
@@ -126,8 +126,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .none
 
     case .onAppear:
-      // FIXME: probably should not do this here
-      // start listening for Discovery broadcasts (long-running Effect)
+      // subscribe to Discovery broadcasts (long-running Effect)
       return environment.discoveryEffect()
       
     case .testButton(let selection):

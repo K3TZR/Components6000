@@ -27,16 +27,16 @@ struct TopButtonsView: View {
         .keyboardShortcut(viewStore.radio == nil ? .defaultAction : .cancelAction)
 
         HStack(spacing: 20) {
-          Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .button(\.isGui)))
-          Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .button(\.showTimes)))
-          Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .button(\.showPings)))
-          Toggle("WanLogin", isOn: viewStore.binding(get: \.wanLogin, send: .button(\.wanLogin))).disabled(viewStore.connectionMode == .local)
+          Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .toggleButton(\.isGui)))
+          Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .toggleButton(\.showTimes)))
+          Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .toggleButton(\.showPings)))
+          Toggle("WanLogin", isOn: viewStore.binding(get: \.wanLogin, send: .toggleButton(\.wanLogin))).disabled(viewStore.connectionMode == .local)
         }
 
         Spacer()
         Picker("", selection: viewStore.binding(
           get: \.connectionMode,
-          send: { .modePicker($0) }
+          send: { .connectionModePicker($0) }
         )) {
           Text("Local").tag(ConnectionMode.local)
           Text("Smartlink").tag(ConnectionMode.smartlink)
@@ -53,7 +53,7 @@ struct TopButtonsView: View {
       .alert(
         item: viewStore.binding(
           get: { $0.alert },
-          send: .alertDismissed
+          send: .alertClosed
         ),
         content: { Alert(title: Text($0.title)) }
       )

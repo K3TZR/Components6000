@@ -28,7 +28,7 @@ struct FilterObjectsView: View {
       HStack {
         Picker("Show objects of type", selection: viewStore.binding(
           get: \.objectsFilterBy,
-          send: { value in .objectsFilterBy(value) } )) {
+          send: { value in .objectsPicker(value) } )) {
             ForEach(ObjectsFilter.allCases, id: \.self) {
               Text($0.rawValue)
             }
@@ -50,7 +50,7 @@ struct FilterMessagesView: View {
       HStack {
         Picker("Show messages of type", selection: viewStore.binding(
           get: \.messagesFilterBy,
-          send: { value in .messagesFilterBy(value) } )) {
+          send: { value in .messagesPicker(value) } )) {
             ForEach(MessagesFilter.allCases, id: \.self) {
               Text($0.rawValue)
             }
@@ -59,11 +59,11 @@ struct FilterMessagesView: View {
           .frame(width: 300)
         Image(systemName: "x.circle").foregroundColor(viewStore.radio == nil ? .gray : nil)
           .onTapGesture {
-            viewStore.send(.messagesFilterByText(""))
+            viewStore.send(.messagesFilterTextField(""))
           }.disabled(viewStore.radio == nil)
         TextField("", text: viewStore.binding(
           get: \.messagesFilterByText,
-          send: { value in ApiAction.messagesFilterByText(value) }))
+          send: { value in ApiAction.messagesFilterTextField(value) }))
           .disabled(viewStore.radio == nil)
       }
     }

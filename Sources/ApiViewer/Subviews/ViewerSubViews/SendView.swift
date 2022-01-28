@@ -27,17 +27,17 @@ struct SendView: View {
           HStack(spacing: 0) {
             Image(systemName: "x.circle").foregroundColor(viewStore.radio == nil ? .gray : nil)
               .onTapGesture {
-                viewStore.send(.commandToSend(""))
+                viewStore.send(.commandTextField(""))
               }.disabled(viewStore.radio == nil)
             TextField("Command to send", text: viewStore.binding(
               get: \.commandToSend,
-              send: { value in .commandToSend(value) } ))
+              send: { value in .commandTextField(value) } ))
           }
         }
         .disabled(viewStore.radio == nil)
 
         Spacer()
-        Toggle("Clear on Send", isOn: viewStore.binding(get: \.clearOnSend, send: .button(\.clearOnSend)))
+        Toggle("Clear on Send", isOn: viewStore.binding(get: \.clearOnSend, send: .toggleButton(\.clearOnSend)))
       }
     }
   }

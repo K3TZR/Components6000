@@ -28,8 +28,8 @@ struct BottomButtonsView: View {
         Text(String(format: "%2.0f", viewStore.fontSize)).frame(alignment: .leading)
         Spacer()
         HStack(spacing: 40) {
-          Toggle("Clear on Connect", isOn: viewStore.binding(get: \.clearOnConnect, send: .button(\.clearOnConnect)))
-          Toggle("Clear on Disconnect", isOn: viewStore.binding(get: \.clearOnDisconnect, send: .button(\.clearOnDisconnect)))
+          Toggle("Clear on Connect", isOn: viewStore.binding(get: \.clearOnConnect, send: .toggleButton(\.clearOnConnect)))
+          Toggle("Clear on Disconnect", isOn: viewStore.binding(get: \.clearOnDisconnect, send: .toggleButton(\.clearOnDisconnect)))
           Button("Clear Now") { viewStore.send(.clearNowButton)}
         }
       }

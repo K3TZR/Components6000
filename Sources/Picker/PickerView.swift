@@ -87,7 +87,7 @@ struct PickerView_Previews: PreviewProvider {
         environment: PickerEnvironment()
       )
     )
-      .previewDisplayName("Radio Picker (empty)")
+      .previewDisplayName("Picker Gui (empty)")
 
     PickerView(
       store: Store(
@@ -96,7 +96,7 @@ struct PickerView_Previews: PreviewProvider {
         environment: PickerEnvironment()
       )
     )
-      .previewDisplayName("Radio Picker")
+      .previewDisplayName("Picker Gui")
 
     PickerView(
       store: Store(
@@ -105,15 +105,9 @@ struct PickerView_Previews: PreviewProvider {
         environment: PickerEnvironment()
       )
     )
-      .previewDisplayName("Station Picker")
+      .previewDisplayName("Picker non Gui")
   }
 }
-
-//private func isDefault(_ packet: Packet, _ def: PickerSelection?) -> Bool {
-//  guard def != nil else { return false }
-//  return packet == def!.packet
-//}
-
 
 // ----------------------------------------------------------------------------
 // MARK: - Test data
@@ -157,7 +151,6 @@ func testPacket2() -> Packet {
   packet.guiClientStations = ""
   packet.guiClientHosts = ""
   packet.guiClientIps = ""
-
 
   return packet
 }

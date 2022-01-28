@@ -17,6 +17,7 @@ import UdpStreams
 import Radio
 import XCGWrapper
 import Shared
+import SwiftUI
 
 public enum ViewType: Equatable {
   case api
@@ -38,7 +39,7 @@ public enum ObjectsFilter: String, CaseIterable {
   case xvtrs
 }
 public enum MessagesFilter: String, CaseIterable {
-  case none
+  case all
   case prefix
   case includes
   case excludes
@@ -76,8 +77,8 @@ public struct ApiState: Equatable {
   public var discovery: Discovery? = nil
   public var alert: AlertView?
   public var loginState: LoginState? = nil
-  public var commandMessages = IdentifiedArrayOf<CommandMessage>()
-  public var filteredCommandMessages = IdentifiedArrayOf<CommandMessage>()
+  public var messages = IdentifiedArrayOf<Message>()
+  public var filteredMessages = IdentifiedArrayOf<Message>()
   public var pickerState: PickerState? = nil
   public var update = false
   public var connectionState: ConnectionState?
@@ -100,7 +101,7 @@ public struct ApiState: Equatable {
     self.domain = domain
     fontSize = UserDefaults.standard.double(forKey: "fontSize") == 0 ? 12 : UserDefaults.standard.double(forKey: "fontSize")
     self.isGui = isGui
-    messagesFilterBy = MessagesFilter(rawValue: UserDefaults.standard.string(forKey: "messagesFilterBy") ?? "none") ?? .none
+    messagesFilterBy = MessagesFilter(rawValue: UserDefaults.standard.string(forKey: "messagesFilterBy") ?? "all") ?? .all
     messagesFilterByText = UserDefaults.standard.string(forKey: "messagesFilterByText") ?? ""
     objectsFilterBy = ObjectsFilter(rawValue: UserDefaults.standard.string(forKey: "objectsFilterBy") ?? "core") ?? .core
     self.radio = radio
@@ -112,31 +113,35 @@ public struct ApiState: Equatable {
 }
 
 public enum ApiAction: Equatable {
-  case alertDismissed
-  case commandAction(CommandMessage)
-  case loginAction(LoginAction)
-  case loginClosed
   case onAppear
-  case pickerAction(PickerAction)
-  case sheetClosed
-  case connectionAction(ConnectionAction)
-  case connectionClosed
 
-  // UI controls
-  case button(WritableKeyPath<ApiState, Bool>)
+  // ApiView controls
+  case toggleButton(WritableKeyPath<ApiState, Bool>)
   case clearDefaultButton
   case clearNowButton
-  case commandToSend(String)
+  case commandTextField(String)
   case fontSizeStepper(CGFloat)
   case logViewButton
   case apiViewButton
-  case modePicker(ConnectionMode)
+  case connectionModePicker(ConnectionMode)
   case sendButton
   case startStopButton
-  case objectsFilterBy(ObjectsFilter)
-  case messagesFilterBy(MessagesFilter)
-  case messagesFilterByText(String)
+  case objectsPicker(ObjectsFilter)
+  case messagesPicker(MessagesFilter)
+  case messagesFilterTextField(String)
   
+  // sheet/alert related
+  case alertClosed
+  case connectionAction(ConnectionAction)
+  case connectionSheetClosed
+  case loginAction(LoginAction)
+  case loginSheetClosed
+  case pickerAction(PickerAction)
+  case pickerSheetClosed
+
+  // Effects related
+  case commandAction(Message)
+  case filterMessages(MessagesFilter, String)
 }
 
 public struct ApiEnvironment {
@@ -193,7 +198,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       if state.radio!.connect(selection.packet) {
         // check the radio's version
         state.alert = isVersionCompatible(Version(selection.packet.version))
-        if state.clearOnConnect { state.commandMessages.removeAll() }
+        if state.clearOnConnect {
+          state.messages.removeAll()
+          state.filteredMessages.removeAll()
+        }
       } else {
         state.alert = AlertView(title: "Failed to connect to Radio \(selection.packet.nickname)")
       }
@@ -217,54 +225,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     }
     
     switch action {      
+      
       // ----------------------------------------------------------------------------
-      // MARK: - UI actions
-      
-    case .apiViewButton:
-      state.viewType = .api
-      return .none
-      
-    case .button(let keyPath):
-      // handles all buttons with a Bool state
-      state[keyPath: keyPath].toggle()
-      if keyPath == \.wanLogin { state.alert = AlertView(title: "Takes effect when App restarted") }
-      return .none
-      
-    case .clearDefaultButton:
-      state.defaultConnection = nil
-      return .none
-      
-    case .clearNowButton:
-      state.commandMessages.removeAll()
-      return .none
-      
-    case .commandToSend(let text):
-      state.commandToSend = text
-      return .none
-      
-    case .fontSizeStepper(let size):
-      state.fontSize = size
-      return .none
-      
-    case .logViewButton:
-      state.viewType = .log
-      return .none
-      
-    case .messagesFilterBy(let choice):
-      state.messagesFilterBy = choice
-      return.none
-      
-    case .messagesFilterByText(let text):
-      state.messagesFilterByText = text
-      return.none
-      
-    case .modePicker(let mode):
-      state.connectionMode = mode
-      return .none
-      
-    case .objectsFilterBy(let filterBy):
-      state.objectsFilterBy = filterBy
-      return.none
+      // MARK: - ApiView initialization
       
     case .onAppear:
       // if the first time, start the logger and Discovery
@@ -292,11 +255,60 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         return .none
       }
       
+      // ----------------------------------------------------------------------------
+      // MARK: - ApiView control actions
+      
+    case .apiViewButton:
+      state.viewType = .api
+      return .none
+      
+    case .toggleButton(let keyPath):
+      // handles all buttons with a Bool state
+      state[keyPath: keyPath].toggle()
+      if keyPath == \.wanLogin { state.alert = AlertView(title: "Takes effect when App restarted") }
+      return .none
+      
+    case .clearDefaultButton:
+      state.defaultConnection = nil
+      return .none
+      
+    case .clearNowButton:
+      state.messages.removeAll()
+      return .none
+      
+    case .commandTextField(let text):
+      state.commandToSend = text
+      return .none
+      
+    case .fontSizeStepper(let size):
+      state.fontSize = size
+      return .none
+      
+    case .logViewButton:
+      state.viewType = .log
+      return .none
+      
+    case .messagesPicker(let filter):
+      state.messagesFilterBy = filter
+      return Effect(value: .filterMessages(filter, state.messagesFilterByText))
+
+    case .messagesFilterTextField(let text):
+      state.messagesFilterByText = text
+      return Effect(value: .filterMessages(state.messagesFilterBy, text))
+      
+    case .connectionModePicker(let mode):
+      state.connectionMode = mode
+      return .none
+      
+    case .objectsPicker(let filterBy):
+      state.objectsFilterBy = filterBy
+      return.none
+      
     case .sendButton:
       _ = state.command.send(state.commandToSend)
       return .none
       
-    case .sheetClosed:
+    case .pickerSheetClosed:
       state.pickerState = nil
       return .none
       
@@ -318,7 +330,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         // CONNECTED, disconnect
         state.radio!.disconnect()
         state.radio = nil
-        if state.clearOnDisconnect { state.commandMessages.removeAll() }
+        if state.clearOnDisconnect {
+          state.messages.removeAll()
+          state.filteredMessages.removeAll()
+        }
         return .none
       }
       
@@ -327,7 +342,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .pickerAction(.cancelButton):
       state.pickerState = nil
-      if state.clearOnDisconnect { state.commandMessages.removeAll() }
       return .none
       
     case .pickerAction(.connectButton(let selection)):
@@ -362,7 +376,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.alert = listenForWanPackets(state.discovery!, using: credentials)
       return .none
       
-    case .loginClosed:
+    case .loginSheetClosed:
       state.loginState = nil
       return .none
       
@@ -382,22 +396,41 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // ----------------------------------------------------------------------------
       // MARK: - Alert actions
       
-    case .alertDismissed:
+    case .alertClosed:
       state.alert = nil
       return .none
       
       // ----------------------------------------------------------------------------
-      // MARK: - Command actions
+      // MARK: - ApiEffects actions
       
     case let .commandAction(message):
       // process received TCP messages
       if message.direction == .sent && message.text.contains("ping") && state.showPings == false { return .none }
-      state.commandMessages.append(message)
+      state.messages.append(message)
       state.update.toggle()
+      return Effect(value: .filterMessages(state.messagesFilterBy, state.messagesFilterByText))
+
+    case .connectionSheetClosed:
+      state.connectionState = nil
       return .none
       
-    case .connectionClosed:
-      state.connectionState = nil
+    case .filterMessages(let filterBy, let filterText):
+      switch (filterBy, filterText) {
+
+      case (.all, _):       state.filteredMessages = state.messages
+      case (.prefix, ""):    state.filteredMessages = state.messages
+      case (.prefix, _):     state.filteredMessages = state.messages.filter { $0.text.localizedCaseInsensitiveContains("|" + filterText) }
+//      case (.includes, ""):  state.filteredCommandMessages = [Message]()
+      case (.includes, _):   state.filteredMessages = state.messages.filter { $0.text.localizedCaseInsensitiveContains(filterText) }
+      case (.excludes, ""):  state.filteredMessages = state.messages
+      case (.excludes, _):   state.filteredMessages = state.messages.filter { !$0.text.localizedCaseInsensitiveContains(filterText) }
+      case (.command, _):    state.filteredMessages = state.messages.filter { $0.text.prefix(1) == "C" }
+      case (.S0, _):         state.filteredMessages = state.messages.filter { $0.text.prefix(3) == "S0|" }
+      case (.status, _):     state.filteredMessages = state.messages.filter { $0.text.prefix(1) == "S" && $0.text.prefix(3) != "S0|"}
+      case (.reply, _):      state.filteredMessages = state.messages.filter { $0.text.prefix(1) == "R" }
+      }
+
+      state.update.toggle()
       return .none
     }
   }
