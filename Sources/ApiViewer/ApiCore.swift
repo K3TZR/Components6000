@@ -140,8 +140,12 @@ public enum ApiAction: Equatable {
   case pickerSheetClosed
 
   // Effects related
-  case commandAction(Message)
+  case messageReceived(Message)
   case filterMessages(MessagesFilter, String)
+  case checkForDefault
+  case checkConnection(PickerSelection)
+  case openRadio(PickerSelection, Handle?)
+  case checkVersion(PickerSelection)
 }
 
 public struct ApiEnvironment {
@@ -274,6 +278,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .clearNowButton:
       state.messages.removeAll()
+      state.filteredMessages.removeAll()
       return .none
       
     case .commandTextField(let text):
@@ -328,11 +333,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         
       } else {
         // CONNECTED, disconnect
-        state.radio!.disconnect()
+        state.radio?.disconnect()
         state.radio = nil
         if state.clearOnDisconnect {
-          state.messages.removeAll()
-          state.filteredMessages.removeAll()
+          return Effect(value: .clearNowButton)
         }
         return .none
       }
@@ -403,7 +407,54 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // ----------------------------------------------------------------------------
       // MARK: - ApiEffects actions
       
-    case let .commandAction(message):
+    case .checkForDefault:
+      // is there a default?
+      if let def = state.defaultConnection {
+        // YES, find a matching discovered packet
+        for packet in state.discovery!.packets where def.source == packet.source.rawValue && def.serial == packet.serial {
+          return Effect(value: .checkConnection(PickerSelection(packet, def.station)) )
+        }
+      }
+      return .none
+      
+    case .checkConnection(let selection):
+      // are there other Gui Clients?
+      if state.isGui && selection.packet.guiClients.count > 0 {
+        // YES, may need a disconnect, let the user choose
+        state.connectionState = ConnectionState(pickerSelection: selection)
+      } else {
+        // NO, no pending disconnect, open the radio
+        return Effect(value: .openRadio(selection, nil) )
+      }
+      return .none
+      
+    case .openRadio(let selection, let handle):
+      // instantiate a Radio object
+      state.radio = Radio(selection.packet,
+                          connectionType: state.isGui ? .gui : .nonGui,
+                          command: state.command,
+                          stream: UdpStream(),
+                          stationName: "Api6000",
+                          programName: "Api6000",
+                          disconnectHandle: handle,
+                          testerModeEnabled: true)
+      // try to connect
+      if state.radio!.connect(selection.packet) {
+        return Effect( value: .checkVersion(selection) )
+      } else {
+        state.alert = AlertView(title: "Failed to connect to Radio \(selection.packet.nickname)")
+      }
+      return .none
+      
+    case .checkVersion(let selection):
+      // check the selection's version
+      state.alert = isVersionCompatible(Version(selection.packet.version))
+      if state.clearOnConnect {
+        return Effect(value: .clearNowButton)
+      }
+      return .none
+      
+    case let .messageReceived(message):
       // process received TCP messages
       if message.direction == .sent && message.text.contains("ping") && state.showPings == false { return .none }
       state.messages.append(message)

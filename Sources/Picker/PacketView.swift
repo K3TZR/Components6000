@@ -17,8 +17,9 @@ struct PacketView: View {
   let store: Store<Packet, PacketAction>
   let connectionType: ConnectionType
   let defaultSelection: PickerSelection?
+  let selection: PickerSelection?
 
-  @State var radioSelected = false
+  @State var selectedRadio: PickerSelection?
   @State var selectedStation: String?
 
   /// Create an array of station fromthe GuiClients array
@@ -41,7 +42,6 @@ struct PacketView: View {
     WithViewStore(self.store) { viewStore in
       ZStack {
         HStack(spacing: 0) {
-
           Group {
             Text(viewStore.source.rawValue)
             Text(viewStore.nickname)
@@ -49,12 +49,12 @@ struct PacketView: View {
           }
           .foregroundColor(isDefault(viewStore) ? .red : nil)
           .onTapGesture {
-            radioSelected.toggle()
-            if radioSelected {
-              viewStore.send(.selection(PickerSelection(viewStore.state, nil)))
+            if selectedRadio == nil {
+              selectedRadio = PickerSelection(viewStore.state, nil)
             } else {
-              viewStore.send(.selection(nil))
+              selectedRadio = nil
             }
+            viewStore.send(.selection(selectedRadio))
           }
           .disabled(connectionType == .nonGui)
           .font(.title3)
@@ -97,7 +97,7 @@ struct PacketView: View {
           }
           .font(.title3)
           .frame(width: 140, alignment: .leading)        }
-        Rectangle().fill(radioSelected ? .gray : .clear).frame(height: 20).opacity(0.2)
+        Rectangle().fill(selection?.packet == viewStore.state ? .gray : .clear).frame(height: 20).opacity(0.2)
       }
     }
   }
@@ -113,7 +113,8 @@ struct PacketView_Previews: PreviewProvider {
       reducer: packetReducer,
       environment: PacketEnvironment() ),
                connectionType: .gui,
-               defaultSelection: nil
+               defaultSelection: nil,
+               selection: nil
     )
     .frame(minWidth: 700)
     .padding(.horizontal)

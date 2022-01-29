@@ -60,7 +60,8 @@ public struct PickerView: View {
             ) { packetStore in
               PacketView(store: packetStore,
                          connectionType: viewStore.connectionType,
-                         defaultSelection: viewStore.defaultSelection
+                         defaultSelection: viewStore.defaultSelection,
+                         selection: viewStore.pickerSelection
               )
             }
           }

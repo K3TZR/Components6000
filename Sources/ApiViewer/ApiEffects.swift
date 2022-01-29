@@ -23,7 +23,7 @@ func sentMessagesEffect(_ command: TcpCommand) -> Effect<ApiAction, Never> {
   command.sentPublisher
     .receive(on: DispatchQueue.main)
     // convert to CommandMessage format
-    .map { tcpMessage in .commandAction(Message(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
+    .map { tcpMessage in .messageReceived(Message(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
     .cancellable(id: CommandSubscriptionId())
 }
@@ -36,7 +36,7 @@ func receivedMessagesEffect(_ command: TcpCommand) -> Effect<ApiAction, Never> {
     .filter { allowToPass($0.text) }
     .receive(on: DispatchQueue.main)
   // convert to CommandMessage format
-    .map { tcpMessage in .commandAction(Message(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
+    .map { tcpMessage in .messageReceived(Message(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
     .cancellable(id: CommandSubscriptionId())
 }
