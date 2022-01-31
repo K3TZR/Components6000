@@ -10,7 +10,7 @@ import CocoaAsyncSocket
 
 import Shared
 
-extension UdpStream: GCDAsyncUdpSocketDelegate {
+extension Udp: GCDAsyncUdpSocketDelegate {
   
   public func udpSocket(_ sock: GCDAsyncUdpSocket, didReceive data: Data, fromAddress address: Data, withFilterContext filterContext: Any?) {
     _processQ.async { [weak self] in

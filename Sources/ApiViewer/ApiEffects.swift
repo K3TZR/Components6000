@@ -13,14 +13,10 @@ import SwiftUI
 import TcpCommands
 import Shared
 
-func messagesEffects(_ command: TcpCommand) -> Effect<ApiAction, Never> {
-  .merge(sentMessagesEffect(command), receivedMessagesEffect(command))
-}
-
-func sentMessagesEffect(_ command: TcpCommand) -> Effect<ApiAction, Never> {
+func sentMessagesEffect(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   
   // subscribe to the publisher of received TcpMessages
-  command.sentPublisher
+  tcp.sentPublisher
     .receive(on: DispatchQueue.main)
     // convert to CommandMessage format
     .map { tcpMessage in .messageReceived(Message(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
@@ -28,10 +24,10 @@ func sentMessagesEffect(_ command: TcpCommand) -> Effect<ApiAction, Never> {
     .cancellable(id: CommandSubscriptionId())
 }
 
-func receivedMessagesEffect(_ command: TcpCommand) -> Effect<ApiAction, Never> {
+func receivedMessagesEffect(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   
   // subscribe to the publisher of received TcpMessages
-  command.receivedPublisher
+  tcp.receivedPublisher
   // eliminate replies without errors or data
     .filter { allowToPass($0.text) }
     .receive(on: DispatchQueue.main)

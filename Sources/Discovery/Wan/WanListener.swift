@@ -175,7 +175,7 @@ final class WanListener: NSObject, ObservableObject {
   func stop() {
     _cancellables.removeAll()
     _tcpSocket.disconnect()
-    DispatchQueue.main.async { self.isListening = false }
+    self.isListening = false
   }
   
   // ------------------------------------------------------------------------------

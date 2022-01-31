@@ -50,23 +50,6 @@ struct TopButtonsView: View {
         Button("Clear Default") { viewStore.send(.clearDefaultButton) }
         .disabled(viewStore.defaultConnection == nil)
       }
-      .alert(
-          self.store.scope(state: \.alert),
-          dismiss: .alertCancelled
-        )
-      
-      
-      
-//      .alert(
-//        item: viewStore.binding(
-//          get: { $0.alert },
-//          send: .alertClosed
-//        ),
-//        content: { Alert(title: Text($0.title),
-//                         message: Text($0.message ?? "no message"),
-//                         primaryButton: .default(Text($0.primary)), secondaryButton: .cancel()) }
-//      )
-      .onAppear() { viewStore.send(.onAppear) }
     }
   }
 }

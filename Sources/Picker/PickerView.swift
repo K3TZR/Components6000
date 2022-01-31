@@ -56,10 +56,10 @@ public struct PickerView: View {
           Spacer()
         } else {
           PacketView(store: store)
+        }
           Spacer()
           Divider()
           PickerFooterView(store: store)
-        }
       }
       .frame(minWidth: 600, minHeight: 250)
       .onAppear { viewStore.send(.onAppear) }

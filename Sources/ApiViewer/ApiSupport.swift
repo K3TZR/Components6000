@@ -67,8 +67,10 @@ public struct Message: Equatable, Identifiable {
 func startStopLanListener(_ mode: ConnectionMode, discovery: Discovery) -> AlertState<ApiAction>? {
   switch mode {
     
-  case .both, .local: if !discovery.lanListenerActive { return startLanListener(discovery) }
-  case .smartlink: if discovery.lanListenerActive { discovery.stopLanListener() }
+  case .both, .local: return startLanListener(discovery)
+  case .smartlink:
+      discovery.stopLanListener()
+      discovery.removePackets(ofType: .local)
   }
   return nil
 }
@@ -76,8 +78,10 @@ func startStopLanListener(_ mode: ConnectionMode, discovery: Discovery) -> Alert
 func startStopWanListener(_ mode: ConnectionMode, discovery: Discovery, using smartlinkEmail: String, forceLogin: Bool = false) -> AlertState<ApiAction>? {
   switch mode {
     
-  case .both, .smartlink: if !discovery.wanListenerActive { return startWanListener(discovery, using: smartlinkEmail, forceLogin: forceLogin) }
-  case .local: if !discovery.wanListenerActive { discovery.stopWanListener() }
+  case .both, .smartlink: return startWanListener(discovery, using: smartlinkEmail, forceLogin: forceLogin)
+  case .local:
+      discovery.stopWanListener()
+      discovery.removePackets(ofType: .smartlink)
   }
   return nil
 }

@@ -25,71 +25,86 @@ public struct ApiView: View {
   }
   
   public var body: some View {
-        
+    
     WithViewStore(self.store) { viewStore in
       
       if viewStore.viewType == .api {
-      VStack(alignment: .leading) {
-        TopButtonsView(store: store)
-        SendView(store: store)
-        FiltersView(store: store)
+        VStack(alignment: .leading) {
+          TopButtonsView(store: store)
+          SendView(store: store)
+          FiltersView(store: store)
+          
+          Divider().background(Color(.red))
+          
+          VSplitView {
+            ObjectsView(store: store)
+            Divider().background(Color(.green))
+            MessagesView(store: store)
+          }
+          Spacer()
+          Divider().background(Color(.red))
+          BottomButtonsView(store: store)
+        }
+        .toolbar {
+          Button("Log View") { viewStore.send(.logViewButton) }
+        }
+        // initialize on first appearance
+        .onAppear() { viewStore.send(.onAppear) }
         
-        Divider().background(Color(.red))
+        // alert dialog
+        .alert(
+          self.store.scope(state: \.alert),
+          dismiss: .alertCancelled
+        )
         
-        VSplitView {
-          ObjectsView(store: store)
-          Divider().background(Color(.green))
-          MessagesView(store: store)
-        }
-        Spacer()
-        Divider().background(Color(.red))
-        BottomButtonsView(store: store)
-      }
-      .toolbar {
-        Button("Log View") { viewStore.send(.logViewButton) }
-      }
-      .sheet(
-        isPresented: viewStore.binding(
-          get: { $0.pickerState != nil },
-          send: ApiAction.pickerSheetClosed),
-        content: {
-          IfLetStore(
-            store.scope(state: \.pickerState,
-                        action: ApiAction.pickerAction
-                       ),
-            then: PickerView.init(store:)
-          )
-        }
-      )
-      .sheet(
-        isPresented: viewStore.binding(
-          get: { $0.loginState != nil },
-          send: ApiAction.loginSheetClosed),
-        content: {
-          IfLetStore(
-            store.scope(state: \.loginState,
-                        action: ApiAction.loginAction
-                       ),
-            then: LoginView.init(store:)
-          )
-        }
-      )
-      .sheet(
-        isPresented: viewStore.binding(
-          get: { $0.connectionState != nil },
-          send: ApiAction.connectionSheetClosed),
-        content: {
-          IfLetStore(
-            store.scope(state: \.connectionState,
-                        action: ApiAction.connectionAction
-                       ),
-            then: ConnectionView.init(store:)
-          )
-        }
-      )
+        // Picker sheet
+        .sheet(
+          isPresented: viewStore.binding(
+            get: { $0.pickerState != nil },
+            send: ApiAction.pickerSheetClosed),
+          content: {
+            IfLetStore(
+              store.scope(state: \.pickerState,
+                          action: ApiAction.pickerAction
+                         ),
+              then: PickerView.init(store:)
+            )
+          }
+        )
+        
+        // Login sheet
+        .sheet(
+          isPresented: viewStore.binding(
+            get: { $0.loginState != nil },
+            send: ApiAction.loginSheetClosed),
+          content: {
+            IfLetStore(
+              store.scope(state: \.loginState,
+                          action: ApiAction.loginAction
+                         ),
+              then: LoginView.init(store:)
+            )
+          }
+        )
+        
+        // Connection sheet
+        .sheet(
+          isPresented: viewStore.binding(
+            get: { $0.connectionState != nil },
+            send: ApiAction.connectionSheetClosed),
+          content: {
+            IfLetStore(
+              store.scope(state: \.connectionState,
+                          action: ApiAction.connectionAction
+                         ),
+              then: ConnectionView.init(store:)
+            )
+          }
+        )
+        
       } else {
         LogView(store: Store(
-          initialState: LogState(domain: viewStore.domain, appName: viewStore.appName, backName: "Api View", fontSize: viewStore.fontSize),
+          initialState: LogState(domain: viewStore.domain, appName: viewStore.appName, fontSize: viewStore.fontSize),
           reducer: logReducer,
           environment: LogEnvironment() )
         )

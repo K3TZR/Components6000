@@ -36,9 +36,6 @@ public struct LogView: View {
         LogFooter(store: store)
       }
       .frame(minWidth: 700)
-      .toolbar {
-        Button(viewStore.backName) { viewStore.send(.backButton) }
-      }
       .alert(
         item: viewStore.binding(
           get: { $0.alert },
@@ -49,9 +46,6 @@ public struct LogView: View {
 
       .onAppear() { viewStore.send(.onAppear) }
     }
-    //    .sheet(isPresented: $logManager.showLogPicker) {
-    //      LogPickerView().environmentObject(logManager)
-    //    }
   }
 }
 

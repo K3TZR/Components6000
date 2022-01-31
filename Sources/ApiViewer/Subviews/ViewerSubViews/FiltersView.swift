@@ -68,18 +68,6 @@ struct FilterMessagesView: View {
       }
     }
     .pickerStyle(MenuPickerStyle())
-//      .onChange(of: object.messagesFilterBy, perform: { value in
-//        object.filterUpdate(filterBy: value, filterText: object.messagesFilterText)
-//      })
-//      .frame(width: 275)
-//
-//      TextField("Filter text", text: object.$messagesFilterText)
-//        .onChange(of: object.messagesFilterText, perform: { value in
-//          object.filterUpdate(filterBy: object.messagesFilterBy, filterText: value)
-//        })
-//        .modifier(ClearButton(boundText: object.$messagesFilterText))
-//    }
-//    .pickerStyle(MenuPickerStyle())
   }
 }
 

@@ -29,14 +29,14 @@ public final class Discovery: Equatable, ObservableObject {
   public var packetPublisher = PassthroughSubject<PacketChange, Never>()
   public var testPublisher = PassthroughSubject<SmartlinkTestResult, Never>()
 
-  public var lanListenerActive: Bool {_lanListener.isListening}
-  public var wanListenerActive: Bool {_wanListener.isListening}
+//  public var lanListenerActive: Bool {_lanListener.isListening}
+//  public var wanListenerActive: Bool {_wanListener.isListening}
 
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
-  private var _lanListener: LanListener!
-  private var _wanListener: WanListener!
+  private var _lanListener: LanListener?
+  private var _wanListener: WanListener?
 
   let _log = LogProxy.sharedInstance.log
 
@@ -46,45 +46,53 @@ public final class Discovery: Equatable, ObservableObject {
   public static var sharedInstance = Discovery()
 
   private init() {
-    _lanListener = LanListener(self)
-    _wanListener = WanListener(self)
   }
 
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
   
   public func startLanListener() throws {
-    guard _lanListener.isListening == false else { return }
-    try _lanListener.start()
+    guard _lanListener == nil else { return }
+    _lanListener = LanListener(self)
+    try _lanListener?.start()
   }
   
   public func stopLanListener() {
-    guard _lanListener.isListening == true else { return }
-    _lanListener.stop()
+    guard _lanListener != nil else { return }
+    _lanListener?.stop()
+    _lanListener = nil
   }
 
   public func startWanListener(smartlinkEmail: String?, forceLogin: Bool = false) throws {
-    guard _wanListener.isListening == false else { return }
-    try _wanListener.start(using: smartlinkEmail, forceLogin: forceLogin)
+    guard _wanListener == nil else { return }
+    _wanListener = WanListener(self)
+    try _wanListener?.start(using: smartlinkEmail, forceLogin: forceLogin)
   }
 
   public func startWanListener(using loginResult: LoginResult) throws {
-    guard _wanListener.isListening == false else { return }
-    try _wanListener.start(using: loginResult )
+    guard _wanListener == nil else { return }
+    _wanListener = WanListener(self)
+    try _wanListener?.start(using: loginResult )
   }
 
   public func stopWanListener() {
-    guard _wanListener.isListening == true else { return }
-    _wanListener.stop()
+    guard _wanListener != nil else { return }
+    _wanListener?.stop()
+    _wanListener = nil
   }
 
-
+  public func removePackets(ofType source: PacketSource) {
+    for packet in packets where packet.source == source {
+      packets[id: packet.id] = nil
+    }
+  }
+  
   public func smartlinkTest(_ serial: String) -> Bool {
-    if _wanListener.isListening {
+    if _wanListener!.isListening {
       _log("Discovery: smartLink test initiated to serial number: \(serial)", .debug, #function, #file, #line)
       
       // send a command to SmartLink to test the connection for the specified Radio
-      _wanListener.sendTlsCommand("application test_connection serial=\(serial)")
+      _wanListener!.sendTlsCommand("application test_connection serial=\(serial)")
       return true
 
     } else {

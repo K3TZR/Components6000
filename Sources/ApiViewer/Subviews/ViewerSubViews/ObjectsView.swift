@@ -48,8 +48,8 @@ struct ObjectsView_Previews: PreviewProvider {
           isGui: false,
           radio: Radio(testPacket,
                        connectionType: .gui,
-                       command: TcpCommand(),
-                       stream: UdpStream())
+                       command: Tcp(),
+                       stream: Udp())
         ),
         reducer: apiReducer,
         environment: ApiEnvironment()
@@ -57,7 +57,6 @@ struct ObjectsView_Previews: PreviewProvider {
     )
       .frame(minWidth: 975)
       .previewDisplayName("----- Non Gui -----")
-
 
     ObjectsView(
       store: Store(
@@ -67,8 +66,8 @@ struct ObjectsView_Previews: PreviewProvider {
           isGui: true,
           radio: Radio(testPacket,
                        connectionType: .gui,
-                       command: TcpCommand(),
-                       stream: UdpStream())
+                       command: Tcp(),
+                       stream: Udp())
         ),
         reducer: apiReducer,
         environment: ApiEnvironment()

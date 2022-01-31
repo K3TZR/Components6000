@@ -8,7 +8,7 @@
 import Foundation
 import CocoaAsyncSocket
 
-extension UdpStream {
+extension Udp {
 
   /// Send message (as Data) to the Radio using UDP on the current ip & port
   /// - Parameters:

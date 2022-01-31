@@ -51,7 +51,7 @@ public struct TcpStatus: Identifiable, Equatable {
 
 ///  Tcp Command Class implementation
 ///      manages all Tcp communication with a Radio
-final public class TcpCommand: NSObject {
+final public class Tcp: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
@@ -153,7 +153,7 @@ final public class TcpCommand: NSObject {
 // ----------------------------------------------------------------------------
 // MARK: - GCDAsyncSocketDelegate extension
 
-extension TcpCommand: GCDAsyncSocketDelegate {
+extension Tcp: GCDAsyncSocketDelegate {
   
   public func socketDidSecure(_ sock: GCDAsyncSocket) {
     // TLS connection complete

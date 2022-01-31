@@ -41,7 +41,7 @@ public struct UdpStatus: Identifiable, Equatable {
 
 ///  UDP Stream Class implementation
 ///      manages all Udp communication with a Radio
-final public class UdpStream: NSObject {
+final public class Udp: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   

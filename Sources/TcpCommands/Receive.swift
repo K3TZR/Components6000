@@ -8,7 +8,7 @@
 import Foundation
 import CocoaAsyncSocket
 
-extension TcpCommand {
+extension Tcp {
 
   /// Receive a Command (text) from the connected Radio, publishes the received text
   /// - Parameters:

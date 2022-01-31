@@ -12,13 +12,13 @@ import SwiftUI
 public struct LogState: Equatable {
   public init(domain: String,
               appName: String,
-              backName: String = "Back",
+//              backName: String = "Back",
               fontSize: CGFloat = 12
   )
   {
     self.domain = domain
     self.appName = appName
-    self.backName = backName
+//    self.backName = backName
     self.fontSize = fontSize
     self.logLevel = LogLevel(rawValue: UserDefaults.standard.string(forKey: "logLevel") ?? "debug") ?? .debug
     self.filterBy = LogFilter(rawValue: UserDefaults.standard.string(forKey: "filterBy") ?? "none") ?? .none
@@ -32,7 +32,7 @@ public struct LogState: Equatable {
   public var showTimestamps: Bool { didSet { UserDefaults.standard.set(showTimestamps, forKey: "showTimestamps") } }
 
   // normal state
-  public var backName: String
+//  public var backName: String
   public var domain: String
   public var alert: AlertView?
   public var appName: String
@@ -46,7 +46,7 @@ public struct LogState: Equatable {
 public enum LogAction: Equatable {
   // UI actions
   case alertDismissed
-  case backButton
+//  case backButton
   case clearButton
   case emailButton
   case filterBy(LogFilter)
@@ -74,16 +74,15 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     state.alert = nil
     return .none
     
-  case .backButton:
-    // handled downstream
-    return .none
-
+//  case .backButton:
+//    // handled downstream
+//    return .none
+//
   case .clearButton:
     state.logMessages.removeAll()
     return .none
     
   case .emailButton:
-    // TODO
     state.alert = AlertView(title: "Email: NOT IMPLEMENTED")
     return .none
     
@@ -100,8 +99,6 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     return .none
 
   case .loadButton:
-//    // TODO
-//    state.alert = AlertView(title: "Load: NOT IMPLEMENTED")
     if let url = showOpenPanel() {
       state.logMessages.removeAll()
       do {

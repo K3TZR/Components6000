@@ -6,11 +6,12 @@
 //
 
 import Foundation
+import ComposableArchitecture
 
 // ----------------------------------------------------------------------------
 // MARK: - Constants
 
-public let kVersionSupported = Version("3.2.34")
+public let kVersionSupported = Version("3.1.34")
 
 public let kConnected = "connected"
 public let kDisconnected = "disconnected"
@@ -63,16 +64,30 @@ public enum ConnectionType: String, Equatable {
   case nonGui = "Station"
 }
 
+public enum ButtonType: Equatable {
+  case primary(String)
+  case secondary(String)
+}
+
 public struct AlertView: Equatable, Identifiable {
   
   public init(
-    title: String
+    title: String,
+    message: String? = nil,
+    button1Text: String? = nil
+//    button2: ButtonType? = nil
   )
   {
     self.title = title
+    self.message = message
+    self.button1Text = button1Text
+//    self.button2 = button2
   }
-  public var title: String
   public var id: String { self.title }
+  public var title: String
+  public var message: String?
+  public var button1Text: String?
+//  public var button2: ButtonType?
 }
 
 // ----------------------------------------------------------------------------

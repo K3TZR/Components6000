@@ -14,18 +14,28 @@ import simd
 
 struct MessagesView: View {
   let store: Store<ApiState, ApiAction>
-
+  
   var body: some View {
     
     WithViewStore(self.store) { viewStore in
       ScrollView([.horizontal, .vertical]) {
         VStack(alignment: .leading) {
-          ForEach(viewStore.filteredMessages.reversed(), id: \.id) { message in
-            HStack {
-              if viewStore.showTimes { Text("\(message.timeInterval)") }
-              Text(message.text)
+          if viewStore.reverse {
+            ForEach(viewStore.filteredMessages.reversed(), id: \.id) { message in
+              HStack {
+                if viewStore.showTimes { Text("\(message.timeInterval)") }
+                Text(message.text)
+              }
+              .foregroundColor( message.color )
             }
-            .foregroundColor( message.color )
+          } else {
+            ForEach(viewStore.filteredMessages, id: \.id) { message in
+              HStack {
+                if viewStore.showTimes { Text("\(message.timeInterval)") }
+                Text(message.text)
+              }
+              .foregroundColor( message.color )
+            }
           }
         }
         .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
