@@ -29,13 +29,14 @@ public final class Discovery: Equatable, ObservableObject {
   public var packetPublisher = PassthroughSubject<PacketChange, Never>()
   public var testPublisher = PassthroughSubject<SmartlinkTestResult, Never>()
 
+  public var lanListenerActive: Bool {_lanListener.isListening}
+  public var wanListenerActive: Bool {_wanListener.isListening}
+
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
   private var _lanListener: LanListener!
-  private var _lanListenerStarted = false
   private var _wanListener: WanListener!
-  private var _wanListenerStarted = false
 
   let _log = LogProxy.sharedInstance.log
 
@@ -56,6 +57,11 @@ public final class Discovery: Equatable, ObservableObject {
     guard _lanListener.isListening == false else { return }
     try _lanListener.start()
   }
+  
+  public func stopLanListener() {
+    guard _lanListener.isListening == true else { return }
+    _lanListener.stop()
+  }
 
   public func startWanListener(smartlinkEmail: String?, forceLogin: Bool = false) throws {
     guard _wanListener.isListening == false else { return }
@@ -66,6 +72,12 @@ public final class Discovery: Equatable, ObservableObject {
     guard _wanListener.isListening == false else { return }
     try _wanListener.start(using: loginResult )
   }
+
+  public func stopWanListener() {
+    guard _wanListener.isListening == true else { return }
+    _wanListener.stop()
+  }
+
 
   public func smartlinkTest(_ serial: String) -> Bool {
     if _wanListener.isListening {

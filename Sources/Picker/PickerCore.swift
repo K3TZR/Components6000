@@ -17,12 +17,6 @@ struct PacketEffectId: Hashable {}
 struct ClientEffectId: Hashable {}
 struct TestEffectId: Hashable {}
 
-public enum PickerButton: Equatable {
-  case test
-  case cancel
-  case connect
-}
-
 public struct PickerSelection: Equatable {
   public init(_ packet: Packet, _ station: String?) {
     self.packet = packet
@@ -47,7 +41,6 @@ public struct PickerState: Equatable {
     self.testResult = testResult
   }
   
-//  public var connectedPacket: Packet?
   public var defaultSelection: PickerSelection?
   public var discovery: Discovery
   public var connectionType: ConnectionType
@@ -67,12 +60,11 @@ public enum PickerAction: Equatable {
 
   // effect related
   case clientChange(ClientChange)
-//  case connectResultReceived(SmartlinkTestResult?)
   case packetChange(PacketChange)
   case testResultReceived(SmartlinkTestResult)
 
-  // upstream actions
-  case packet(id: UUID, action: PacketAction)
+  // 
+  case selection(PickerSelection?)
 }
 
 public struct PickerEnvironment {
@@ -90,21 +82,8 @@ public struct PickerEnvironment {
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
-  packetReducer.forEach(
-    state: \PickerState.discovery.packets,
-    action: /PickerAction.packet(id:action:),
-    environment: { _ in PacketEnvironment() }
-      ),
   Reducer { state, action, environment in
     switch action {
-
-      // ----------------------------------------------------------------------------
-      // MARK: - Packet actions
-
-    case let .packet(id: id, action: .selection(selection)):
-      state.pickerSelection = selection
-      return .none
-
       // ----------------------------------------------------------------------------
       // MARK: - Picker UI actions
 
@@ -134,7 +113,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // try to send a Test
       if state.discovery.smartlinkTest(selection.packet.serial) {
         // SENT, wait for response
-        return TestEffect()
+        return testEffect()
       
       } else {
         // NOT SENT, alert
@@ -157,6 +136,10 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     case .testResultReceived(let result):
       state.testResult = result
       return .cancel(ids: TestEffectId())
+
+    case .selection(let selection):
+      state.pickerSelection = selection
+      return .none
     }
   }
 )

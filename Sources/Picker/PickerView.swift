@@ -21,7 +21,9 @@ public struct PickerView: View {
   public init(store: Store<PickerState, PickerAction>) {
     self.store = store
   }
-
+  
+  @State var selectedStation: String?
+  
   /// Determine whether there are items to list
   /// - Parameter viewStore:     a viewStore
   /// - Returns:                 a Bool
@@ -30,12 +32,14 @@ public struct PickerView: View {
       return viewStore.discovery.packets.count == 0
     } else {
       for packet in viewStore.discovery.packets where packet.guiClients.count > 0 {
-       return false
+        return false
       }
       return true
     }
   }
-
+  
+  
+  
   public var body: some View {
     
     WithViewStore(store) { viewStore in
@@ -51,26 +55,86 @@ public struct PickerView: View {
           }
           Spacer()
         } else {
-          List {
-            ForEachStore(
-              self.store.scope(
-                state: \.discovery.packets,
-                action: PickerAction.packet(id:action:)
-              )
-            ) { packetStore in
-              PacketView(store: packetStore,
-                         connectionType: viewStore.connectionType,
-                         defaultSelection: viewStore.defaultSelection,
-                         selection: viewStore.pickerSelection
-              )
-            }
-          }
+          PacketView(store: store)
+          Spacer()
+          Divider()
+          PickerFooterView(store: store)
         }
-        Divider()
-        PickerFooterView(store: store)
       }
-      .frame(minWidth: 700, minHeight: 200, idealHeight: 300, maxHeight: 400)
+      .frame(minWidth: 600, minHeight: 250)
       .onAppear { viewStore.send(.onAppear) }
+    }
+  }
+}
+
+public struct PacketView: View {
+  let store: Store<PickerState, PickerAction>
+  
+  /// Create an array of station fromthe GuiClients array
+  /// - Parameter guiClients:  an array of GuiClients
+  /// - Returns:               an array of station names
+  func parseStations(_ guiClients: IdentifiedArrayOf<GuiClient>) -> [String] {
+    switch guiClients.count {
+    case 1: return [guiClients[0].station, ""]
+    case 2: return [guiClients[0].station, guiClients[1].station]
+    default: return ["",""]
+    }
+  }
+  
+  public var body: some View {
+    
+    WithViewStore(store) { viewStore in
+      ForEach(viewStore.discovery.packets, id: \.id) { packet in
+        ZStack {
+          HStack(spacing: 0) {
+            Group {
+              Text(packet.source.rawValue)
+              Text(packet.nickname)
+              Text(packet.status)
+            }
+            .disabled(viewStore.connectionType == .nonGui)
+            .font(.title3)
+            .frame(minWidth: 140, alignment: .leading)
+            .foregroundColor(viewStore.defaultSelection?.packet == packet ? .red : nil)
+            .onTapGesture {
+              if viewStore.pickerSelection == PickerSelection(packet, nil) {
+                viewStore.send( .selection(nil) )
+              }else {
+                viewStore.send( .selection( PickerSelection(packet, nil) ))
+              }
+            }
+            Group {
+              let stations = parseStations(packet.guiClients)
+              ZStack {
+                Text(stations[0])
+                  .onTapGesture {
+                    if viewStore.pickerSelection == PickerSelection(packet,  stations[0]) {
+                      viewStore.send( .selection(nil) )
+                    } else {
+                      viewStore.send( .selection(PickerSelection(packet,  stations[0])) )
+                    }
+                  }
+                  .disabled(viewStore.connectionType == .gui)
+                Rectangle().fill(viewStore.pickerSelection == PickerSelection(packet,  stations[0]) ? .gray : .clear).opacity(0.2)
+                
+                Text(stations[1])
+                  .onTapGesture {
+                    if viewStore.pickerSelection == PickerSelection(packet,  stations[1]) {
+                      viewStore.send( .selection(nil) )
+                    } else {
+                      viewStore.send( .selection(PickerSelection(packet,  stations[1])) )
+                    }
+                  }
+                  .disabled(viewStore.connectionType == .gui)
+                Rectangle().fill(viewStore.pickerSelection == PickerSelection(packet,  stations[1]) ? .gray : .clear).opacity(0.2)                   }
+            }
+            .font(.title3)
+            .frame(minWidth: 140, alignment: .leading)
+          }
+          Rectangle().fill(viewStore.pickerSelection?.packet == packet ? .gray : .clear).frame(height: 20).opacity(0.2)
+        }
+      }
+      .padding(.horizontal)
     }
   }
 }
@@ -80,7 +144,7 @@ public struct PickerView: View {
 
 struct PickerView_Previews: PreviewProvider {
   static var previews: some View {
-
+    
     PickerView(
       store: Store(
         initialState: PickerState(connectionType: .gui),
@@ -89,7 +153,7 @@ struct PickerView_Previews: PreviewProvider {
       )
     )
       .previewDisplayName("Picker Gui (empty)")
-
+    
     PickerView(
       store: Store(
         initialState: PickerState(connectionType: .gui),
@@ -98,7 +162,16 @@ struct PickerView_Previews: PreviewProvider {
       )
     )
       .previewDisplayName("Picker Gui")
-
+    
+    PickerView(
+      store: Store(
+        initialState: PickerState(connectionType: .nonGui),
+        reducer: pickerReducer,
+        environment: PickerEnvironment()
+      )
+    )
+      .previewDisplayName("Picker non Gui (empty)")
+    
     PickerView(
       store: Store(
         initialState: PickerState(connectionType: .nonGui),
@@ -122,7 +195,7 @@ func testPackets() -> [Packet] {
   
   packets.append(testPacket1())
   packets.append(testPacket2())
-
+  
   return packets
 }
 
@@ -137,7 +210,7 @@ func testPacket1() -> Packet {
   packet.guiClientStations = "Windows,iPad"
   packet.guiClientHosts = ""
   packet.guiClientIps = "192.168.1.200,192.168.1.201"
-
+  
   return packet
 }
 
@@ -152,7 +225,7 @@ func testPacket2() -> Packet {
   packet.guiClientStations = ""
   packet.guiClientHosts = ""
   packet.guiClientIps = ""
-
+  
   return packet
 }
 

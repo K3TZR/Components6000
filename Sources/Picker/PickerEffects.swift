@@ -17,7 +17,7 @@ import Shared
 
 public func liveDiscoveryEffect() -> Effect<PickerAction, Never> {
   
-  return Effect.concatenate(
+  Effect.concatenate(
     Discovery.sharedInstance.packetPublisher
       .receive(on: DispatchQueue.main)
       .map { update in .packetChange(update) }
@@ -32,7 +32,7 @@ public func liveDiscoveryEffect() -> Effect<PickerAction, Never> {
   )
 }
 
-public func TestEffect() -> Effect<PickerAction, Never> {
+public func testEffect() -> Effect<PickerAction, Never> {
   
   Effect(
     Discovery.sharedInstance.testPublisher

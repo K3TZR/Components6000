@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import ComposableArchitecture
 
 import Login
 import Discovery
@@ -63,42 +64,61 @@ public struct Message: Equatable, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - Pure functions used by ApiViewer
 
-func listenForLocalPackets(_ state: ApiState) -> AlertView? {
+func startStopLanListener(_ mode: ConnectionMode, discovery: Discovery) -> AlertState<ApiAction>? {
+  switch mode {
+    
+  case .both, .local: if !discovery.lanListenerActive { return startLanListener(discovery) }
+  case .smartlink: if discovery.lanListenerActive { discovery.stopLanListener() }
+  }
+  return nil
+}
+
+func startStopWanListener(_ mode: ConnectionMode, discovery: Discovery, using smartlinkEmail: String, forceLogin: Bool = false) -> AlertState<ApiAction>? {
+  switch mode {
+    
+  case .both, .smartlink: if !discovery.wanListenerActive { return startWanListener(discovery, using: smartlinkEmail, forceLogin: forceLogin) }
+  case .local: if !discovery.wanListenerActive { discovery.stopWanListener() }
+  }
+  return nil
+}
+
+
+func startLanListener(_ discovery: Discovery) -> AlertState<ApiAction>? {
   do {
-    try state.discovery?.startLanListener()
+    try discovery.startLanListener()
     return nil
   } catch LanListenerError.kSocketError {
-    return AlertView(title: "Discovery: Lan Listener, Failed to open a socket")
+    return AlertState(title: TextState("Discovery: Lan Listener, Failed to open a socket"))
   } catch LanListenerError.kReceivingError {
-    return AlertView(title: "Discovery: Lan Listener, Failed to start receiving")
+    return AlertState(title: TextState("Discovery: Lan Listener, Failed to start receiving"))
   } catch {
-    return AlertView(title: "Discovery: Lan Listener, unknown error")
+    return AlertState(title: TextState("Discovery: Lan Listener, unknown error"))
   }
 }
 
-func listenForWanPackets(_ discovery: Discovery, using smartlinkEmail: String, forceLogin: Bool = false) -> AlertView? {
+func startWanListener(_ discovery: Discovery, using smartlinkEmail: String, forceLogin: Bool = false) -> AlertState<ApiAction>? {
   do {
     try discovery.startWanListener(smartlinkEmail: smartlinkEmail, forceLogin: forceLogin)
     return nil
   } catch WanListenerError.kFailedToObtainIdToken {
-    return AlertView(title: "Discovery: Wan Logoin required")
+    return AlertState(title: TextState("Discovery: Wan Logoin required"))
   } catch WanListenerError.kFailedToConnect {
-    return AlertView(title: "Discovery: Wan Listener, Failed to Connect")
+    return AlertState(title: TextState("Discovery: Wan Listener, Failed to Connect"))
   } catch {
-    return AlertView(title: "Discovery: Wan Listener, unknown error")
+    return AlertState(title: TextState("Discovery: Wan Listener, unknown error"))
   }
 }
 
-func listenForWanPackets(_ discovery: Discovery, using loginResult: LoginResult) -> AlertView? {
+func startWanListener(_ discovery: Discovery, using loginResult: LoginResult) -> AlertState<ApiAction>? {
   do {
     try discovery.startWanListener(using: loginResult)
     return nil
   } catch WanListenerError.kFailedToObtainIdToken {
-    return AlertView(title: "Discovery: Wan Listener, Failed to Obtain IdToken")
+    return AlertState(title: TextState("Discovery: Wan Listener, Failed to Obtain IdToken"))
   } catch WanListenerError.kFailedToConnect {
-    return AlertView(title: "Discovery: Wan Listener, Failed to Connect")
+    return AlertState(title: TextState("Discovery: Wan Listener, Failed to Connect"))
   } catch {
-    return AlertView(title: "Discovery: Wan Listener, unknown error")
+    return AlertState(title: TextState("Discovery: Wan Listener, unknown error"))
   }
 }
 

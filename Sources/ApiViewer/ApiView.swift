@@ -91,13 +91,11 @@ public struct ApiView: View {
         LogView(store: Store(
           initialState: LogState(domain: viewStore.domain, appName: viewStore.appName, backName: "Api View", fontSize: viewStore.fontSize),
           reducer: logReducer,
-          environment: LogEnvironment()
-        )
+          environment: LogEnvironment() )
         )
           .toolbar {
             Button("Api View") { viewStore.send(.apiViewButton) }
           }
-
       }
     }
   }
