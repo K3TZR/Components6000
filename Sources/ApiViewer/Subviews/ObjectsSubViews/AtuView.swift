@@ -19,13 +19,12 @@ struct AtuView: View {
       if viewStore.radio != nil {
         let atu = viewStore.radio!.atu!
         HStack(spacing: 20) {
-          Text("ATU -> ").frame(width: 75, alignment: .leading)
-          Text("").frame(width: 120, alignment: .leading)
+          Text("ATU").padding(.leading, 90)
           Text("Enabled \(atu.enabled ? "Y" : "N")")
           Text("Status \(atu.status)")
           Text("Memories enabled \(atu.memoriesEnabled ? "Y" : "N")")
           Text("Using memories \(atu.usingMemory ? "Y" : "N")")
-        }.frame(maxWidth: .infinity, alignment: .leading)
+        }.frame(minWidth: 1000, maxWidth: .infinity, alignment: .leading)
       }
     }
   }
@@ -48,8 +47,8 @@ struct AtuView_Previews: PreviewProvider {
           appName: "Api6000",
           radio: Radio(Packet(),
                        connectionType: .gui,
-                       command: TcpCommand(),
-                       stream: UdpStream())
+                       command: Tcp(),
+                       stream: Udp())
         ),
         reducer: apiReducer,
         environment: ApiEnvironment()

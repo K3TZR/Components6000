@@ -17,94 +17,80 @@ class ApiViewerTests: XCTestCase {
   
   func testButtons() {
     let store = TestStore(
-      initialState: .init(fontSize: 12, smartlinkEmail: "douglas.adams@me.com"),
+      initialState: .init(domain: "net.k3tzr", appName: "ApiViewerTests"),
       reducer: apiReducer,
       environment: ApiEnvironment(
         queue: { self.scheduler.eraseToAnyScheduler() }
       )
     )
     // StartStop (default is "START")
-    store.send(.buttonTapped(.startStop)) {
+    store.send(.startStopButton) {
       $0.pickerState = PickerState()
     }
-    store.send(.buttonTapped(.startStop)) {
+    store.send(.startStopButton) {
       $0.pickerState = nil
     }
     // isGui (default is "ON")
-    store.send(.buttonTapped(.isGui)) {
+    store.send(.toggleButton(\.isGui)) {
       $0.isGui = false
     }
-    store.send(.buttonTapped(.isGui)) {
+    store.send(.toggleButton(\.isGui)) {
       $0.isGui = true
     }
     // showTimes
-    store.send(.buttonTapped(.showTimes)) {
+    store.send(.toggleButton(\.showTimes)) {
       $0.showTimes = true
     }
-    store.send(.buttonTapped(.showTimes)) {
+    store.send(.toggleButton(\.showTimes)) {
       $0.showTimes = false
     }
     // showPings
-    store.send(.buttonTapped(.showPings)) {
+    store.send(.toggleButton(\.showPings)) {
       $0.showPings = true
     }
-    store.send(.buttonTapped(.showPings)) {
+    store.send(.toggleButton(\.showPings)) {
       $0.showPings = false
     }
-    // showReplies
-    store.send(.buttonTapped(.showReplies)) {
-      $0.showReplies = true
-    }
-    store.send(.buttonTapped(.showReplies)) {
-      $0.showReplies = false
-    }
-    // showButtons
-    store.send(.buttonTapped(.showButtons)) {
-      $0.showButtons = true
-    }
-    store.send(.buttonTapped(.showButtons)) {
-      $0.showButtons = false
-    }
     // clearOnConnect
-    store.send(.buttonTapped(.clearOnConnect)) {
+    store.send(.toggleButton(\.clearOnConnect)) {
       $0.clearOnConnect = true
     }
-    store.send(.buttonTapped(.clearOnConnect)) {
+    store.send(.toggleButton(\.clearOnConnect)) {
       $0.clearOnConnect = false
     }
     // clearOnDisconnect
-    store.send(.buttonTapped(.clearOnDisconnect)) {
+    store.send(.toggleButton(\.clearOnDisconnect)) {
       $0.clearOnDisconnect = true
     }
-    store.send(.buttonTapped(.clearOnDisconnect)) {
+    store.send(.toggleButton(\.clearOnDisconnect)) {
       $0.clearOnDisconnect = false
     }
     // clearOnSend
-    store.send(.buttonTapped(.clearOnSend)) {
+    store.send(.toggleButton(\.clearOnSend)) {
       $0.clearOnSend = true
     }
-    store.send(.buttonTapped(.clearOnSend)) {
+    store.send(.toggleButton(\.clearOnSend)) {
       $0.clearOnSend = false
     }
     // Command to send
-    store.send(.commandToSendChanged("info")) {
+    store.send(.commandTextField("info")) {
       $0.commandToSend = "info"
     }
-    store.send(.commandToSendChanged("")) {
+    store.send(.commandTextField("")) {
       $0.commandToSend = ""
     }
-    store.send(.buttonTapped(.send))
+    store.send(.sendButton)
+
     // font size
-    store.send(.fontSizeChanged(8)) {
+    store.send(.fontSizeStepper(8)) {
       $0.fontSize = 8
     }
-    store.send(.fontSizeChanged(12)) {
+    store.send(.fontSizeStepper(12)) {
       $0.fontSize = 12
     }
     
     // currently unimplemented
-    store.send(.buttonTapped(.smartlinkLogin))
-    store.send(.buttonTapped(.status))
-    store.send(.buttonTapped(.clearNow))
+    store.send(.clearDefaultButton)
+    store.send(.clearNowButton)
   }
 }

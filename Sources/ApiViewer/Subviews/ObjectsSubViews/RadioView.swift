@@ -21,8 +21,6 @@ struct RadioView: View {
       } else {
         VStack(alignment: .leading) {
           HStack(spacing: 20) {
-            Text("RADIO -> ")
-              .frame(width: 75, alignment: .leading)
             Text(viewStore.radio!.packet.nickname).frame(width: 120, alignment: .leading)
             Text(viewStore.radio!.packet.model)
             Text(viewStore.radio!.packet.status)
@@ -63,8 +61,8 @@ struct RadioView_Previews: PreviewProvider {
           appName: "Api6000",
           radio: Radio(testPacket,
                        connectionType: .gui,
-                       command: TcpCommand(),
-                       stream: UdpStream())
+                       command: Tcp(),
+                       stream: Udp())
         ),
         reducer: apiReducer,
         environment: ApiEnvironment()

@@ -18,6 +18,21 @@ import Discovery
 class PickerTests: XCTestCase {
   let testScheduler = DispatchQueue.test
 
+  var testPacket: Packet {
+    var packet = Packet()
+    packet.id = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+    packet.nickname = "Dougs 6500"
+    packet.status = "Available"
+    packet.serial = "1234-5678-9012-3456"
+    packet.publicIp = "10.0.1.200"
+    packet.guiClientHandles = "1,2"
+    packet.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
+    packet.guiClientStations = "Windows,iPad"
+    packet.guiClientHosts = ""
+    packet.guiClientIps = "192.168.1.200,192.168.1.201"
+    return packet
+  }
+
   // ----------------------------------------------------------------------------
   // MARK: - testButtons
 
@@ -27,14 +42,14 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        subscriptions: mockPacketSubscriptions
+        discoveryEffect: mockPacketSubscriptions
       )
     )
 
-    store.send(.connectButton)
+    store.send(.connectButton( PickerSelection(testPacket, nil)) )
     // TODO: do connection
     
-    store.send(.testButton)
+    store.send(.testButton( PickerSelection(testPacket, nil)) )
     // TODO: do testing
     
     store.send(.cancelButton)
@@ -49,7 +64,7 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        subscriptions: mockPacketSubscriptions
+        discoveryEffect: mockPacketSubscriptions
       )
     )
     store.send(.onAppear)
@@ -80,23 +95,6 @@ class PickerTests: XCTestCase {
     store.send(.cancelButton)
   }
 
-  private func testPacket() -> Packet {
-    var packet = Packet()
-    
-    packet.id = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
-    packet.nickname = "Dougs 6500"
-    packet.status = "Available"
-    packet.serial = "1234-5678-9012-3456"
-    packet.publicIp = "10.0.1.200"
-    packet.guiClientHandles = "1,2"
-    packet.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
-    packet.guiClientStations = "Windows,iPad"
-    packet.guiClientHosts = ""
-    packet.guiClientIps = "192.168.1.200,192.168.1.201"
-
-    return packet
-  }
-
   // ----------------------------------------------------------------------------
   // MARK: - testIsKnownPacket
 
@@ -106,7 +104,7 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        subscriptions: mockPacketSubscriptions
+        discoveryEffect: mockPacketSubscriptions
       )
     )
     store.send(.onAppear)
@@ -152,7 +150,7 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        subscriptions: mockPacketSubscriptions
+        discoveryEffect: mockPacketSubscriptions
       )
     )
     store.send(.onAppear)
@@ -200,7 +198,7 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        subscriptions: mockClientSubscriptions
+        discoveryEffect: mockClientSubscriptions
       )
     )
     store.send(.onAppear)
@@ -223,7 +221,7 @@ class PickerTests: XCTestCase {
       $0.discovery.packets = [testPacket]
     }
     
-    let testClient1 = GuiClient(clientHandle: 1,
+    let testClient1 = GuiClient(handle: 1,
                                 station: "Windows",
                                 program: "SmartSDR-Windows",
                                 clientId: nil,
@@ -244,7 +242,7 @@ class PickerTests: XCTestCase {
       $0.discovery.packets = [updatedPacket]
     }
     
-    let testClient2 = GuiClient(clientHandle: 2,
+    let testClient2 = GuiClient(handle: 2,
                                 station: "iPad",
                                 program: "SmartSDR-iOS",
                                 clientId: nil,
@@ -294,7 +292,7 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        subscriptions: mockPacketSubscriptions
+        discoveryEffect: mockPacketSubscriptions
       )
     )
     // ON APPEAR
@@ -302,37 +300,35 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChange( PacketChange(.added, packet: testPacket() ))) {
-      $0.discovery.packets = [self.testPacket()]
+    store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
+      $0.discovery.packets = [self.testPacket]
     }
     
     testScheduler.advance()
     // Tap the Packet to make it the Default
-    store.send(.packet(id: self.testPacket().id, action: .defaultButton) ) {
-      $0.discovery.packets[id: self.testPacket().id]?.isDefault = true
-      $0.defaultPacket = self.testPacket().id
+    store.send(.defaultButton( PickerSelection(testPacket, nil)) ) {
+      $0.defaultSelection = PickerSelection(self.testPacket, nil)
 //      $0.forceUpdate.toggle()
     }
 
-    testScheduler.advance()
-    // Confirm the Default status
-    store.receive( .defaultSelected(self.testPacket().id) ) {
-      $0.defaultPacket = self.testPacket().id
-    }
+//    testScheduler.advance()
+//    // Confirm the Default status
+//    store.receive( .defaultSelected(self.testPacket.id) ) {
+//      $0.defaultPacket = self.testPacket.id
+//    }
 
     testScheduler.advance()
     // Tap the Packet again to undo it's Default status
-    store.send(.packet(id: self.testPacket().id, action: .defaultButton) ) {
-      $0.discovery.packets[id: self.testPacket().id]?.isDefault = false
-      $0.defaultPacket = nil
+    store.send(.defaultButton( PickerSelection(testPacket, nil)) ) {
+      $0.defaultSelection = nil
 //      $0.forceUpdate.toggle()
     }
 
-    testScheduler.advance()
-    // Confirm the Default status
-    store.receive( .defaultSelected(nil) ) {
-      $0.defaultPacket = nil
-    }
+//    testScheduler.advance()
+//    // Confirm the Default status
+//    store.receive( .defaultSelected(nil) ) {
+//      $0.defaultPacket = nil
+//    }
     store.send(.cancelButton)
   }
 
@@ -348,7 +344,7 @@ class PickerTests: XCTestCase {
         .receive(on: testScheduler)
         .map { update in .packetChange(update) }
         .eraseToEffect()
-        .cancellable(id: PacketSubscriptionId())
+        .cancellable(id: PacketEffectId())
   }
   
   public func mockClientSubscriptions() -> Effect<PickerAction, Never> {
@@ -357,7 +353,7 @@ class PickerTests: XCTestCase {
         .receive(on: testScheduler)
         .map { update in .clientChange(update) }
         .eraseToEffect()
-        .cancellable(id: ClientSubscriptionId())
+        .cancellable(id: ClientEffectId())
   }
 
 }

@@ -89,7 +89,7 @@ final class LanListener: NSObject, ObservableObject {
   func stop() {
     _cancellables = Set<AnyCancellable>()
     _udpSocket?.close()
-    DispatchQueue.main.async { self.isListening = false }
+    isListening = false
   }
   
   // ----------------------------------------------------------------------------

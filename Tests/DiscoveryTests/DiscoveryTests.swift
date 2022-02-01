@@ -73,15 +73,15 @@ class DiscoveryTests: XCTestCase {
 //      XCTFail("Failed to start Wan Listener, unknown error")
 //    }
 
-    do {
-      try discovery.startWanListener(using: "douglas.adams@me.com", pwd: "fleX!20Comm")
-    } catch WanListenerError.kFailedToObtainIdToken {
-      XCTFail("Failed to start Wan Listener, Failed to Obtain IdToken")
-    } catch WanListenerError.kFailedToConnect {
-      XCTFail("Failed to start Wan Listener, Failed to Connect")
-    } catch {
-      XCTFail("Failed to start Wan Listener, unknown error")
-    }
+//    do {
+//      try discovery.startWanListener(using: "douglas.adams@me.com")
+//    } catch WanListenerError.kFailedToObtainIdToken {
+//      XCTFail("Failed to start Wan Listener, Failed to Obtain IdToken")
+//    } catch WanListenerError.kFailedToConnect {
+//      XCTFail("Failed to start Wan Listener, Failed to Connect")
+//    } catch {
+//      XCTFail("Failed to start Wan Listener, unknown error")
+//    }
 
     sleep(2)
 
@@ -110,7 +110,6 @@ class DiscoveryTests: XCTestCase {
     
     cancellable = discovery.packetPublisher
       .sink { update in
-//        print("-----> DiscoveryTests: \(update.action), id = \(update.packet.id)")
         updates.append(update)
       }
 
@@ -207,7 +206,7 @@ class DiscoveryTests: XCTestCase {
     XCTAssert( discovery.stations.count == 0, "Stations count \(discovery.stations.count) != 0" )
 
     // add a Client
-    let testClient1 = GuiClient(clientHandle: 1,
+    let testClient1 = GuiClient(handle: 1,
                                 station: "Windows",
                                 program: "SmartSDR-Windows",
                                 clientId: nil,
@@ -227,7 +226,7 @@ class DiscoveryTests: XCTestCase {
     XCTAssert( discovery.stations.count == 1, "Stations count \(discovery.stations.count) != 1" )
 
     // add a second Client
-    let testClient2 = GuiClient(clientHandle: 2,
+    let testClient2 = GuiClient(handle: 2,
                                 station: "iPad",
                                 program: "SmartSDR-iOS",
                                 clientId: nil,

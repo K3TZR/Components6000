@@ -48,8 +48,8 @@ struct AmplifierView_Previews: PreviewProvider {
           appName: "Api6000",
           radio: Radio(Packet(),
                        connectionType: .gui,
-                       command: TcpCommand(),
-                       stream: UdpStream())
+                       command: Tcp(),
+                       stream: Udp())
         ),
         reducer: apiReducer,
         environment: ApiEnvironment()

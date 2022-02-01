@@ -218,7 +218,6 @@ public final class Radio: Equatable {
   var _cancellableStreamStatus: AnyCancellable?
   var _clientId: String?
   var _clientInitialized = false
-  var _command: TcpCommand
   let _connectionType: ConnectionType
   var _disconnectHandle: Handle?
   let _domain: String
@@ -233,17 +232,18 @@ public final class Radio: Equatable {
   var _radioInitialized = false
   var _replyHandlers = [SequenceNumber: ReplyTuple]()
   var _stationName: String?
-  var _stream: UdpStream
+  var _tcp: Tcp
   var _testerModeEnabled: Bool
-  
+  var _udp: Udp
+
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
-  public init(_ packet: Packet, connectionType: ConnectionType, command: TcpCommand, stream: UdpStream, stationName: String? = nil, programName: String? = nil, lowBandwidthConnect: Bool = false, lowBandwidthDax: Bool = false, disconnectHandle: Handle? = nil, testerModeEnabled: Bool = false) {
+  public init(_ packet: Packet, connectionType: ConnectionType, command: Tcp, stream: Udp, stationName: String? = nil, programName: String? = nil, lowBandwidthConnect: Bool = false, lowBandwidthDax: Bool = false, disconnectHandle: Handle? = nil, testerModeEnabled: Bool = false) {
     self.packet = packet
     _connectionType = connectionType
-    _command = command
-    _stream = stream
+    _tcp = command
+    _udp = stream
     _lowBandwidthConnect = lowBandwidthConnect
     _lowBandwidthDax = lowBandwidthDax
     _stationName = stationName
@@ -347,12 +347,12 @@ public final class Radio: Equatable {
     }
     
     // attempt to connect
-    return _command.connect(packet)
+    return _tcp.connect(packet)
   }
   
   /// Disconnect from the Radio
   public func disconnect() {
-    _command.disconnect()
+    _tcp.disconnect()
   }
   
   /// Send a command to the Radio (hardware)
@@ -363,7 +363,7 @@ public final class Radio: Equatable {
   public func send(_ command: String, diagnostic flag: Bool = false, replyTo callback: ReplyHandler? = nil) {
     
     // tell TcpCommands to send the command
-    let sequenceNumber = _command.send(command, diagnostic: flag)
+    let sequenceNumber = _tcp.send(command, diagnostic: flag)
     
     // register to be notified when reply received
     addReplyHandler( sequenceNumber, replyTuple: (replyTo: callback, command: command) )
@@ -374,7 +374,7 @@ public final class Radio: Equatable {
   ///   - data:        data
   public func send(_ data: Data) {
     // tell UdpStreams to send the data
-    _stream.send(data)
+    _udp.send(data)
   }
   
   /// Determine if status is for this client
@@ -482,7 +482,7 @@ public final class Radio: Equatable {
         
       } else {
         // bind a UDP port for the Streams
-        if _stream.bind(packet) == false { _command.disconnect() }
+        if _udp.bind(packet) == false { _tcp.disconnect() }
         
         // FIXME: clientHandle is not used by bind????
       }
@@ -490,17 +490,17 @@ public final class Radio: Equatable {
     case .wanHandleValidated (let success):
       if success {
         _log("Radio: Wan handle validated", .debug, #function, #file, #line)
-        if _stream.bind(packet) == false { _command.disconnect() }
+        if _udp.bind(packet) == false { _tcp.disconnect() }
       } else {
         _log("Radio: Wan handle validation FAILED", .debug, #function, #file, #line)
-        _command.disconnect()
+        _tcp.disconnect()
       }
       
     case .udpBound (let receivePort, let sendPort):
       _log("Radio: UDP bound, receive port = \(receivePort), send port = \(sendPort)", .debug, #function, #file, #line)
       
       // if a Wan connection, register
-      if packet.source == .smartlink { _stream.register(clientHandle: connectionHandle) }
+      if packet.source == .smartlink { _udp.register(clientHandle: connectionHandle) }
       
       // a UDP port has been bound, inform observers
       //      NC.post(.udpDidBind, object: nil)
@@ -517,7 +517,7 @@ public final class Radio: Equatable {
       //      NC.post(.tcpDidDisconnect, object: reason)
       
       // stop all streams
-      _stream.unbind(reason: reason ?? "User initiated")
+      _udp.unbind(reason: reason ?? "User initiated")
       
       // stop pinging (if active)
       _pinger?.stopPinging()
@@ -550,10 +550,10 @@ public final class Radio: Equatable {
       sendCommands()
       
       // set the UDP port for a Local connection
-      if packet.source == .local { send("client udpport " + "\(_stream.sendPort)") }
+      if packet.source == .local { send("client udpport " + "\(_udp.sendPort)") }
       
       // start pinging the Radio
-      if pingerEnabled { _pinger = Pinger(radio: self, command: _command) }
+      if pingerEnabled { _pinger = Pinger(radio: self, command: _tcp) }
       
     } else {
       // NO, pending disconnect
@@ -561,13 +561,13 @@ public final class Radio: Equatable {
       
       // give client disconnection time to happen
       sleep(1)
-      _command.disconnect()
+      _tcp.disconnect()
       sleep(1)
       
       // reconnect
       _disconnectHandle = nil
       _clientInitialized = false
-      _ = _command.connect(packet)
+      _ = _tcp.connect(packet)
     }
   }
   
