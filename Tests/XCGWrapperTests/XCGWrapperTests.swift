@@ -10,7 +10,7 @@ import ComposableArchitecture
 import Combine
 
 //import Shared
-import LogProxy
+import Shared
 import XCGWrapper
 
 @testable import XCGWrapper
@@ -45,9 +45,6 @@ class XCGWrapperTests: XCTestCase {
     let wrapper = XCGWrapper()
 
     var logEntry = LogEntry("XCGWrapperTests: debug message", .debug, #function, #file, #line)
-    logProxy.logPublisher.send(logEntry)
-
-    logEntry = LogEntry("XCGWrapperTests: verbose message", .verbose, #function, #file, #line)
     logProxy.logPublisher.send(logEntry)
 
     logEntry = LogEntry("XCGWrapperTests: info message", .info, #function, #file, #line)
@@ -96,9 +93,6 @@ class XCGWrapperTests: XCTestCase {
     let wrapper = XCGWrapper( logLevel: .warning )
 
     var logEntry = LogEntry("XCGWrapperTests: debug message", .debug, #function, #file, #line)
-    logProxy.logPublisher.send(logEntry)
-
-    logEntry = LogEntry("XCGWrapperTests: verbose message", .verbose, #function, #file, #line)
     logProxy.logPublisher.send(logEntry)
 
     logEntry = LogEntry("XCGWrapperTests: info message", .info, #function, #file, #line)

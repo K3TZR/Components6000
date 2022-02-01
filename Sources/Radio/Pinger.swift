@@ -26,7 +26,7 @@ final public class Pinger {
   private let _pingQ = DispatchQueue(label: "Radio.pingQ")
   private var _pingTimer: DispatchSourceTimer!
   private let _radio: Radio
-  private var _command: TcpCommand
+  private var _command: Tcp
 
   private let kPingInterval = 1
   private let kTimeoutInterval = 10.0
@@ -34,7 +34,7 @@ final public class Pinger {
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
 
-  public init(radio: Radio, command: TcpCommand, pingInterval: Int = 1, pingTimeout: Double = 10) {
+  public init(radio: Radio, command: Tcp, pingInterval: Int = 1, pingTimeout: Double = 10) {
     _radio = radio
     _command = command
     _lastPingRxTime = Date(timeIntervalSinceNow: 0)

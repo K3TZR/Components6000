@@ -10,12 +10,12 @@ import ComposableArchitecture
 import Combine
 
 import Discovery
-import Commands
+import TcpCommands
 import Shared
 
-@testable import Commands
+@testable import TcpCommands
 
-class CommandsTests: XCTestCase {
+class TcpCommandsTests: XCTestCase {
   let discovery = Discovery.sharedInstance
   
   var testMessages = [
@@ -33,7 +33,7 @@ class CommandsTests: XCTestCase {
     "S32848110|eq rxsc mode=0 63Hz=0 125Hz=0 250Hz=0 500Hz=0 1000Hz=0 2000Hz=0 4000Hz=0 8000Hz=0\n",
     "S0|interlock tx_client_handle=0x00000000 state=RECEIVE reason= source= tx_allowed=0 amplifier=\n"
   ]
-  let testTcpStatus = TcpStatus(isConnected: true, host: "192.168.1.200", port: 4992, error: nil)
+  let testTcpStatus = TcpStatus(.didConnect, host: "192.168.1.200", port: 4992, error: nil, reason: nil)
 
   func testLiveConnect() {
     var discoveryCancellable: AnyCancellable?
@@ -43,19 +43,19 @@ class CommandsTests: XCTestCase {
     var messages = [String]()
     var status = [TcpStatus]()
 
-    let command = Command()
+    let tcp = Tcp()
 
     discoveryCancellable = discovery.packetPublisher
       .sink { update in
         updates.append(update)
       }
     
-    commandCancellable = command.receivedDataPublisher
-      .sink { msg in
-        messages.append(msg)
+    commandCancellable = tcp.receivedPublisher
+      .sink { tcpMessage in
+        messages.append(tcpMessage.text)
       }
 
-    statusCancellable = command.statusPublisher
+    statusCancellable = tcp.statusPublisher
       .sink { tcpStatus in
         status.append(tcpStatus)
       }
@@ -70,14 +70,14 @@ class CommandsTests: XCTestCase {
     
     XCTAssert(updates.count == 1, "Failed to receive Discovery packet")
 
-    XCTAssert( command.connect(updates[0].packet) == true, "Failed to connect")
+    XCTAssert( tcp.connect(updates[0].packet) == true, "Failed to connect")
 
     sleep(1)
 
-    XCTAssert( status[0].isConnected == testTcpStatus.isConnected, "TCP connection status error, \(status[0].isConnected) != \(testTcpStatus.isConnected)" )
+    XCTAssert( status[0].statusType == testTcpStatus.statusType, "TCP connection failed" )
     XCTAssert( status[0].host == testTcpStatus.host, "TCP host error, \(status[0].host) != \(testTcpStatus.host)" )
     XCTAssert( status[0].port == testTcpStatus.port, "TCP port error, \(status[0].port) != \(testTcpStatus.port)" )
-    XCTAssert( status[0].error == nil, "TCP error, \(status[0].error) != nil" )
+    XCTAssert( status[0].error == nil, "TCP error, \(status[0].error!) != nil" )
 
     // fix the testMessages handle value
     let handle = String(messages[1].dropFirst().dropLast())
@@ -92,7 +92,7 @@ class CommandsTests: XCTestCase {
       XCTAssert(message == testMessages[i], "Received message error, \(message) != \(testMessages[i])" )
     }
     
-    command.disconnect()
+    tcp.disconnect()
 
     commandCancellable?.cancel()
     statusCancellable?.cancel()

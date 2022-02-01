@@ -34,8 +34,7 @@ struct MeterView: View {
           ForEach(meters, id: \.id) { meter in
             HStack(spacing: 0) {
               if show(meter) {
-                Text("Meter")
-                  .padding(.leading, sliceId == nil ? 20 : 65)
+                Text("Meter").padding(.leading, sliceId == nil ? 20 : 65)
                 Text(String(format: "% 3d", meter.id)).frame(width: 50, alignment: .leading)
                 Text(meter.group).frame(width: 30, alignment: .trailing).padding(.trailing)
                 Text(meter.name).frame(width: 110, alignment: .leading)
@@ -47,8 +46,7 @@ struct MeterView: View {
                 Text(meter.units).frame(width: 50, alignment: .leading)
                 Text(String(format: "%02d", meter.fps) + " fps").frame(width: 75, alignment: .leading).padding(.trailing)
                 Text(meter.desc)
-                  .frame(width: 450, height: 10, alignment: .leading)
-                  .truncationMode(.middle)
+                  .frame(width: 1000, alignment: .leading)
               }
             }
           }
