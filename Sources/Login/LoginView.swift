@@ -41,7 +41,7 @@ public struct LoginView: View {
 //            SecureField("", text: viewStore.binding(
 //              get: \.pwd,
 //              send: LoginAction.pwdFieldChanged))
-            SecureField("", text: $pwd)
+            SecureField("", text: $pwd, onCommit: { viewStore.send( .loginButton(LoginResult(email, pwd: pwd))) })
           }
         }
         

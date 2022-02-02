@@ -30,7 +30,7 @@ struct TopButtonsView: View {
           Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .toggleButton(\.isGui)))
           Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .toggleButton(\.showTimes)))
           Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .toggleButton(\.showPings)))
-          Toggle("WanLogin", isOn: viewStore.binding(get: \.wanLogin, send: .toggleButton(\.wanLogin))).disabled(viewStore.connectionMode == .local)
+//          Toggle("WanLogin", isOn: viewStore.binding(get: \.wanLogin, send: .toggleButton(\.wanLogin))).disabled(viewStore.connectionMode == .local)
         }
 
         Spacer()
@@ -41,12 +41,15 @@ struct TopButtonsView: View {
           Text("Local").tag(ConnectionMode.local)
           Text("Smartlink").tag(ConnectionMode.smartlink)
           Text("Both").tag(ConnectionMode.both)
+          Text("None").tag(ConnectionMode.none)
         }
         .pickerStyle(.segmented)
         .labelsHidden()
         .frame(width: 200)
 
         Spacer()
+        Button("Force Login") {viewStore.send(.forceLoginButton)}
+        .disabled(viewStore.connectionMode == .local || viewStore.connectionMode == .none)
         Button("Clear Default") { viewStore.send(.clearDefaultButton) }
         .disabled(viewStore.defaultConnection == nil)
       }

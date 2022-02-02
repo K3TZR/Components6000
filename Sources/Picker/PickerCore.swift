@@ -29,21 +29,21 @@ public struct PickerSelection: Equatable {
 
 public struct PickerState: Equatable {
   public init(connectionType: ConnectionType = .gui,
-              pickerSelection: PickerSelection? = nil,
               defaultSelection: PickerSelection? = nil,
-              testResult: SmartlinkTestResult? = nil,
-              discovery: Discovery = Discovery.sharedInstance)
+              discovery: Discovery = Discovery.sharedInstance,
+              pickerSelection: PickerSelection? = nil,
+              testResult: SmartlinkTestResult? = nil)
   {
+    self.connectionType = connectionType
     self.defaultSelection = defaultSelection
     self.discovery = discovery
-    self.connectionType = connectionType
     self.pickerSelection = pickerSelection
     self.testResult = testResult
   }
   
+  public var connectionType: ConnectionType
   public var defaultSelection: PickerSelection?
   public var discovery: Discovery
-  public var connectionType: ConnectionType
   public var pickerSelection: PickerSelection?
   public var testResult: SmartlinkTestResult?
   public var forceUpdate = false
@@ -55,30 +55,31 @@ public enum PickerAction: Equatable {
   // UI controls
   case cancelButton
   case connectButton(PickerSelection)
-  case testButton(PickerSelection)
   case defaultButton(PickerSelection)
+  case testButton(PickerSelection)
+  case selection(PickerSelection?)
 
   // effect related
   case clientChange(ClientChange)
   case packetChange(PacketChange)
   case testResultReceived(SmartlinkTestResult)
-
-  // 
-  case selection(PickerSelection?)
 }
 
 public struct PickerEnvironment {
   public init(
     queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
-    discoveryEffect: @escaping () -> Effect<PickerAction, Never> = liveDiscoveryEffect
+    discoveryEffect: @escaping () -> Effect<PickerAction, Never> = liveDiscoveryEffect,
+    testEffect: @escaping () -> Effect<PickerAction, Never> = liveTestEffect
   )
   {
     self.queue = queue
     self.discoveryEffect = discoveryEffect
+    self.testEffect = testEffect
   }
   
   var queue: () -> AnySchedulerOf<DispatchQueue>
   var discoveryEffect: () -> Effect<PickerAction, Never>
+  var testEffect: () -> Effect<PickerAction, Never>
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
@@ -108,12 +109,16 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // subscribe to Discovery broadcasts (long-running Effect)
       return environment.discoveryEffect()
       
+    case .selection(let selection):
+      state.pickerSelection = selection
+      return .none
+
     case .testButton(let selection):
       state.testResult = nil
       // try to send a Test
       if state.discovery.smartlinkTest(selection.packet.serial) {
         // SENT, wait for response
-        return testEffect()
+        return environment.testEffect()
       
       } else {
         // NOT SENT, alert
@@ -136,10 +141,6 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     case .testResultReceived(let result):
       state.testResult = result
       return .cancel(ids: TestEffectId())
-
-    case .selection(let selection):
-      state.pickerSelection = selection
-      return .none
     }
   }
 )

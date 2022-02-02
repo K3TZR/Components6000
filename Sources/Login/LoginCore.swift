@@ -24,7 +24,6 @@ public struct LoginState: Equatable {
     self.heading = heading
     self.pwd = pwd
   }
-  
   var email: String
   var heading: String
   var pwd: String
@@ -41,6 +40,13 @@ public struct LoginEnvironment {
 
 let loginReducer = Reducer<LoginState, LoginAction, LoginEnvironment>
   { state, action, environment in
+    
+    switch action {
+    case .cancelButton:
+      return .none
+      
+    case .loginButton(let result):
+      return .none
+    }
   
-  return .none
   }

@@ -32,7 +32,7 @@ public func liveDiscoveryEffect() -> Effect<PickerAction, Never> {
   )
 }
 
-public func testEffect() -> Effect<PickerAction, Never> {
+public func liveTestEffect() -> Effect<PickerAction, Never> {
   
   Effect(
     Discovery.sharedInstance.testPublisher

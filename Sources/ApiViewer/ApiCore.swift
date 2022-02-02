@@ -69,21 +69,22 @@ public struct ApiState: Equatable {
   public var messagesFilterByText: String { didSet { UserDefaults.standard.set(messagesFilterByText, forKey: "messagesFilterByText") } }
   
   // normal state
+  public var alert: AlertState<ApiAction>?
   public var appName: String
   public var domain: String
-  public var radio: Radio?
   public var clearNow = false
-  public var tcp = Tcp()
   public var commandToSend = ""
-  public var discovery: Discovery? = nil
-  public var alert: AlertState<ApiAction>?
-  public var loginState: LoginState? = nil
-  public var messages = IdentifiedArrayOf<Message>()
-  public var filteredMessages = IdentifiedArrayOf<Message>()
-  public var pickerState: PickerState? = nil
-  public var reverse = false
-  public var update = false
   public var connectionState: ConnectionState?
+  public var discovery: Discovery? = nil
+  public var filteredMessages = IdentifiedArrayOf<TcpMessage>()
+  public var forceWanLogin = false
+  public var loginState: LoginState? = nil
+  public var messages = IdentifiedArrayOf<TcpMessage>()
+  public var pickerState: PickerState? = nil
+  public var radio: Radio?
+  public var reverse = false
+  public var tcp = Tcp()
+  public var update = false
   public var viewType: ViewType = .api
   public var xcgWrapper: XCGWrapper?
   
@@ -124,6 +125,7 @@ public enum ApiAction: Equatable {
   case commandTextField(String)
   case connectionModePicker(ConnectionMode)
   case fontSizeStepper(CGFloat)
+  case forceLoginButton
   case logViewButton
   case messagesPicker(MessagesFilter)
   case messagesFilterTextField(String)
@@ -136,21 +138,11 @@ public enum ApiAction: Equatable {
   // sheet/alert related
   case alertCancelled
   case connectionAction(ConnectionAction)
-  case connectionSheetClosed
   case loginAction(LoginAction)
-  case loginSheetClosed
   case pickerAction(PickerAction)
-  case pickerSheetClosed
-  case toggleWanLogin
 
   // Effects related
-//  case checkConnection(PickerSelection)
-//  case checkForDefault
-//  case checkVersion(PickerSelection, Handle?)
-//  case filterMessages(MessagesFilter, String)
-  case messageReceived(Message)
-//  case openRadio(PickerSelection, Handle?)
-//  case versionOk(PickerSelection, Handle?)
+  case tcpAction(TcpMessage)
 }
 
 public struct ApiEnvironment {
@@ -181,7 +173,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       environment: { _ in ConnectionEnvironment() }
     ),
   Reducer { state, action, environment in
-
     
     // ----------------------------------------------------------------------------
     // MARK: - Helper functions
@@ -189,11 +180,18 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     func listenForPackets(_ discovery: Discovery?) {
       guard discovery != nil else { return }
       state.alert = startStopLanListener(state.connectionMode, discovery: discovery!)
-      let alert = startStopWanListener(state.connectionMode, discovery: discovery!, using: state.smartlinkEmail)
-      if alert != nil {
-        state.alert = alert
+      
+      if state.forceWanLogin {
         // show the Login sheet
         state.loginState = LoginState(email: state.smartlinkEmail)
+
+      } else {
+        let alert = startStopWanListener(state.connectionMode, discovery: discovery!, using: state.smartlinkEmail, forceLogin: state.forceWanLogin)
+        if alert != nil {
+          state.alert = alert
+          // show the Login sheet
+          state.loginState = LoginState(email: state.smartlinkEmail)
+        }
       }
     }
     
@@ -226,6 +224,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
           return PickerSelection(packet, saved.station)
         }
       }
+      // none saved OR no matching packet
       return nil
     }
         
@@ -251,6 +250,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         // YES, may need a disconnect, let the user choose
         state.connectionState = ConnectionState(pickerSelection: selection)
       } else {
+        // NO, just open
         openRadio(selection, nil)
       }
     }
@@ -267,8 +267,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
                           testerModeEnabled: true)
       // try to connect
       if state.radio!.connect(selection.packet) {
+        // connected
         if state.clearOnConnect { clear() }
       } else {
+        // failed
         state.alert = AlertState(title: TextState("Failed to connect to Radio \(selection.packet.nickname)"))
       }
     }
@@ -318,6 +320,19 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.fontSize = size
       return .none
       
+    case .forceLoginButton:
+      let savedMode = state.connectionMode
+      // stop all listeners
+      state.connectionMode = .none
+      listenForPackets(state.discovery)
+      // set the flag and restart listeners
+      state.forceWanLogin = true
+      state.connectionMode = savedMode
+      listenForPackets(state.discovery)
+      // reset the flag
+      state.forceWanLogin = false
+      return .none
+      
     case .logViewButton:
       state.viewType = .log
       return .none
@@ -336,10 +351,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.objectsFilterBy = filterBy
       return.none
       
-    case .pickerSheetClosed:
-      state.pickerState = nil
-      return .none
-      
     case .reverseButton:
       state.reverse.toggle()
       return .none
@@ -352,7 +363,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       if state.radio == nil {
         // NOT connected, is there a default
         if let selection = findDefault() {
-          // YES,
+          // YES, see if other Clients must be handled
           checkConnectionStatus(for: selection)
         } else {
           // NO, open the Picker
@@ -370,20 +381,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .toggleButton(let keyPath):
       // handles all buttons with a Bool state
-      if keyPath == \.wanLogin {
-        state.alert = .init(
-          title: TextState("Takes effect when App restarted"),
-          message: TextState("Set this flag?"),
-          primaryButton: .default(TextState("OK"), action: .send(.toggleWanLogin) ),
-          secondaryButton: .cancel(TextState("Cancel"))
-        )
-      } else {
-        state[keyPath: keyPath].toggle()
-      }
-      return .none
-      
-    case .toggleWanLogin:
-      state.wanLogin.toggle()
+      state[keyPath: keyPath].toggle()
       return .none
       
       // ----------------------------------------------------------------------------
@@ -426,10 +424,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.alert = startWanListener(state.discovery!, using: credentials)
       return .none
       
-    case .loginSheetClosed:
-      state.loginState = nil
-      return .none
-      
       // ----------------------------------------------------------------------------
       // MARK: - Connection actions
       
@@ -442,10 +436,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       openRadio(selection, handle)
       return .none
       
-    case .connectionSheetClosed:
-      state.connectionState = nil
-      return .none
-      
       // ----------------------------------------------------------------------------
       // MARK: - Alert actions
       
@@ -455,76 +445,14 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
       // ----------------------------------------------------------------------------
       // MARK: - ApiEffects actions
-      
-//    case .checkConnection(let selection):
-//      // are there other Gui Clients?
-//      if state.isGui && selection.packet.guiClients.count > 0 {
-//        // YES, may need a disconnect, let the user choose
-//        state.connectionState = ConnectionState(pickerSelection: selection)
-//      } else {
-//        // NO, no pending disconnect, open the radio
-//        return Effect(value: .checkVersion(selection, nil) )
-//      }
-//      return .none
-      
-//    case .checkForDefault:
-//      // is there a default?
-//      if let def = state.defaultConnection {
-//        // YES, find a matching discovered packet
-//        for packet in state.discovery!.packets where def.source == packet.source.rawValue && def.serial == packet.serial {
-//          return Effect(value: .checkConnection(PickerSelection(packet, def.station)) )
-//        }
-//      }
-//      return .none
-      
-//    case .checkVersion(let selection, let handle):
-//      // compatible version?
-//      if Shared.kVersionSupported < Version(selection.packet.version)  {
-//        // NO, return an Alert
-//        state.alert = .init(title: TextState(
-//                                """
-//                                Radio may be incompatible:
-//
-//                                Radio version is \(Version(selection.packet.version).string)
-//                                App supports <= \(kVersionSupported.string)
-//                                """
-//                                ),
-//                            primaryButton: .default(TextState("Continue"), action: .send(.openRadio(selection, handle)) ),
-//                            secondaryButton: .cancel(TextState("Cancel"), action: .send(.alertCancelled))
-//                                )
-//      } else {
-//        return Effect(value: .openRadio(selection, handle))
-//      }
-//      return .none
-      
-    case let .messageReceived(message):
+            
+    case let .tcpAction(message):
       // process received TCP messages
       if message.direction == .sent && message.text.contains("ping") && state.showPings == false { return .none }
       state.messages.append(message)
       state.update.toggle()
       filterMessages(filterBy: state.messagesFilterBy, filterText: state.messagesFilterByText)
       return .none
-
-//    case .openRadio(let selection, let handle):
-//      // instantiate a Radio object
-//      state.radio = Radio(selection.packet,
-//                          connectionType: state.isGui ? .gui : .nonGui,
-//                          command: state.tcp,
-//                          stream: Udp(),
-//                          stationName: "Api6000",
-//                          programName: "Api6000",
-//                          disconnectHandle: handle,
-//                          testerModeEnabled: true)
-//      // try to connect
-//      if state.radio!.connect(selection.packet) {
-//        if state.clearOnConnect { clear() }
-//      } else {
-//        state.alert = AlertState(title: TextState("Failed to connect to Radio \(selection.packet.nickname)"))
-//      }
-//      return .none
-      
-//    case .versionOk(let selection, let handleToDisconnect):
-//      return Effect(value: .openRadio(selection, handleToDisconnect))
     }
   }
 )

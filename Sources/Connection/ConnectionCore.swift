@@ -26,7 +26,6 @@ public enum ConnectionAction: Equatable {
 }
 
 public struct ConnectionEnvironment {
-
   public init() {}
 }
 
@@ -34,10 +33,12 @@ public let connectionReducer = Reducer<ConnectionState, ConnectionAction, Connec
   { state, action, environment in
 
     switch action {
-    case let .connect(selection, disconnectHandle):
+    case .connect(let selection, let disconnectHandle):
+      // handled downstream
       return .none
 
     case .cancelButton:
+      // handled downstream
       return .none
     }
   }

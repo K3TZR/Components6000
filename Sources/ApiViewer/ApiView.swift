@@ -51,7 +51,7 @@ public struct ApiView: View {
         // initialize on first appearance
         .onAppear() { viewStore.send(.onAppear) }
         
-        // alert dialog
+        // alert dialogs
         .alert(
           self.store.scope(state: \.alert),
           dismiss: .alertCancelled
@@ -61,7 +61,7 @@ public struct ApiView: View {
         .sheet(
           isPresented: viewStore.binding(
             get: { $0.pickerState != nil },
-            send: ApiAction.pickerSheetClosed),
+            send: ApiAction.pickerAction(.cancelButton)),
           content: {
             IfLetStore(
               store.scope(state: \.pickerState,
@@ -76,7 +76,7 @@ public struct ApiView: View {
         .sheet(
           isPresented: viewStore.binding(
             get: { $0.loginState != nil },
-            send: ApiAction.loginSheetClosed),
+            send: ApiAction.loginAction(.cancelButton)),
           content: {
             IfLetStore(
               store.scope(state: \.loginState,
@@ -91,7 +91,7 @@ public struct ApiView: View {
         .sheet(
           isPresented: viewStore.binding(
             get: { $0.connectionState != nil },
-            send: ApiAction.connectionSheetClosed),
+            send: ApiAction.connectionAction(.cancelButton)),
           content: {
             IfLetStore(
               store.scope(state: \.connectionState,

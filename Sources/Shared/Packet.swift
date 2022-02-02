@@ -45,9 +45,7 @@ public struct Packet: Identifiable, Equatable, Hashable {
   public var id: UUID
   public var lastSeen: Date
   public var source: PacketSource
-//  public var isDefault = false
   public var isPortForwardOn = false
-//  public var isSelected = false
   public var guiClients = IdentifiedArrayOf<GuiClient>()
   public var localInterfaceIP = ""
   public var requiresHolePunch = false

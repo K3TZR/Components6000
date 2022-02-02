@@ -66,6 +66,8 @@ struct ConnectionView_Previews: PreviewProvider {
         environment: ConnectionEnvironment()
       )
     )
+      .previewDisplayName("Gui connect (disconnect not required)")
+
     ConnectionView(
       store: Store(
         initialState: ConnectionState( pickerSelection: testPickerSelection2() ),
@@ -73,6 +75,7 @@ struct ConnectionView_Previews: PreviewProvider {
         environment: ConnectionEnvironment()
       )
     )
+      .previewDisplayName("Gui connect (disconnect required)")
   }
 }
 

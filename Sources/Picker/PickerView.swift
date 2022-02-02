@@ -70,7 +70,7 @@ public struct PickerView: View {
 public struct PacketView: View {
   let store: Store<PickerState, PickerAction>
   
-  /// Create an array of station fromthe GuiClients array
+  /// Create an array of station from the GuiClients array
   /// - Parameter guiClients:  an array of GuiClients
   /// - Returns:               an array of station names
   func parseStations(_ guiClients: IdentifiedArrayOf<GuiClient>) -> [String] {

@@ -12,9 +12,6 @@ import ComposableArchitecture
 import Login
 import Discovery
 import Picker
-import UdpStreams
-import Shared
-import TcpCommands
 
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums used by ApiViewer
@@ -47,20 +44,6 @@ public struct DefaultConnection: Codable, Equatable {
   }
 }
 
-public enum ConnectionMode: String {
-  case local
-  case smartlink
-  case both
-}
-
-public struct Message: Equatable, Identifiable {
-  public var id = UUID()
-  var direction: TcpMessageDirection
-  var text: String
-  var color: Color
-  var timeInterval: TimeInterval
-}
-
 // ----------------------------------------------------------------------------
 // MARK: - Pure functions used by ApiViewer
 
@@ -71,6 +54,9 @@ func startStopLanListener(_ mode: ConnectionMode, discovery: Discovery) -> Alert
   case .smartlink:
       discovery.stopLanListener()
       discovery.removePackets(ofType: .local)
+  case .none:
+    discovery.stopLanListener()
+    discovery.removePackets(ofType: .local)
   }
   return nil
 }
@@ -82,6 +68,9 @@ func startStopWanListener(_ mode: ConnectionMode, discovery: Discovery, using sm
   case .local:
       discovery.stopWanListener()
       discovery.removePackets(ofType: .smartlink)
+  case .none:
+    discovery.stopWanListener()
+    discovery.removePackets(ofType: .smartlink)
   }
   return nil
 }

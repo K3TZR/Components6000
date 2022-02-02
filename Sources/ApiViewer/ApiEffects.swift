@@ -13,13 +13,28 @@ import SwiftUI
 import TcpCommands
 import Shared
 
+public enum ConnectionMode: String {
+  case both
+  case local
+  case none
+  case smartlink
+}
+
+public struct TcpMessage: Equatable, Identifiable {
+  public var id = UUID()
+  var direction: TcpMessageDirection
+  var text: String
+  var color: Color
+  var timeInterval: TimeInterval
+}
+
 func sentMessagesEffect(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   
-  // subscribe to the publisher of received TcpMessages
+  // subscribe to the publisher of sent TcpMessages
   tcp.sentPublisher
     .receive(on: DispatchQueue.main)
-    // convert to CommandMessage format
-    .map { tcpMessage in .messageReceived(Message(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
+    // convert to TcpMessage format
+    .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
     .cancellable(id: CommandSubscriptionId())
 }
@@ -31,8 +46,8 @@ func receivedMessagesEffect(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   // eliminate replies without errors or data
     .filter { allowToPass($0.text) }
     .receive(on: DispatchQueue.main)
-  // convert to CommandMessage format
-    .map { tcpMessage in .messageReceived(Message(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
+  // convert to TcpMessage format
+    .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
     .cancellable(id: CommandSubscriptionId())
 }
