@@ -149,5 +149,9 @@ let package = Package(
       name: "TcpCommandsTests",
       dependencies: ["TcpCommands", "Discovery"]
     ),
+    .testTarget(
+      name: "LogProxyTests",
+      dependencies: ["Shared"]
+    ),
   ]
 )

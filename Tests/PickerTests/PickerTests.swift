@@ -36,24 +36,24 @@ class PickerTests: XCTestCase {
   // ----------------------------------------------------------------------------
   // MARK: - testButtons
 
-  func testButtons() {
-    let store = TestStore(
-      initialState: .init(),
-      reducer: pickerReducer,
-      environment: PickerEnvironment(
-        queue: { self.testScheduler.eraseToAnyScheduler() },
-        discoveryEffect: mockPacketSubscriptions
-      )
-    )
-
-    store.send(.connectButton( PickerSelection(testPacket, nil)) )
-    // TODO: do connection
-    
-    store.send(.testButton( PickerSelection(testPacket, nil)) )
-    // TODO: do testing
-    
-    store.send(.cancelButton)
-  }
+//  func testButtons() {
+//    let store = TestStore(
+//      initialState: .init(),
+//      reducer: pickerReducer,
+//      environment: PickerEnvironment(
+//        queue: { self.testScheduler.eraseToAnyScheduler() },
+//        discoveryEffect: mockPacketSubscriptions
+//      )
+//    )
+//
+//    store.send(.connectButton( PickerSelection(testPacket, nil)) )
+//    // TODO: do connection
+//    
+//    store.send(.testButton( PickerSelection(testPacket, nil)) )
+//    // TODO: do testing
+//    
+//    store.send(.cancelButton)
+//  }
 
   // ----------------------------------------------------------------------------
   // MARK: - testSubscription
@@ -90,7 +90,7 @@ class PickerTests: XCTestCase {
     // Receive the added Packet
     store.receive( .packetChange( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
-//      $0.forceUpdate.toggle()
+      $0.forceUpdate.toggle()
     }
     store.send(.cancelButton)
   }
@@ -125,18 +125,21 @@ class PickerTests: XCTestCase {
     // add a Packet
     store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
+      $0.forceUpdate.toggle()
     }
     
     testScheduler.advance()
     // send the same Packet
     store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
+      $0.forceUpdate.toggle()
     }
 
     testScheduler.advance()
     // delete a Packet
     store.send(.packetChange( PacketChange(.deleted, packet: testPacket ))) {
       $0.discovery.packets = []
+      $0.forceUpdate.toggle()
     }
     store.send(.cancelButton)
   }
@@ -171,6 +174,7 @@ class PickerTests: XCTestCase {
     // add a Packet
     store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
+      $0.forceUpdate.toggle()
     }
     
     testScheduler.advance()
@@ -179,12 +183,14 @@ class PickerTests: XCTestCase {
     updatedTestPacket.nickname = "Petes 6700"
     store.send(.packetChange( PacketChange(.updated, packet: updatedTestPacket))) {
       $0.discovery.packets = [updatedTestPacket]
+      $0.forceUpdate.toggle()
     }
     
     testScheduler.advance()
     // delete a Packet
     store.send(.packetChange( PacketChange(.deleted, packet: testPacket ))) {
       $0.discovery.packets = []
+      $0.forceUpdate.toggle()
     }
     store.send(.cancelButton)
   }
@@ -219,6 +225,7 @@ class PickerTests: XCTestCase {
     // add a Packet
     store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
+      $0.forceUpdate.toggle()
     }
     
     let testClient1 = GuiClient(handle: 1,
@@ -279,6 +286,7 @@ class PickerTests: XCTestCase {
     // delete the Packet
     store.send(.packetChange( PacketChange(.deleted, packet: testPacket ))) {
       $0.discovery.packets = []
+      $0.forceUpdate.toggle()
     }
     store.send(.cancelButton)
   }
@@ -302,33 +310,21 @@ class PickerTests: XCTestCase {
     // add a Packet
     store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [self.testPacket]
+      $0.forceUpdate.toggle()
     }
     
     testScheduler.advance()
     // Tap the Packet to make it the Default
     store.send(.defaultButton( PickerSelection(testPacket, nil)) ) {
       $0.defaultSelection = PickerSelection(self.testPacket, nil)
-//      $0.forceUpdate.toggle()
     }
-
-//    testScheduler.advance()
-//    // Confirm the Default status
-//    store.receive( .defaultSelected(self.testPacket.id) ) {
-//      $0.defaultPacket = self.testPacket.id
-//    }
 
     testScheduler.advance()
     // Tap the Packet again to undo it's Default status
     store.send(.defaultButton( PickerSelection(testPacket, nil)) ) {
       $0.defaultSelection = nil
-//      $0.forceUpdate.toggle()
     }
 
-//    testScheduler.advance()
-//    // Confirm the Default status
-//    store.receive( .defaultSelected(nil) ) {
-//      $0.defaultPacket = nil
-//    }
     store.send(.cancelButton)
   }
 

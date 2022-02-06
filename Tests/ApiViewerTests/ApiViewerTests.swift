@@ -79,8 +79,6 @@ class ApiViewerTests: XCTestCase {
     store.send(.commandTextField("")) {
       $0.commandToSend = ""
     }
-    store.send(.sendButton)
-
     // font size
     store.send(.fontSizeStepper(8)) {
       $0.fontSize = 8
@@ -89,8 +87,23 @@ class ApiViewerTests: XCTestCase {
       $0.fontSize = 12
     }
     
-    // currently unimplemented
-    store.send(.clearDefaultButton)
-    store.send(.clearNowButton)
+    // default connection
+    let selection = PickerSelection(testPacket, nil)
+    store.send(.pickerAction(.defaultButton(selection))) {
+      $0.defaultConnection = DefaultConnection(selection)
+    }
+    store.send(.clearDefaultButton) {
+      $0.defaultConnection = nil
+    }
+    
+    // clear messages
+    let message = TcpMessage(direction: .received, text: "This is a received message", color: .red, timeInterval: 1.0)
+    store.send(.tcpAction(message)) {
+      $0.messages[id: message.id] = message
+    }
+    store.send(.clearNowButton) {
+      $0.messages.removeAll()
+      $0.filteredMessages.removeAll()
+    }
   }
 }

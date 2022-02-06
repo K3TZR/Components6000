@@ -13,6 +13,9 @@ import SwiftUI
 import TcpCommands
 import Shared
 
+// ----------------------------------------------------------------------------
+// MARK: - Public proerties
+
 public enum ConnectionMode: String {
   case both
   case local
@@ -28,7 +31,10 @@ public struct TcpMessage: Equatable, Identifiable {
   var timeInterval: TimeInterval
 }
 
-func sentMessagesEffect(_ tcp: Tcp) -> Effect<ApiAction, Never> {
+// ----------------------------------------------------------------------------
+// MARK: - Public methods
+
+func sentMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   
   // subscribe to the publisher of sent TcpMessages
   tcp.sentPublisher
@@ -39,18 +45,21 @@ func sentMessagesEffect(_ tcp: Tcp) -> Effect<ApiAction, Never> {
     .cancellable(id: CommandSubscriptionId())
 }
 
-func receivedMessagesEffect(_ tcp: Tcp) -> Effect<ApiAction, Never> {
+func receivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   
   // subscribe to the publisher of received TcpMessages
   tcp.receivedPublisher
-  // eliminate replies without errors or data
+    // eliminate replies without errors or data
     .filter { allowToPass($0.text) }
     .receive(on: DispatchQueue.main)
-  // convert to TcpMessage format
+    // convert to TcpMessage format
     .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
     .cancellable(id: CommandSubscriptionId())
 }
+
+// ----------------------------------------------------------------------------
+// MARK: - Private methods
 
 /// Assign each text line a color
 /// - Parameter text:   the text line

@@ -15,7 +15,17 @@ public enum LogLevel: String, CaseIterable {
     case error
 }
 
-public struct LogEntry {
+public struct LogEntry: Equatable {
+  public static func == (lhs: LogEntry, rhs: LogEntry) -> Bool {
+    guard lhs.msg == rhs.msg else { return false }
+    guard lhs.level == rhs.level else { return false }
+    guard lhs.level == rhs.level else { return false }
+    guard lhs.function.description == rhs.function.description else { return false }
+    guard lhs.file.description == rhs.file.description else { return false }
+    guard lhs.line == rhs.line else { return false }
+    return true
+  }
+  
   public var msg: String
   public var level: LogLevel
   public var function: StaticString

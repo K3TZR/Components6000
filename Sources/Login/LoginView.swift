@@ -34,13 +34,7 @@ public struct LoginView: View {
           }
           
           VStack(alignment: .leading, spacing: 40) {
-//            TextField("", text: viewStore.binding(
-//              get: \.email,
-//              send: LoginAction.emailFieldChanged))
             TextField("", text: $email)
-//            SecureField("", text: viewStore.binding(
-//              get: \.pwd,
-//              send: LoginAction.pwdFieldChanged))
             SecureField("", text: $pwd, onCommit: { viewStore.send( .loginButton(LoginResult(email, pwd: pwd))) })
           }
         }

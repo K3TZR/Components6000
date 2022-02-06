@@ -65,12 +65,12 @@ final public class Tcp: NSObject {
   // MARK: - Internal properties
   
   let _log = LogProxy.sharedInstance.log
+  var _packetSource: PacketSource?
   let _receiveQ = DispatchQueue(label: "TcpCommand.receiveQ")
   let _sendQ = DispatchQueue(label: "TcpCommand.sendQ")
   var _socket: GCDAsyncSocket!
-  var _timeout = 0.0   // seconds
-  var _packetSource: PacketSource?
   var _startTime: Date?
+  var _timeout = 0.0   // seconds
   
   @Atomic(0) var sequenceNumber: Int
   

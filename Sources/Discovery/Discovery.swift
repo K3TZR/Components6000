@@ -29,9 +29,6 @@ public final class Discovery: Equatable, ObservableObject {
   public var packetPublisher = PassthroughSubject<PacketChange, Never>()
   public var testPublisher = PassthroughSubject<SmartlinkTestResult, Never>()
 
-//  public var lanListenerActive: Bool {_lanListener.isListening}
-//  public var wanListenerActive: Bool {_wanListener.isListening}
-
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
@@ -41,12 +38,10 @@ public final class Discovery: Equatable, ObservableObject {
   let _log = LogProxy.sharedInstance.log
 
   // ----------------------------------------------------------------------------
-  // MARK: - Initialization
+  // MARK: - Singleton
   
   public static var sharedInstance = Discovery()
-
-  private init() {
-  }
+  private init() {}
 
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
