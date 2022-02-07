@@ -1,6 +1,6 @@
 //
 //  Tnf.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 6/30/15.
 //  Copyright © 2015 Douglas Adams. All rights reserved.
@@ -80,7 +80,7 @@ extension Tnf: DynamicModel {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  static func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // Note: Tnf does not send status on removal
 
     // get the Id
@@ -88,13 +88,13 @@ extension Tnf: DynamicModel {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if radio.tnfs[id] == nil {
+        if Objects.sharedInstance.tnfs[id] == nil {
 
           // NO, create a new Tnf & add it to the Tnfs collection
-          radio.tnfs[id] = Tnf(id)
+          Objects.sharedInstance.tnfs[id] = Tnf(id)
         }
         // pass the remaining key values to the Tnf for parsing
-        radio.tnfs[id]!.parseProperties(radio, Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.tnfs[id]!.parseProperties(Array(properties.dropFirst(1)) )
       }
     }
   }
@@ -103,7 +103,7 @@ extension Tnf: DynamicModel {
   ///   PropertiesParser Protocol method, executes on the parseQ
   ///
   /// - Parameter properties:       a KeyValues
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

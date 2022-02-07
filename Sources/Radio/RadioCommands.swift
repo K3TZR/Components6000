@@ -1,6 +1,6 @@
 //
 //  RadioExtension.swift
-//  
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 1/3/20.
 //
@@ -401,7 +401,7 @@ extension Radio {
   //
   public func findAllSlices(on id: PanadapterStreamId) -> [Slice]? {
     // find the Slices on the Panadapter (if any)
-    let filteredSlices = slices.values.filter { $0.panadapterId == id }
+    let filteredSlices = _objects.slices.values.filter { $0.panadapterId == id }
     guard filteredSlices.count >= 1 else { return nil }
     
     return filteredSlices
@@ -451,7 +451,7 @@ extension Radio {
   //
   public func findSlice(using channel: Int) -> Slice? {
     // find the Slices with the specified Channel (if any)
-    let filteredSlices = slices.values.filter { $0.daxChannel == channel }
+    let filteredSlices = _objects.slices.values.filter { $0.daxChannel == channel }
     guard filteredSlices.count >= 1 else { return nil }
     
     // return the first one
@@ -460,7 +460,7 @@ extension Radio {
   
   public func findSlice(letter: String, guiClientHandle: Handle) -> Slice? {
     // find the Slices with the specified Channel (if any)
-    let filteredSlices = slices.values.filter { $0.sliceLetter == letter && $0.clientHandle == guiClientHandle }
+    let filteredSlices = _objects.slices.values.filter { $0.sliceLetter == letter && $0.clientHandle == guiClientHandle }
     guard filteredSlices.count >= 1 else { return nil }
     
     // return the first one
@@ -503,7 +503,7 @@ extension Radio {
     //    NC.post(.tnfWillBeRemoved, object: self as Any?)
     
     // remove it immediately (Tnf does not send status on removal)
-    tnfs[id] = nil
+    _objects.tnfs[id] = nil
     
     _log("Tnf, removed: id = \(id)", .debug, #function, #file, #line)
     //    NC.post(.tnfHasBeenRemoved, object: id as Any?)
@@ -514,7 +514,7 @@ extension Radio {
   
   public func findTnf(at freq: Hz, minWidth: Hz) -> Tnf? {
     // return the Tnfs within the specified Frequency / minimum width (if any)
-    let filteredTnfs = tnfs.values.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
+    let filteredTnfs = _objects.tnfs.values.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
     guard filteredTnfs.count >= 1 else { return nil }
     
     // return the first one

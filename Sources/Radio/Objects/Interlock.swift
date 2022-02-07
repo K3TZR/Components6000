@@ -1,6 +1,6 @@
 //
 //  Interlock.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 8/16/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -105,7 +105,7 @@ public final class Interlock: ObservableObject {
 extension Interlock: StaticModel {
   /// Parse an Interlock status message
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // NO, process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys
@@ -127,8 +127,6 @@ extension Interlock: StaticModel {
       case .reason:           reason = property.value
       case .source:           source = property.value
       case .state:            state = property.value
-        // determine if a Mox change is needed
-        radio.interlockStateChange(state)
       case .timeout:          timeout = property.value.iValue
       case .txAllowed:        txAllowed = property.value.bValue
       case .txClientHandle:   txClientHandle = property.value.handle ?? 0

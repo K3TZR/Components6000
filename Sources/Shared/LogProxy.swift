@@ -47,6 +47,7 @@ final public class LogProxy {
   
   public static var sharedInstance = LogProxy()
   public var logPublisher = PassthroughSubject<LogEntry, Never>()
+  public var alertPublisher = PassthroughSubject<LogEntry, Never>()
   public var publishLog = true
 
   // ----------------------------------------------------------------------------
@@ -70,6 +71,9 @@ final public class LogProxy {
     if publishLog {
       // publish for use by a logging module
       logPublisher.send( LogEntry(msg, level, function, file, line) )
+      if level == .warning || level == .error {
+        alertPublisher.send( LogEntry(msg, level, function, file, line) )
+      }
     } else {
       // print to the console
       print("\(msg), level = \(level.rawValue)")

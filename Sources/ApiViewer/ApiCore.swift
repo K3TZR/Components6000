@@ -6,6 +6,7 @@
 //
 
 import ComposableArchitecture
+import Combine
 import Dispatch
 import SwiftUI
 
@@ -88,6 +89,8 @@ public struct ApiState: Equatable {
   public var viewType: ViewType = .api
   public var xcgWrapper: XCGWrapper?
   
+  public var cancellables = Set<AnyCancellable>()
+  
   public init(
     domain: String,
     appName: String,
@@ -142,11 +145,13 @@ public enum ApiAction: Equatable {
   case pickerAction(PickerAction)
 
   // Effects related
-  case tcpAction(TcpMessage)
-  case filterMessages(MessagesFilter, String)
-  case openRadio(PickerSelection, Handle?)
   case checkConnectionStatus(PickerSelection)
+  case filterMessages(MessagesFilter, String)
   case findDefault
+  case logAlert(LogEntry)
+  case openRadio(PickerSelection, Handle?)
+  case tcpAction(TcpMessage)
+  case finishInitialization
 }
 
 public struct ApiEnvironment {
@@ -207,15 +212,22 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .onAppear:
       // if the first time, start Logger, Discovery and the Listeners
       if state.xcgWrapper == nil {
-        state.xcgWrapper = XCGWrapper()
-        state.discovery = Discovery.sharedInstance
-        // listen for broadcast packets
-        listenForPackets(state.discovery)
+//        state.xcgWrapper = XCGWrapper()
+//        state.discovery = Discovery.sharedInstance
+//        // listen for broadcast packets
+//        listenForPackets(state.discovery)
         // capture TCP messages (sent & received)
-        return .merge(sentMessages(state.tcp), receivedMessages(state.tcp))
+        return .merge(logAlerts(), sentMessages(state.tcp), receivedMessages(state.tcp), Effect(value: .finishInitialization))
       }
       return .none
-      
+
+    case .finishInitialization:
+      state.xcgWrapper = XCGWrapper()
+      state.discovery = Discovery.sharedInstance
+      // listen for broadcast packets
+      listenForPackets(state.discovery)
+      return .none
+
       // ----------------------------------------------------------------------------
       // MARK: - ApiView control actions
       
@@ -425,7 +437,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         // YES, may need a disconnect, let the user choose
         state.connectionState = ConnectionState(pickerSelection: selection)
       } else {
-        // NO, just open
+        // NO, open the radio
         return Effect(value: .openRadio(selection, nil))
       }
       return .none
@@ -441,7 +453,18 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // NO, open the Picker
       state.pickerState = PickerState(connectionType: state.isGui ? .gui : .nonGui)
       return .none
-
+      
+    case .logAlert(let logEntry):
+      state.alert = .init(title: TextState(
+                              """
+                              An ERROR or WARNING was logged:
+                              
+                              \(logEntry.msg)
+                              \(logEntry.level == .warning ? "Warning" : "Error")
+                              """
+                              )
+      )
+      return .none
     }
   }
 )

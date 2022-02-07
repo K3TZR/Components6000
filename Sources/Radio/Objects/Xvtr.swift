@@ -1,6 +1,6 @@
 //
 //  Xvtr.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 6/24/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -93,26 +93,26 @@ extension Xvtr {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true ) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true ) {
     // get the id
     if let id = properties[0].key.objectId {
       // isthe Xvtr in use?
       if inUse {
         // YES, does the object exist?
-        if radio.xvtrs[id] == nil {
+        if Objects.sharedInstance.xvtrs[id] == nil {
           // NO, create a new Xvtr & add it to the Xvtrs collection
-          radio.xvtrs[id] = Xvtr(id)
+          Objects.sharedInstance.xvtrs[id] = Xvtr(id)
         }
         // pass the remaining key values to the Xvtr for parsing
-        radio.xvtrs[id]!.parseProperties(radio,  Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.xvtrs[id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       } else {
         // does it exist?
-        if radio.xvtrs[id] != nil {
+        if Objects.sharedInstance.xvtrs[id] != nil {
           // YES, remove it, notify all observers
 //          NC.post(.xvtrWillBeRemoved, object: radio.xvtrs[id] as Any?)
           
-          radio.xvtrs[id] = nil
+          Objects.sharedInstance.xvtrs[id] = nil
           
           LogProxy.sharedInstance.log("Xvtr, removed: id = \(id)", .debug, #function, #file, #line)
 //          NC.post(.xvtrHasBeenRemoved, object: id as Any?)
@@ -123,7 +123,7 @@ extension Xvtr {
   
   /// Parse Xvtr key/value pairs
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

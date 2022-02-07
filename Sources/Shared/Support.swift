@@ -11,7 +11,7 @@ import ComposableArchitecture
 // ----------------------------------------------------------------------------
 // MARK: - Constants
 
-public let kVersionSupported = Version("3.1.34")
+public let kVersionSupported = Version("3.2.34")
 public let kConnected = "connected"
 public let kDisconnected = "disconnected"
 public let kNoError = "0"

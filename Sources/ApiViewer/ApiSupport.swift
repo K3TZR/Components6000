@@ -16,7 +16,9 @@ import Picker
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums used by ApiViewer
 
-struct CommandSubscriptionId: Hashable {}
+struct ReceivedCommandSubscriptionId: Hashable {}
+struct SentCommandSubscriptionId: Hashable {}
+struct LogAlertSubscriptionId: Hashable {}
 
 public struct DefaultConnection: Codable, Equatable {
 

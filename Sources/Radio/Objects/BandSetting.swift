@@ -1,6 +1,6 @@
 //
 //  BandSetting.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 4/6/19.
 //  Copyright © 2019 Douglas Adams. All rights reserved.
@@ -76,26 +76,26 @@ extension BandSetting: DynamicModel {
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
   ///
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id = properties[0].key.objectId {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if radio.bandSettings[id] == nil {
+        if Objects.sharedInstance.bandSettings[id] == nil {
           // NO, create a new BandSetting & add it to the BandSettings collection
-          radio.bandSettings[id] = BandSetting(id)
+          Objects.sharedInstance.bandSettings[id] = BandSetting(id)
         }
         // pass the remaining key values to the BandSetting for parsing
-        radio.bandSettings[id]!.parseProperties(radio, Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.bandSettings[id]!.parseProperties(Array(properties.dropFirst(1)) )
 
       } else {
         // does it exist?
-        if radio.bandSettings[id] != nil {
+        if Objects.sharedInstance.bandSettings[id] != nil {
           // YES, remove it, notify observers
 //          NC.post(.bandSettingWillBeRemoved, object: radio.bandSettings[id] as Any?)
 
-          radio.bandSettings[id] = nil
+          Objects.sharedInstance.bandSettings[id] = nil
 
           LogProxy.sharedInstance.log("BandSetting removed: id = \(id)", .debug, #function, #file, #line)
 //          NC.post(.bandSettingHasBeenRemoved, object: id as Any?)
@@ -107,7 +107,7 @@ extension BandSetting: DynamicModel {
   /// Parse BandSetting key/value pairs
   ///   PropertiesParser Protocol method, , executes on the parseQ
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

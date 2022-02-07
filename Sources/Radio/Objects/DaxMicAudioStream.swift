@@ -1,6 +1,6 @@
 //
 //  DaxMicAudioStream.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Mario Illgen on 27.03.17.
 //  Copyright © 2017 Douglas Adams & Mario Illgen. All rights reserved.
@@ -97,27 +97,24 @@ extension DaxMicAudioStream {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id =  properties[0].key.streamId {
       // is the object in use?
       if inUse {
-        // YES, is it for this client?
-        guard radio.isForThisClient(properties, connectionHandle: radio.connectionHandle) else { return }
-        
-        // does it exist?
-        if radio.daxMicAudioStreams[id] == nil {
+        // YES, does it exist?
+        if Objects.sharedInstance.daxMicAudioStreams[id] == nil {
           // NO, create a new object & add it to the collection
-          radio.daxMicAudioStreams[id] = DaxMicAudioStream(id)
+          Objects.sharedInstance.daxMicAudioStreams[id] = DaxMicAudioStream(id)
         }
         // pass the remaining key values for parsing
-        radio.daxMicAudioStreams[id]!.parseProperties(radio, Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.daxMicAudioStreams[id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       } else {
         // NO, does it exist?
-        if radio.daxMicAudioStreams[id] != nil {
+        if Objects.sharedInstance.daxMicAudioStreams[id] != nil {
           // YES, remove it
-          radio.daxMicAudioStreams[id] = nil
+          Objects.sharedInstance.daxMicAudioStreams[id] = nil
           
           LogProxy.sharedInstance.log("DaxMicAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line)
           //                        NC.post(.daxMicAudioStreamHasBeenRemoved, object: id as Any?)
@@ -128,7 +125,7 @@ extension DaxMicAudioStream {
   
   /// Parse Mic Audio Stream key/value pairs
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown keys

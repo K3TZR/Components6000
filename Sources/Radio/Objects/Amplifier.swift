@@ -1,6 +1,6 @@
 //
 //  Amplifier.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 8/7/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -138,26 +138,26 @@ extension Amplifier {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the handle
     if let id = properties[0].key.handle {
       // is the object in use
       if inUse {
         // YES, does it exist?
-        if radio.amplifiers[id] == nil {
+        if Objects.sharedInstance.amplifiers[id] == nil {
           // NO, create a new Amplifier & add it to the Amplifiers collection
-          radio.amplifiers[id] = Amplifier(id)
+          Objects.sharedInstance.amplifiers[id] = Amplifier(id)
         }
         // pass the remaining key values to the Amplifier for parsing
-        radio.amplifiers[id]!.parseProperties(radio, Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.amplifiers[id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       } else {
         // does it exist?
-        if radio.amplifiers[id] != nil {
+        if Objects.sharedInstance.amplifiers[id] != nil {
           // YES, remove it, notify observers
 //          NC.post(.amplifierWillBeRemoved, object: radio.amplifiers[id] as Any?)
           
-          radio.amplifiers[id] = nil
+          Objects.sharedInstance.amplifiers[id] = nil
           LogProxy.sharedInstance.log("Amplifier removed: id = \(id.hex)", .debug, #function, #file, #line)
 //          NC.post(.amplifierHasBeenRemoved, object: id as Any?)
         }
@@ -170,7 +170,7 @@ extension Amplifier {
   ///
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

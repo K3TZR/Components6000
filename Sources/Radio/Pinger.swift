@@ -1,6 +1,6 @@
 //
 //  Pinger.swift
-//  CommonCode
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 12/14/16.
 //  Copyright © 2018 Douglas Adams & Mario Illgen. All rights reserved.

@@ -1,6 +1,6 @@
 //
 //  xLib6001.Slice.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 6/2/15.
 //  Copyright (c) 2015 Douglas Adams, K3TZR
@@ -407,26 +407,26 @@ extension Slice {
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
   ///
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id = properties[0].key.objectId {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if radio.slices[id] == nil {
+        if Objects.sharedInstance.slices[id] == nil {
           // create a new Slice & add it to the Slices collection
-          radio.slices[id] = Slice(id)
+          Objects.sharedInstance.slices[id] = Slice(id)
         }
         // pass the remaining key values to the Slice for parsing
-        radio.slices[id]!.parseProperties( radio, Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.slices[id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       } else {
         // does it exist?
-        if radio.slices[id] != nil {
+        if Objects.sharedInstance.slices[id] != nil {
           // YES, remove it, notify observers
 //          NC.post(.sliceWillBeRemoved, object: radio.slices[id] as Any?)
           
-          radio.slices[id] = nil
+          Objects.sharedInstance.slices[id] = nil
           
           LogProxy.sharedInstance.log("Slice: removed, id = \(id)", .debug, #function, #file, #line)
 //          NC.post(.sliceHasBeenRemoved, object: id as Any?)
@@ -437,7 +437,7 @@ extension Slice {
   
   /// Parse Slice key/value pairs    ///
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

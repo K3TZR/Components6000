@@ -1,6 +1,6 @@
 //
 //  RemoteTxAudioStream.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 2/9/16.
 //  Copyright © 2016 Douglas Adams. All rights reserved.
@@ -58,6 +58,7 @@ public final class RemoteTxAudioStream: ObservableObject, Identifiable {
   
   private var _initialized = false
   private let _log = LogProxy.sharedInstance.log
+  private var _objects = Objects.sharedInstance
   private var _suppress = false
   private var _txSequenceNumber = 0
   private var _vita: Vita?
@@ -75,7 +76,7 @@ public final class RemoteTxAudioStream: ObservableObject, Identifiable {
   ///   - buffer:             array of encoded audio samples
   /// - Returns:              success / failure
   public func sendTxAudio(radio: Radio, buffer: [UInt8], samples: Int) {
-    guard radio.interlock.state == "TRANSMITTING" else { return }
+    guard _objects.interlock.state == "TRANSMITTING" else { return }
     
     // FIXME: This assumes Opus encoded audio
     if compression == "opus" {
@@ -124,27 +125,24 @@ extension RemoteTxAudioStream {
   ///   - radio:              the current Radio class
   ///   - queue:              a parse Queue for the object
   ///   - inUse:              false = "to be deleted"
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id =  properties[0].key.streamId {
       // is the object in use?
       if inUse {
-        // YES, is it for this client?
-        guard radio.isForThisClient(properties, connectionHandle: radio.connectionHandle) else { return }
-        
-        // does it exist?
-        if radio.remoteTxAudioStreams[id] == nil {
+        // YES, does it exist?
+        if Objects.sharedInstance.remoteTxAudioStreams[id] == nil {
           // create a new object & add it to the collection
-          radio.remoteTxAudioStreams[id] = RemoteTxAudioStream(id)
+          Objects.sharedInstance.remoteTxAudioStreams[id] = RemoteTxAudioStream(id)
         }
         // pass the remaining key values for parsing (dropping the Id)
-        radio.remoteTxAudioStreams[id]!.parseProperties(radio, Array(properties.dropFirst(2)) )
+        Objects.sharedInstance.remoteTxAudioStreams[id]!.parseProperties(Array(properties.dropFirst(2)) )
         
       } else {
         // NO, does it exist?
-        if radio.remoteTxAudioStreams[id] != nil {
+        if Objects.sharedInstance.remoteTxAudioStreams[id] != nil {
           // YES, remove it
-          radio.remoteTxAudioStreams[id] = nil
+          Objects.sharedInstance.remoteTxAudioStreams[id] = nil
           
           LogProxy.sharedInstance.log("RemoteTxAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line)
           //                        NC.post(.remoteTxAudioStreamHasBeenRemoved, object: id as Any?)
@@ -155,7 +153,7 @@ extension RemoteTxAudioStream {
   
   ///  Parse RemoteTxAudioStream key/value pairs
   /// - Parameter properties: a KeyValuesArray
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair
     for property in properties {
       // check for unknown Keys

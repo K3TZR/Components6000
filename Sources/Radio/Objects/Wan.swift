@@ -1,6 +1,6 @@
 //
 //  Wan.swift
-//  xLib6000
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 8/17/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -44,7 +44,7 @@ public final class Wan  {
 
   /// Parse a Wan status message
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys

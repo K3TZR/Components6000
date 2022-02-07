@@ -1,6 +1,6 @@
 //
 //  DaxIqStream.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 3/9/17.
 //  Copyright © 2017 Douglas Adams & Mario Illgen. All rights reserved.
@@ -57,6 +57,7 @@ public final class DaxIqStream: ObservableObject, Identifiable {
   
   private var _initialized = false
   private let _log = LogProxy.sharedInstance.log
+  private let _objects = Objects.sharedInstance
   private var _rxPacketCount      = 0
   private var _rxLostPacketCount  = 0
   private var _txSampleCount      = 0
@@ -95,27 +96,24 @@ extension DaxIqStream {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id =  properties[0].key.streamId {
       // is the object in use?
       if inUse {
-        // YES, is it for this client?
-        guard radio.isForThisClient(properties, connectionHandle: radio.connectionHandle) else { return }
-        
-        // does it exist?
-        if radio.daxIqStreams[id] == nil {
+        // YES, does it exist?
+        if Objects.sharedInstance.daxIqStreams[id] == nil {
           // create a new object & add it to the collection
-          radio.daxIqStreams[id] = DaxIqStream(id)
+          Objects.sharedInstance.daxIqStreams[id] = DaxIqStream(id)
         }
         // pass the remaining key values for parsing
-        radio.daxIqStreams[id]!.parseProperties(radio, Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.daxIqStreams[id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       } else {
         // NO, does it exist?
-        if radio.daxIqStreams[id] != nil {
+        if Objects.sharedInstance.daxIqStreams[id] != nil {
           // YES, remove it
-          radio.daxIqStreams[id] = nil
+          Objects.sharedInstance.daxIqStreams[id] = nil
           
           LogProxy.sharedInstance.log("DaxIqStream removed: id = \(id.hex)", .debug, #function, #file, #line)
 //          NC.post(.daxIqStreamHasBeenRemoved, object: id as Any?)
@@ -129,7 +127,7 @@ extension DaxIqStream {
   ///
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       

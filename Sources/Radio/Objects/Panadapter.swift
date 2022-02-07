@@ -1,6 +1,6 @@
 //
 //  Panadapter.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 5/31/15.
 //  Copyright (c) 2015 Douglas Adams, K3TZR
@@ -265,22 +265,22 @@ extension Panadapter: DynamicModelWithStream {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     //get the Id
     if let id =  properties[1].key.streamId {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if radio.panadapters[id] == nil {
+        if Objects.sharedInstance.panadapters[id] == nil {
           // create a new object & add it to the collection
-          radio.panadapters[id] = Panadapter(id)
+          Objects.sharedInstance.panadapters[id] = Panadapter(id)
         }
         // pass the remaining key values for parsing
-        radio.panadapters[id]!.parseProperties( radio, Array(properties.dropFirst(2)) )
+        Objects.sharedInstance.panadapters[id]!.parseProperties(Array(properties.dropFirst(2)) )
         
       } else {
         // does it exist?
-        if radio.panadapters[id] != nil {
+        if Objects.sharedInstance.panadapters[id] != nil {
           // YES, notify all observers
 //          NC.post(.panadapterWillBeRemoved, object: self as Any?)
         }
@@ -292,7 +292,7 @@ extension Panadapter: DynamicModelWithStream {
   /// Parse Panadapter key/value pairs
   ///   executes on the mainQ
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     _suppress = true
     
     // process each key/value pair, <key=value>

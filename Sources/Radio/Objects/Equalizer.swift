@@ -1,6 +1,6 @@
 //
 //  Equalizer.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 5/31/15.
 //  Copyright (c) 2015 Douglas Adams, K3TZR
@@ -66,6 +66,7 @@ public final class Equalizer: ObservableObject, Identifiable {
 
   private var _initialized = false
   private let _log = LogProxy.sharedInstance.log
+  private let _objects = Objects.sharedInstance
   private var _suppress = false
 
   // ------------------------------------------------------------------------------
@@ -85,7 +86,7 @@ extension Equalizer: DynamicModel {
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
   ///
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     var equalizer: Equalizer?
 
     // get the Type
@@ -94,22 +95,22 @@ extension Equalizer: DynamicModel {
     // determine the type of Equalizer
     switch type {
 
-    case EqType.txsc.rawValue:  equalizer = radio.equalizers[.txsc]
-    case EqType.rxsc.rawValue:  equalizer = radio.equalizers[.rxsc]
+    case EqType.txsc.rawValue:  equalizer = Objects.sharedInstance.equalizers[.txsc]
+    case EqType.rxsc.rawValue:  equalizer = Objects.sharedInstance.equalizers[.rxsc]
     case EqType.rx.rawValue, EqType.tx.rawValue:  break // obslete types, ignore
     default: LogProxy.sharedInstance.log("Radio: Unknown Equalizer type: \(type)", .warning, #function, #file, #line)
     }
     // if an equalizer was found
     if let equalizer = equalizer {
       // pass the key values to the Equalizer for parsing (dropping the Type)
-      equalizer.parseProperties(radio, Array(properties.dropFirst(1)) )
+      equalizer.parseProperties(Array(properties.dropFirst(1)) )
     }
   }
 
   /// Parse Equalizer key/value pairs
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

@@ -1,6 +1,6 @@
 //
 //  Protocols.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 5/20/18.
 //  Copyright © 2018 Douglas Adams. All rights reserved.
@@ -33,7 +33,7 @@ protocol StaticModel: AnyObject {
   /// - Parameters:
   ///   - radio:          a reference to the Radio object
   ///   - keyValues:      a KeyValues array containing object property values
-  func parseProperties(_ radio: Radio, _ keyValues: KeyValuesArray)
+  func parseProperties(_ keyValues: KeyValuesArray)
 }
 
 /// Models for which there can be multiple instances
@@ -45,7 +45,7 @@ protocol DynamicModel: StaticModel {
   ///   - keyValues:  a KeyValues array containing a Status message for an object type
   ///   - radio:      the current Radio object
   ///   - inUse:      a flag indicating whether the object in the status message is active
-  static func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool)
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool)
 
   associatedtype IdType
   var id: IdType {get set}

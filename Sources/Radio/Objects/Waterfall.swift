@@ -1,6 +1,6 @@
 //
 //  Waterfall.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 5/31/15.
 //  Copyright (c) 2015 Douglas Adams, K3TZR
@@ -123,33 +123,33 @@ extension Waterfall {
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
   ///
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id = properties[1].key.streamId {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if radio.waterfalls[id] == nil {
+        if Objects.sharedInstance.waterfalls[id] == nil {
           // Create a Waterfall & add it to the Waterfalls collection
-          radio.waterfalls[id] = Waterfall(id)
+          Objects.sharedInstance.waterfalls[id] = Waterfall(id)
         }
         // pass the key values to the Waterfall for parsing (dropping the Type and Id)
-        radio.waterfalls[id]!.parseProperties( radio, Array(properties.dropFirst(2)))
+        Objects.sharedInstance.waterfalls[id]!.parseProperties(Array(properties.dropFirst(2)))
         
       } else {
         // does it exist?
-        if radio.waterfalls[id] != nil {
+        if Objects.sharedInstance.waterfalls[id] != nil {
           // YES, remove the Panadapter & Waterfall, notify all observers
-          if let panId = radio.waterfalls[id]!.panadapterId {
+          if let panId = Objects.sharedInstance.waterfalls[id]!.panadapterId {
             
-            radio.panadapters[panId] = nil
+            Objects.sharedInstance.panadapters[panId] = nil
             
             LogProxy.sharedInstance.log("Panadapter, removed: id = \(panId.hex)", .debug, #function, #file, #line)
 //            NC.post(.panadapterHasBeenRemoved, object: id as Any?)
             
 //            NC.post(.waterfallWillBeRemoved, object: radio.waterfalls[id] as Any?)
             
-            radio.waterfalls[id] = nil
+            Objects.sharedInstance.waterfalls[id] = nil
             
             LogProxy.sharedInstance.log("Waterfall, removed: id = \(id.hex)", .debug, #function, #file, #line)
 //            NC.post(.waterfallHasBeenRemoved, object: id as Any?)
@@ -164,7 +164,7 @@ extension Waterfall {
   ///
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

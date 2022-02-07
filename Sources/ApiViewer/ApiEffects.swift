@@ -42,7 +42,7 @@ func sentMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
     // convert to TcpMessage format
     .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
-    .cancellable(id: CommandSubscriptionId())
+    .cancellable(id: SentCommandSubscriptionId())
 }
 
 func receivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
@@ -55,9 +55,17 @@ func receivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
     // convert to TcpMessage format
     .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
-    .cancellable(id: CommandSubscriptionId())
+    .cancellable(id: ReceivedCommandSubscriptionId())
 }
 
+func logAlerts() -> Effect<ApiAction, Never> {
+  
+  LogProxy.sharedInstance.alertPublisher
+    .receive(on: DispatchQueue.main)
+    .map { logEntry in .logAlert(logEntry) }
+    .eraseToEffect()
+    .cancellable(id: LogAlertSubscriptionId())
+}
 // ----------------------------------------------------------------------------
 // MARK: - Private methods
 

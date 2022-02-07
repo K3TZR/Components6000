@@ -1,6 +1,6 @@
 //
 //  Memory.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 8/20/15.
 //  Copyright © 2015 Douglas Adams. All rights reserved.
@@ -191,26 +191,26 @@ extension Memory {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id = properties[0].key.objectId {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if radio.memories[id] == nil {
+        if Objects.sharedInstance.memories[id] == nil {
           // NO, create a new object & add it to the collection
-          radio.memories[id] = Memory(id)
+          Objects.sharedInstance.memories[id] = Memory(id)
         }
         // pass the key values to the Memory for parsing
-        radio.memories[id]!.parseProperties( radio, Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.memories[id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       } else {
         // does it exist?
-        if radio.memories[id] != nil {
+        if Objects.sharedInstance.memories[id] != nil {
           // YES, remove it, notify observers
 //          NC.post(.memoryWillBeRemoved, object: radio.memories[id] as Any?)
           
-          radio.memories[id] = nil
+          Objects.sharedInstance.memories[id] = nil
           
           LogProxy.sharedInstance.log("Memory removed: id = \(id)", .debug, #function, #file, #line)
 //          NC.post(.memoryHasBeenRemoved, object: id as Any?)
@@ -221,7 +221,7 @@ extension Memory {
   
   /// Parse Memory key/value pairs
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray)  {
+  func parseProperties(_ properties: KeyValuesArray)  {
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys

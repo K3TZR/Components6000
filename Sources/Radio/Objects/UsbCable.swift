@@ -1,6 +1,6 @@
 //
 //  UsbCable.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 6/25/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -129,18 +129,18 @@ extension UsbCable {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     let id = properties[0].key
     
     // is the object in use?
     if inUse {
       // YES, does it exist?
-      if radio.usbCables[id] == nil {
+      if Objects.sharedInstance.usbCables[id] == nil {
         // NO, is it a valid cable type?
         if let cableType = UsbCable.UsbCableType(rawValue: properties[1].value) {
           // YES, create a new UsbCable & add it to the UsbCables collection
-          radio.usbCables[id] = UsbCable(id, cableType: cableType)
+          Objects.sharedInstance.usbCables[id] = UsbCable(id, cableType: cableType)
           
         } else {
           // NO, log the error and ignore it
@@ -149,15 +149,15 @@ extension UsbCable {
         }
       }
       // pass the remaining key values to the Usb Cable for parsing
-      radio.usbCables[id]!.parseProperties(radio, Array(properties.dropFirst(1)) )
+      Objects.sharedInstance.usbCables[id]!.parseProperties(Array(properties.dropFirst(1)) )
       
     } else {
       // does the object exist?
-      if radio.usbCables[id] != nil {
+      if Objects.sharedInstance.usbCables[id] != nil {
         // YES, remove it, notify observers
 //        NC.post(.usbCableWillBeRemoved, object: radio.usbCables[id] as Any?)
         
-        radio.usbCables[id] = nil
+        Objects.sharedInstance.usbCables[id] = nil
         
         LogProxy.sharedInstance.log("USBCable removed: id = \(id)", .debug, #function, #file, #line)
 //        NC.post(.usbCableHasBeenRemoved, object: id as Any?)
@@ -170,7 +170,7 @@ extension UsbCable {
   ///
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // is the Status for a cable of this type?
     if cableType.rawValue == properties[0].value {
       // YES,

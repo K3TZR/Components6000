@@ -38,7 +38,7 @@ public struct LogState: Equatable {
   public var appName: String
   public var logUrl: URL?
   public var fontSize: CGFloat = 12
-  public var logMessages = IdentifiedArrayOf<LogEntry>()
+  public var logMessages = IdentifiedArrayOf<LogLine>()
   public var forceUpdate = false
   
 }
@@ -105,7 +105,7 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
         let fileString = try String(contentsOf: url)
         let fileArray = fileString.components(separatedBy: "\n")
         for item in fileArray {
-          state.logMessages.append(LogEntry(text: item, color: lineColor(item)))
+          state.logMessages.append(LogLine(text: item, color: lineColor(item)))
         }
 
       } catch {

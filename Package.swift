@@ -153,5 +153,9 @@ let package = Package(
       name: "LogProxyTests",
       dependencies: ["Shared"]
     ),
+    .testTarget(
+      name: "RadioTests",
+      dependencies: ["Radio"]
+    ),
   ]
 )

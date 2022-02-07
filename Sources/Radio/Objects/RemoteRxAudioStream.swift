@@ -1,6 +1,6 @@
 //
 //  RemoteRxAudioStream.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 2/9/16.
 //  Copyright © 2016 Douglas Adams. All rights reserved.
@@ -96,27 +96,24 @@ extension RemoteRxAudioStream: DynamicModelWithStream {
   ///   - radio:              the current Radio class
   ///   - queue:              a parse Queue for the object
   ///   - inUse:              false = "to be deleted"
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id =  properties[0].key.streamId {
       // is the object in use?
       if inUse {
-        // YES, is it for this client?
-        guard radio.isForThisClient(properties, connectionHandle: radio.connectionHandle) else { return }
-        
-        // does it exist?
-        if radio.remoteRxAudioStreams[id] == nil {
+        // YES, does it exist?
+        if Objects.sharedInstance.remoteRxAudioStreams[id] == nil {
           // create a new object & add it to the collection
-          radio.remoteRxAudioStreams[id] = RemoteRxAudioStream(id)
+          Objects.sharedInstance.remoteRxAudioStreams[id] = RemoteRxAudioStream(id)
         }
         // pass the remaining key values for parsing (dropping the Id)
-        radio.remoteRxAudioStreams[id]!.parseProperties(radio, Array(properties.dropFirst(2)) )
+        Objects.sharedInstance.remoteRxAudioStreams[id]!.parseProperties(Array(properties.dropFirst(2)) )
         
       } else {
         // NO, does it exist?
-        if radio.remoteRxAudioStreams[id] != nil {
+        if Objects.sharedInstance.remoteRxAudioStreams[id] != nil {
           // YES, remove it
-          radio.remoteRxAudioStreams[id] = nil
+          Objects.sharedInstance.remoteRxAudioStreams[id] = nil
           
           LogProxy.sharedInstance.log("RemoteRxAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line)
 //          NC.post(.remoteRxAudioStreamHasBeenRemoved, object: id as Any?)
@@ -128,7 +125,7 @@ extension RemoteRxAudioStream: DynamicModelWithStream {
   
   ///  Parse RemoteRxAudioStream key/value pairs
   /// - Parameter properties: a KeyValuesArray
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair
     for property in properties {
       // check for unknown Keys

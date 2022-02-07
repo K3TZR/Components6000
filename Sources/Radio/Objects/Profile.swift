@@ -1,6 +1,6 @@
 //
 //  Profile.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 8/17/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -90,7 +90,7 @@ extension Profile {
   ///   - queue:              a parse Queue for the object
   ///   - inUse:              false = "to be deleted"
   ///
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     let components = properties[0].key.split(separator: " ")
     
     // get the Id
@@ -107,12 +107,12 @@ extension Profile {
     adjustedProperties[0].key = String(components[1])
     
     // does the object exist?
-    if  radio.profiles[id] == nil {
+    if  Objects.sharedInstance.profiles[id] == nil {
       // NO, create a new Profile & add it to the Profiles collection
-      radio.profiles[id] = Profile(id)
+      Objects.sharedInstance.profiles[id] = Profile(id)
     }
     // pass the remaining values to Profile for parsing
-    radio.profiles[id]!.parseProperties(radio, adjustedProperties )
+    Objects.sharedInstance.profiles[id]!.parseProperties(adjustedProperties )
   }
   
   /// Parse a Profile status message
@@ -120,7 +120,7 @@ extension Profile {
   ///
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ radio: Radio, _ properties: KeyValuesArray) {
+  func parseProperties(_ properties: KeyValuesArray) {
     // check for unknown Keys
     guard let token = ProfileTokens(rawValue: properties[0].key) else {
       // log it and ignore the Key

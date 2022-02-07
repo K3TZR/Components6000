@@ -1,6 +1,6 @@
 //
 //  Radio.swift
-//  Components6000/ApiObjects
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 1/12/22.
 //
@@ -33,34 +33,34 @@ public final class Radio: Equatable {
   
   
   // Dynamic Model Collections
-  @Published public var amplifiers = [AmplifierId: Amplifier]()
-  @Published public var bandSettings = [BandId: BandSetting]()
-  @Published public var daxIqStreams = [DaxIqStreamId: DaxIqStream]()
-  @Published public var daxMicAudioStreams = [DaxMicStreamId: DaxMicAudioStream]()
-  @Published public var daxRxAudioStreams = [DaxRxStreamId: DaxRxAudioStream]()
-  @Published public var daxTxAudioStreams = [DaxTxStreamId: DaxTxAudioStream]()
-  @Published public var equalizers = [Equalizer.EqType: Equalizer]()
-  @Published public var memories = [MemoryId: Memory]()
-  @Published public var meters = [MeterId: Meter]()
-  @Published public var panadapters = [PanadapterStreamId: Panadapter]()
-  @Published public var profiles = [ProfileId: Profile]()
-  @Published public var remoteRxAudioStreams = [RemoteRxStreamId: RemoteRxAudioStream]()
-  @Published public var remoteTxAudioStreams = [RemoteTxStreamId: RemoteTxAudioStream]()
-  @Published public var slices = [SliceId: Slice]()
-  @Published public var tnfs = [TnfId: Tnf]()
-  @Published public var usbCables = [UsbCableId: UsbCable]()
-  @Published public var waterfalls = [WaterfallStreamId: Waterfall]()
-  @Published public var xvtrs = [XvtrId: Xvtr]()
+//  @Published public var amplifiers = [AmplifierId: Amplifier]()
+//  @Published public var bandSettings = [BandId: BandSetting]()
+//  @Published public var daxIqStreams = [DaxIqStreamId: DaxIqStream]()
+//  @Published public var daxMicAudioStreams = [DaxMicStreamId: DaxMicAudioStream]()
+//  @Published public var daxRxAudioStreams = [DaxRxStreamId: DaxRxAudioStream]()
+//  @Published public var daxTxAudioStreams = [DaxTxStreamId: DaxTxAudioStream]()
+//  @Published public var equalizers = [Equalizer.EqType: Equalizer]()
+//  @Published public var memories = [MemoryId: Memory]()
+//  @Published public var meters = [MeterId: Meter]()
+//  @Published public var panadapters = [PanadapterStreamId: Panadapter]()
+//  @Published public var profiles = [ProfileId: Profile]()
+//  @Published public var remoteRxAudioStreams = [RemoteRxStreamId: RemoteRxAudioStream]()
+//  @Published public var remoteTxAudioStreams = [RemoteTxStreamId: RemoteTxAudioStream]()
+//  @Published public var slices = [SliceId: Slice]()
+//  @Published public var tnfs = [TnfId: Tnf]()
+//  @Published public var usbCables = [UsbCableId: UsbCable]()
+//  @Published public var waterfalls = [WaterfallStreamId: Waterfall]()
+//  @Published public var xvtrs = [XvtrId: Xvtr]()
   
   // Static Models
-  @Published public private(set) var atu: Atu!
-  @Published public private(set) var cwx: Cwx!
-  @Published public private(set) var gps: Gps!
-  @Published public private(set) var interlock: Interlock!
+//  @Published public private(set) var atu: Atu!
+//  @Published public private(set) var cwx: Cwx!
+//  @Published public private(set) var gps: Gps!
+//  @Published public private(set) var interlock: Interlock!
   //  @Published public private(set) var netCwStream: NetCwStream!
-  @Published public private(set) var transmit: Transmit!
-  @Published public private(set) var wan: Wan!
-  @Published public private(set) var waveform: Waveform!
+//  @Published public private(set) var transmit: Transmit!
+//  @Published public private(set) var wan: Wan!
+//  @Published public private(set) var waveform: Waveform!
   //  @Published public private(set) var wanServer: WanServer!
   
   
@@ -225,6 +225,7 @@ public final class Radio: Equatable {
   var _lowBandwidthConnect = false
   var _lowBandwidthDax = false
   var _metersAreStreaming = false
+  var _objects = Objects.sharedInstance
   var _params: ConnectionParams!
   let _parseQ = DispatchQueue(label: "Radio.parseQ", qos: .userInteractive)
   var _pinger: Pinger?
@@ -256,19 +257,20 @@ public final class Radio: Equatable {
     _appName = String(bundleIdentifier.suffix(from: bundleIdentifier.index(separator, offsetBy: 1)))
     _domain = String(bundleIdentifier.prefix(upTo: separator))
     
+    
     // initialize the static models (only one of each is ever created)
-    atu = Atu()
-    cwx = Cwx()
-    gps = Gps()
-    interlock = Interlock()
-    //    netCwStream = NetCwStream()
-    transmit = Transmit()
-    wan = Wan()
-    waveform = Waveform()
+    _objects.atu = Atu()
+    _objects.cwx = Cwx()
+    _objects.gps = Gps()
+    _objects.interlock = Interlock()
+    //    _objects.netCwStream = NetCwStream()
+    _objects.transmit = Transmit()
+    _objects.wan = Wan()
+    _objects.waveform = Waveform()
     
     // initialize Equalizers
-    equalizers[.rxsc] = Equalizer(Equalizer.EqType.rxsc.rawValue)
-    equalizers[.txsc] = Equalizer(Equalizer.EqType.txsc.rawValue)
+    _objects.equalizers[.rxsc] = Equalizer(Equalizer.EqType.rxsc.rawValue)
+    _objects.equalizers[.txsc] = Equalizer(Equalizer.EqType.txsc.rawValue)
     
     // subscribe to the publisher of TcpCommands received messages
     _cancellableCommandData = command.receivedPublisher
@@ -416,25 +418,25 @@ public final class Radio: Equatable {
       }
       
     case .panadapter:
-      if let object = panadapters[vitaPacket.streamId]          { object.vitaProcessor(vitaPacket) }
+      if let object = _objects.panadapters[vitaPacket.streamId]          { object.vitaProcessor(vitaPacket) }
       
     case .waterfall:
-      if let object = waterfalls[vitaPacket.streamId]           { object.vitaProcessor(vitaPacket) }
+      if let object = _objects.waterfalls[vitaPacket.streamId]           { object.vitaProcessor(vitaPacket) }
       
     case .daxAudio:
-      if let object = daxRxAudioStreams[vitaPacket.streamId]    { object.vitaProcessor(vitaPacket)}
-      if let object = daxMicAudioStreams[vitaPacket.streamId]   { object.vitaProcessor(vitaPacket) }
-      if let object = remoteRxAudioStreams[vitaPacket.streamId] { object.vitaProcessor(vitaPacket) }
+      if let object = _objects.daxRxAudioStreams[vitaPacket.streamId]    { object.vitaProcessor(vitaPacket)}
+      if let object = _objects.daxMicAudioStreams[vitaPacket.streamId]   { object.vitaProcessor(vitaPacket) }
+      if let object = _objects.remoteRxAudioStreams[vitaPacket.streamId] { object.vitaProcessor(vitaPacket) }
       
     case .daxReducedBw:
-      if let object = daxRxAudioStreams[vitaPacket.streamId]    { object.vitaProcessor(vitaPacket) }
-      if let object = daxMicAudioStreams[vitaPacket.streamId]   { object.vitaProcessor(vitaPacket) }
+      if let object = _objects.daxRxAudioStreams[vitaPacket.streamId]    { object.vitaProcessor(vitaPacket) }
+      if let object = _objects.daxMicAudioStreams[vitaPacket.streamId]   { object.vitaProcessor(vitaPacket) }
       
     case .opus:
-      if let object = remoteRxAudioStreams[vitaPacket.streamId] { object.vitaProcessor(vitaPacket) }
+      if let object = _objects.remoteRxAudioStreams[vitaPacket.streamId] { object.vitaProcessor(vitaPacket) }
       
     case .daxIq24, .daxIq48, .daxIq96, .daxIq192:
-      if let object = daxIqStreams[vitaPacket.streamId]         { object.vitaProcessor(vitaPacket) }
+      if let object = _objects.daxIqStreams[vitaPacket.streamId]         { object.vitaProcessor(vitaPacket) }
       
     default:
       // log the error
@@ -605,52 +607,52 @@ public final class Radio: Equatable {
     
     // notify all observers, then remove
 //    daxRxAudioStreams.forEach( { NC.post(.daxRxAudioStreamWillBeRemoved, object: $0.value as Any?) } )
-    daxRxAudioStreams.removeAll()
+    _objects.daxRxAudioStreams.removeAll()
     
 //    daxIqStreams.forEach( { NC.post(.daxIqStreamWillBeRemoved, object: $0.value as Any?) } )
-    daxIqStreams.removeAll()
+    _objects.daxIqStreams.removeAll()
     
 //    daxMicAudioStreams.forEach( {NC.post(.daxMicAudioStreamWillBeRemoved, object: $0.value as Any?)} )
-    daxMicAudioStreams.removeAll()
+    _objects.daxMicAudioStreams.removeAll()
     
 //    daxTxAudioStreams.forEach( { NC.post(.daxTxAudioStreamWillBeRemoved, object: $0.value as Any?) } )
-    daxTxAudioStreams.removeAll()
+    _objects.daxTxAudioStreams.removeAll()
     
 //    remoteRxAudioStreams.forEach( { NC.post(.remoteRxAudioStreamWillBeRemoved, object: $0.value as Any?) } )
-    remoteRxAudioStreams.removeAll()
+    _objects.remoteRxAudioStreams.removeAll()
     
 //    remoteTxAudioStreams.forEach( { NC.post(.remoteTxAudioStreamWillBeRemoved, object: $0.value as Any?) } )
-    remoteTxAudioStreams.removeAll()
+    _objects.remoteTxAudioStreams.removeAll()
     
 //    tnfs.forEach( { NC.post(.tnfWillBeRemoved, object: $0.value as Any?) } )
-    tnfs.removeAll()
+    _objects.tnfs.removeAll()
     
 //    slices.forEach( { NC.post(.sliceWillBeRemoved, object: $0.value as Any?) } )
-    slices.removeAll()
+    _objects.slices.removeAll()
     
-    panadapters.forEach {
+    _objects.panadapters.forEach {
       let waterfallId = $0.value.waterfallId
-      let waterfall = waterfalls[waterfallId]
+      let waterfall = _objects.waterfalls[waterfallId]
       
       // notify all observers
 //      NC.post(.panadapterWillBeRemoved, object: $0.value as Any?)
 //      NC.post(.waterfallWillBeRemoved, object: waterfall as Any?)
     }
-    panadapters.removeAll()
-    waterfalls.removeAll()
+    _objects.panadapters.removeAll()
+    _objects.waterfalls.removeAll()
     
-    profiles.forEach {
+    _objects.profiles.forEach {
 //      NC.post(.profileWillBeRemoved, object: $0.value.list as Any?)
       $0.value.list.removeAll()
     }
     
-    equalizers.removeAll()
-    memories.removeAll()
+    _objects.equalizers.removeAll()
+    _objects.memories.removeAll()
     _metersAreStreaming = false
-    meters.removeAll()
+    _objects.meters.removeAll()
     replyHandlers.removeAll()
-    usbCables.removeAll()
-    xvtrs.removeAll()
+    _objects.usbCables.removeAll()
+    _objects.xvtrs.removeAll()
     
     nickname = ""
     smartSdrMB = ""

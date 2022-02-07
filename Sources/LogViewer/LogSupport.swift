@@ -14,7 +14,7 @@ import Shared
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums used by LogViewer
 
-public struct LogEntry: Identifiable, Equatable {
+public struct LogLine: Identifiable, Equatable {
 
   public init(text: String, color: Color = .primary) {
     self.text = text
@@ -56,8 +56,8 @@ func getLogUrl(for domain: String, appName: String) -> URL? {
 /// Read a Log file
 /// - Parameter url:    the URL of the file
 /// - Returns:          an array of log entries
-func readLogFile(at url: URL) -> IdentifiedArrayOf<LogEntry>? {
-  var messages = IdentifiedArrayOf<LogEntry>()
+func readLogFile(at url: URL) -> IdentifiedArrayOf<LogLine>? {
+  var messages = IdentifiedArrayOf<LogLine>()
 
   do {
     // get the contents of the file
@@ -65,7 +65,7 @@ func readLogFile(at url: URL) -> IdentifiedArrayOf<LogEntry>? {
     // parse it into lines
     let lines = logString.components(separatedBy: "\n")
     for line in lines {
-      messages.append(LogEntry(text: line, color: lineColor(line)))
+      messages.append(LogLine(text: line, color: lineColor(line)))
     }
     return messages
 
@@ -99,9 +99,9 @@ func lineColor(_ text: String) -> Color {
 ///   - filterText:     the filter text
 ///   - showTimes:      whether to show timestamps
 /// - Returns:          the filtered array of Log entries
-func filter(_ messages: IdentifiedArrayOf<LogEntry>, level: LogLevel, filter: LogFilter, filterText: String = "", showTimes: Bool = true) -> IdentifiedArrayOf<LogEntry> {
-  var lines = IdentifiedArrayOf<LogEntry>()
-  var limitedLines = IdentifiedArrayOf<LogEntry>()
+func filter(_ messages: IdentifiedArrayOf<LogLine>, level: LogLevel, filter: LogFilter, filterText: String = "", showTimes: Bool = true) -> IdentifiedArrayOf<LogLine> {
+  var lines = IdentifiedArrayOf<LogLine>()
+  var limitedLines = IdentifiedArrayOf<LogLine>()
 
   // filter the log entries
   switch level {

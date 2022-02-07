@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  
+//  RadioTokens.swift
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 1/21/22.
 //
@@ -123,6 +123,14 @@ extension Radio {
     case gateway
     case ip
     case netmask
+  }
+  enum StreamTypeTokens: String {
+    case daxIq                    = "dax_iq"
+    case daxMic                   = "dax_mic"
+    case daxRx                    = "dax_rx"
+    case daxTx                    = "dax_tx"
+    case remoteRx                 = "remote_audio_rx"
+    case remoteTx                 = "remote_audio_tx"
   }
   enum VersionTokens: String {
     case fpgaMb                   = "fpga-mb"

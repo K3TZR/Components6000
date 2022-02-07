@@ -1,6 +1,6 @@
 //
 //  Meter.swift
-//  xLib6001
+//  Components6000/Radio
 //
 //  Created by Douglas Adams on 6/2/15.
 //  Copyright (c) 2015 Douglas Adams, K3TZR
@@ -129,7 +129,7 @@ extension Meter {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ radio: Radio, _ properties: KeyValuesArray, _ inUse: Bool = true) {
+  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // is the object in use?
     if inUse {
       // YES, extract the Meter Number from the first KeyValues entry
@@ -139,12 +139,12 @@ extension Meter {
       // the Meter Number is the 0th item
       if let id = components[0].objectId {
         // does the meter exist?
-        if radio.meters[id] == nil {
+        if Objects.sharedInstance.meters[id] == nil {
           // NO, create a new Meter & add it to the Meters collection
-          radio.meters[id] = Meter(id)
+          Objects.sharedInstance.meters[id] = Meter(id)
         }
         // pass the key values to the Meter for parsing
-        radio.meters[id]!.parseProperties( properties )
+        Objects.sharedInstance.meters[id]!.parseProperties( properties )
       }
       
     } else {
@@ -152,9 +152,9 @@ extension Meter {
       // NO, extract the Id
       if let id = properties[0].key.components(separatedBy: " ")[0].objectId {
         // does it exist?
-        if radio.meters[id] != nil {
-          let name = radio.meters[id]!.name
-          radio.meters[id] = nil
+        if Objects.sharedInstance.meters[id] != nil {
+          let name = Objects.sharedInstance.meters[id]!.name
+          Objects.sharedInstance.meters[id] = nil
           
           // notify appropriate observers
           LogProxy.sharedInstance.log("Meter removed: id = \(id)", .debug, #function, #file, #line)
@@ -252,7 +252,7 @@ extension Meter {
           
           // find the meter (if present) & update it
           //        if let meter = Api.sharedInstance.radio?.meters[String(format: "%i", number)] {
-          if let meter = radio.meters[id] {
+          if let meter = Objects.sharedInstance.meters[id] {
             //          meter.streamHandler( value)
             let newValue = Int16(bitPattern: value)
             let previousValue = meter.value
