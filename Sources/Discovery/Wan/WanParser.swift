@@ -8,7 +8,7 @@
 import Foundation
 import Shared
 
-extension WanListener {
+extension WanListener {  
   // ------------------------------------------------------------------------------
   // MARK: - Tokens
   
@@ -125,7 +125,11 @@ extension WanListener {
       // Known tokens, in alphabetical order
       switch token {
         
-      case .publicIp:       DispatchQueue.main.async { self.publicIp = property.value }
+      case .publicIp:       _publicIp = property.value
+      }
+      if _publicIp != nil {
+        // publish
+        _discovery?.wanStatusPublisher.send(WanStatus(.publicIp, _firstName! + " " + _lastName!, _callsign!, _serial, _wanHandle, _publicIp))
       }
     }
   }
@@ -139,9 +143,6 @@ extension WanListener {
   /// Parse a received "user settings" message
   /// - Parameter properties:         a KeyValuesArray
   private func parseUserSettings(_ properties: KeyValuesArray) {
-    var callsign: String?
-    var firstName: String?
-    var lastName: String?
     
     // process each key/value pair, <key=value>
     for property in properties {
@@ -154,27 +155,21 @@ extension WanListener {
       // Known tokens, in alphabetical order
       switch token {
         
-      case .callsign:       callsign = property.value
-      case .firstName:      firstName = property.value
-      case .lastName:       lastName = property.value
+      case .callsign:       _callsign = property.value
+      case .firstName:      _firstName = property.value
+      case .lastName:       _lastName = property.value
       }
     }
     
-    if firstName != nil && lastName != nil  && callsign != nil{
+    if _firstName != nil && _lastName != nil && _callsign != nil {
       // publish
-      DispatchQueue.main.async {
-        self.userName = firstName! + " " + lastName!
-        self.callsign = callsign!
-      }
+      _discovery?.wanStatusPublisher.send(WanStatus(.settings, _firstName! + " " + _lastName!, _callsign!, _serial, _wanHandle, _publicIp))
     }
   }
   
   /// Parse a received "connect ready" message
   /// - Parameter properties:         a KeyValuesArray
   private func parseRadioConnectReady(_ properties: KeyValuesArray) {
-    var handle: Handle?
-    var serial: String?
-    
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys
@@ -186,25 +181,22 @@ extension WanListener {
       // Known tokens, in alphabetical order
       switch token {
         
-      case .handle:         handle = property.value.handle
-      case .serial:         serial = property.value
+      case .handle:         _wanHandle = property.value
+      case .serial:         _serial = property.value
       }
     }
     
-    if handle != nil && serial != nil {
+    if _wanHandle != nil && _serial != nil {
       // publish
-      DispatchQueue.main.async {
-        self.handle = handle!
-        self.serial = serial!
-      }
+      _discovery?.wanStatusPublisher.send(WanStatus(.connect, nil, nil, _serial, _wanHandle, _publicIp))
     }
   }
   
   /// Parse a received "radio list" message
   /// - Parameter msg:        the list
   private func parseRadioList(_ msg: String.SubSequence) {
-    var publicTlsPortToUse = -1
-    var publicUdpPortToUse = -1
+    var publicTlsPortToUse: Int?
+    var publicUdpPortToUse: Int?
     
     // several radios are possible, separate list into its components
     let radioMessages = msg.components(separatedBy: "|")

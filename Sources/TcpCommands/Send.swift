@@ -14,7 +14,7 @@ extension Tcp {
   ///   - cmd:            a Command string
   ///   - diagnostic:     whether to add "D" suffix
   /// - Returns:          the Sequence Number of the Command
-  public func send(_ cmd: String, diagnostic: Bool = false) -> UInt {
+  public func send(_ cmd: String, diagnostic: Bool = false, startTime: Date = Date()) -> UInt {
     let assignedNumber = sequenceNumber
 
     _sendQ.sync {
@@ -24,7 +24,7 @@ extension Tcp {
       // send it, no timeout, tag = segNum
       self._socket.write(command.data(using: String.Encoding.utf8, allowLossyConversion: false)!, withTimeout: -1, tag: assignedNumber)
 
-      sentPublisher.send(TcpMessage(timeInterval: Date().timeIntervalSince( _startTime!), direction: .sent, text: String(command.dropLast())))
+      sentPublisher.send(TcpMessage(timeInterval: Date().timeIntervalSince( startTime), direction: .sent, text: String(command.dropLast())))
 
       // atomically increment the Sequence Number
       $sequenceNumber.mutate { $0 += 1}

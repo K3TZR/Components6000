@@ -184,7 +184,7 @@ public final class Radio: Equatable {
     case tcpConnected (host: String, port: UInt16)
     case udpBound (receivePort: UInt16, sendPort: UInt16)
     case clientDisconnected
-    case clientConnected (radio: Radio)
+    case clientConnected
     case tcpDisconnected (reason: String?)
     case wanHandleValidated (success: Bool)
     case udpUnbound (reason: String?)
@@ -451,7 +451,7 @@ public final class Radio: Equatable {
     switch status.statusType {
       
     case .didConnect:     updateState(to: .tcpConnected(host: status.host, port: status.port))
-    case .didSecure:      break
+    case .didSecure:      updateState(to: .tcpConnected(host: status.host, port: status.port))
     case .didDisconnect:  updateState(to: .tcpDisconnected(reason: status.reason ?? "User Initiated"))
     }
   }
@@ -507,6 +507,13 @@ public final class Radio: Equatable {
       // a UDP port has been bound, inform observers
       //      NC.post(.udpDidBind, object: nil)
       
+    case .clientConnected where packet.source == .smartlink:
+        // when connecting to a WAN radio, the public IP address of the connected
+        // client must be obtained from the radio.  This value is used to determine
+        // if audio streams from the radio are meant for this client.
+        // (isForThisClient(...) checks)
+        send("client ip", replyTo: clientIpReplyHandler)
+
     case .clientConnected:
       _log("Radio: client connected (LOCAL)", .debug, #function, #file, #line)
       
@@ -541,7 +548,26 @@ public final class Radio: Equatable {
       break
     }
   }
-  
+
+  /// Reply handler for the "client ip" command
+  /// - Parameters:
+  ///   - command:                a Command string
+  ///   - seqNum:                 the Command's sequence number
+  ///   - responseValue:          the response contained in the Reply to the Command
+  ///   - reply:                  the descriptive text contained in the Reply to the Command
+  private func clientIpReplyHandler(_ command: String, seqNum: UInt, responseValue: String, reply: String) {
+    // was an error code returned?
+//    if responseValue == Shared.kNoError {
+//      // NO, the reply value is the IP address
+//      let localIP = reply.isValidIP4() ? reply : "0.0.0.0"
+//
+//    } else {
+//      // YES, use the ip of the local interface
+//      let localIP = _tcp.interfaceIpAddress
+//    }
+    connectionCompletion()
+  }
+
   /// executed after an IP Address has been obtained
   func connectionCompletion() {
     _log("Radio: connectionCompletion for \(packet.nickname)", .debug, #function, #file, #line)

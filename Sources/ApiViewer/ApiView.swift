@@ -88,19 +88,19 @@ public struct ApiView: View {
         )
         
         // Connection sheet
-        .sheet(
-          isPresented: viewStore.binding(
-            get: { $0.connectionState != nil },
-            send: ApiAction.connectionAction(.cancelButton)),
-          content: {
-            IfLetStore(
-              store.scope(state: \.connectionState,
-                          action: ApiAction.connectionAction
-                         ),
-              then: ConnectionView.init(store:)
-            )
-          }
-        )
+//        .sheet(
+//          isPresented: viewStore.binding(
+//            get: { $0.connectionState != nil },
+//            send: ApiAction.connectionAction(.cancelButton)),
+//          content: {
+//            IfLetStore(
+//              store.scope(state: \.connectionState,
+//                          action: ApiAction.connectionAction
+//                         ),
+//              then: ConnectionView.init(store:)
+//            )
+//          }
+//        )
         
       } else {
         LogView(store: Store(

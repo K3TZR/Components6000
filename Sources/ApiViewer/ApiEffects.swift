@@ -10,6 +10,7 @@ import ComposableArchitecture
 import Combine
 import SwiftUI
 
+import Discovery
 import TcpCommands
 import Shared
 
@@ -66,6 +67,16 @@ func logAlerts() -> Effect<ApiAction, Never> {
     .eraseToEffect()
     .cancellable(id: LogAlertSubscriptionId())
 }
+
+func wanStatus() -> Effect<ApiAction, Never> {
+  
+  Discovery.sharedInstance.wanStatusPublisher
+    .receive(on: DispatchQueue.main)
+    .map { status in .wanStatus(status) }
+    .eraseToEffect()
+    .cancellable(id: WanStatusSubscriptionId())
+}
+
 // ----------------------------------------------------------------------------
 // MARK: - Private methods
 

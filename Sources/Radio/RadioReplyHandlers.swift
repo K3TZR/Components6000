@@ -55,6 +55,7 @@ extension Radio {
     default:              break
     }
   }
+  
   /// Reply handler for the "wan validate" command
   /// - Parameters:
   ///   - command:                a Command string
@@ -63,6 +64,6 @@ extension Radio {
   ///   - reply:                  the descriptive text contained in the Reply to the Command
   func wanValidateReplyHandler(_ command: String, seqNum: UInt, responseValue: String, reply: String) {
     // return status
-    updateState(to: .wanHandleValidated(success: responseValue == kNoError))
+    updateState(to: .wanHandleValidated(success: responseValue == Shared.kNoError))
   }
 }

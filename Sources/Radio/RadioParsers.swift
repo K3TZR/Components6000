@@ -145,7 +145,7 @@ extension Radio {
     if !_clientInitialized && components[0].handle == connectionHandle {
       // YES, set the API state to finish the UDP initialization
       _clientInitialized = true
-      updateState(to: .clientConnected(radio: self))
+      updateState(to: .clientConnected)
     }
   }
   

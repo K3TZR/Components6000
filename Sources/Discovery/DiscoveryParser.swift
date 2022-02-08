@@ -78,10 +78,10 @@ extension Discovery {
       case .nickname, .radioName:       packet.nickname = property.value
       case .port:                       packet.port = property.value.iValue
       case .publicIp, .publicIpWan:     packet.publicIp = property.value
-      case .publicTlsPort:              packet.publicTlsPort = property.value.iValue
-      case .publicUdpPort:              packet.publicUdpPort = property.value.iValue
-      case .publicUpnpTlsPort:          packet.publicUpnpTlsPort = property.value.iValue
-      case .publicUpnpUdpPort:          packet.publicUpnpUdpPort = property.value.iValue
+      case .publicTlsPort:              packet.publicTlsPort = property.value.iValueOpt
+      case .publicUdpPort:              packet.publicUdpPort = property.value.iValueOpt
+      case .publicUpnpTlsPort:          packet.publicUpnpTlsPort = property.value.iValueOpt
+      case .publicUpnpUdpPort:          packet.publicUpnpUdpPort = property.value.iValueOpt
       case .serial:                     packet.serial = property.value
       case .status:                     packet.status = property.value
       case .upnpSupported:              packet.upnpSupported = property.value.bValue

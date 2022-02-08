@@ -11,21 +11,12 @@ import Dispatch
 import AppKit
 
 import Discovery
+import Connection
 import Shared
 
 struct PacketEffectId: Hashable {}
 struct ClientEffectId: Hashable {}
 struct TestEffectId: Hashable {}
-
-public struct PickerSelection: Equatable {
-  public init(_ packet: Packet, _ station: String?) {
-    self.packet = packet
-    self.station = station
-  }
-
-  public var packet: Packet
-  public var station: String?
-}
 
 public struct PickerState: Equatable {
   public init(connectionType: ConnectionType = .gui,
@@ -47,6 +38,9 @@ public struct PickerState: Equatable {
   public var pickerSelection: PickerSelection?
   public var testResult: SmartlinkTestResult?
   public var forceUpdate = false
+  public var alert: AlertState<PickerAction>?
+  public var connectionState: ConnectionState?
+
 }
 
 public enum PickerAction: Equatable {
@@ -59,10 +53,15 @@ public enum PickerAction: Equatable {
   case testButton(PickerSelection)
   case selection(PickerSelection?)
 
+  // sheet/alert related
+  case alertCancelled
+  case connectionAction(ConnectionAction)
+
   // effect related
   case clientChange(ClientChange)
   case packetChange(PacketChange)
   case testResultReceived(SmartlinkTestResult)
+  case openSelection(PickerSelection)
 }
 
 public struct PickerEnvironment {
@@ -83,6 +82,13 @@ public struct PickerEnvironment {
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
+  connectionReducer
+    .optional()
+    .pullback(
+      state: \PickerState.connectionState,
+      action: /PickerAction.connectionAction,
+      environment: { _ in ConnectionEnvironment() }
+    ),
   Reducer { state, action, environment in
     switch action {
       // ----------------------------------------------------------------------------
@@ -92,10 +98,20 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // stop subscribing to Discovery broadcasts
       return .cancel(ids: PacketEffectId(), ClientEffectId())
 
-    case .connectButton(_):
-      // handled downstream
-      // stop subscribing to Discovery broadcasts
-      return .cancel(ids: PacketEffectId(), ClientEffectId())
+    case .connectButton(let selection):
+      // are there multiple Gui connections?
+      if state.connectionType == .gui && selection.packet.guiClients.count > 0 {
+        // YES, may need a disconnect, let the user choose
+        state.connectionState = ConnectionState(pickerSelection: selection)
+        return .none
+      
+      } else {
+        // NO, handled downstream (open radio)
+        // stop subscribing to Discovery broadcasts
+        return .concatenate(
+          .cancel(ids: PacketEffectId(), ClientEffectId()),
+          Effect(value: .openSelection(selection)))
+      }
 
     case .defaultButton(let selection):
       if state.defaultSelection == selection {
@@ -111,6 +127,20 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       
     case .selection(let selection):
       state.pickerSelection = selection
+      if let selection = selection {
+        if Shared.kVersionSupported < Version(selection.packet.version)  {
+          // NO, return an Alert
+          state.alert = .init(title: TextState(
+                                """
+                                Radio may be incompatible:
+                                
+                                Radio version is \(Version(selection.packet.version).string)
+                                App supports <= \(kVersionSupported.string)
+                                """
+          )
+          )
+        }
+      }
       return .none
 
     case .testButton(let selection):
@@ -125,6 +155,28 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
         NSSound.beep()
         return .none
       }
+      
+      // ----------------------------------------------------------------------------
+      // MARK: - Connection actions
+      
+    case .connectionAction(.cancelButton):
+      state.connectionState = nil
+      return .none
+
+    case .connectionAction(.connect(let selection, let disconnectHandle)):
+      state.connectionState = nil
+      // handled downstream (open radio)
+      // stop subscribing to Discovery broadcasts
+      return .concatenate(
+        .cancel(ids: PacketEffectId(), ClientEffectId()),
+        Effect(value: .openSelection(PickerSelection(selection.packet, selection.station, disconnectHandle))))
+
+      // ----------------------------------------------------------------------------
+      // MARK: - Alert actions
+      
+    case .alertCancelled:
+      state.alert = nil
+      return .none
 
       // ----------------------------------------------------------------------------
       // MARK: - Picker Effect actions
@@ -133,6 +185,10 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // process a GuiClient change
       return .none
       
+    case .openSelection(_):
+      // handled downstream
+      return .none
+
     case .packetChange(let update):
       // process a DiscoveryPacket change
       state.forceUpdate.toggle()
@@ -141,6 +197,9 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     case .testResultReceived(let result):
       state.testResult = result
       return .cancel(ids: TestEffectId())
+      
+    case .connectionAction(_):
+      return .none
     }
   }
 )

@@ -32,7 +32,7 @@ let package = Package(
     .target(
       name: "Connection",
       dependencies: [
-        "Picker",
+        "Shared",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -96,6 +96,7 @@ let package = Package(
       name: "Picker",
       dependencies: [
         "Discovery",
+        "Shared",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),

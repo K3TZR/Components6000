@@ -10,6 +10,7 @@ import Combine
 import ComposableArchitecture
 
 import Discovery
+import Connection
 import Shared
 
 // ----------------------------------------------------------------------------
@@ -63,6 +64,27 @@ public struct PickerView: View {
       }
       .frame(minWidth: 600, minHeight: 250)
       .onAppear { viewStore.send(.onAppear) }
+
+      // alert dialogs
+      .alert(
+        self.store.scope(state: \.alert),
+        dismiss: .alertCancelled
+      )
+      
+      // Connection sheet
+      .sheet(
+        isPresented: viewStore.binding(
+          get: { $0.connectionState != nil },
+          send: PickerAction.connectionAction(.cancelButton)),
+        content: {
+          IfLetStore(
+            store.scope(state: \.connectionState,
+                        action: PickerAction.connectionAction
+                       ),
+            then: ConnectionView.init(store:)
+          )
+        }
+      )
     }
   }
 }
@@ -97,10 +119,10 @@ public struct PacketView: View {
             .frame(minWidth: 140, alignment: .leading)
             .foregroundColor(viewStore.defaultSelection?.packet == packet ? .red : nil)
             .onTapGesture {
-              if viewStore.pickerSelection == PickerSelection(packet, nil) {
+              if viewStore.pickerSelection == PickerSelection(packet) {
                 viewStore.send( .selection(nil) )
               }else {
-                viewStore.send( .selection( PickerSelection(packet, nil) ))
+                viewStore.send( .selection( PickerSelection(packet) ))
               }
             }
             Group {
@@ -108,10 +130,10 @@ public struct PacketView: View {
               ZStack {
                 Text(stations[0])
                   .onTapGesture {
-                    if viewStore.pickerSelection == PickerSelection(packet,  stations[0]) {
+                    if viewStore.pickerSelection == PickerSelection(packet, stations[0]) {
                       viewStore.send( .selection(nil) )
                     } else {
-                      viewStore.send( .selection(PickerSelection(packet,  stations[0])) )
+                      viewStore.send( .selection(PickerSelection(packet, stations[0])) )
                     }
                   }
                   .disabled(viewStore.connectionType == .gui)
@@ -119,14 +141,14 @@ public struct PacketView: View {
                 
                 Text(stations[1])
                   .onTapGesture {
-                    if viewStore.pickerSelection == PickerSelection(packet,  stations[1]) {
+                    if viewStore.pickerSelection == PickerSelection(packet, stations[1]) {
                       viewStore.send( .selection(nil) )
                     } else {
-                      viewStore.send( .selection(PickerSelection(packet,  stations[1])) )
+                      viewStore.send( .selection(PickerSelection(packet, stations[1])) )
                     }
                   }
                   .disabled(viewStore.connectionType == .gui)
-                Rectangle().fill(viewStore.pickerSelection == PickerSelection(packet,  stations[1]) ? .gray : .clear).opacity(0.2)                   }
+                Rectangle().fill(viewStore.pickerSelection == PickerSelection(packet, stations[1]) ? .gray : .clear).opacity(0.2)                   }
             }
             .font(.title3)
             .frame(minWidth: 140, alignment: .leading)

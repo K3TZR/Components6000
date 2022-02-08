@@ -12,6 +12,7 @@ import ComposableArchitecture
 import Login
 import Discovery
 import Picker
+import Shared
 
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums used by ApiViewer
@@ -19,6 +20,7 @@ import Picker
 struct ReceivedCommandSubscriptionId: Hashable {}
 struct SentCommandSubscriptionId: Hashable {}
 struct LogAlertSubscriptionId: Hashable {}
+struct WanStatusSubscriptionId: Hashable {}
 
 public struct DefaultConnection: Codable, Equatable {
 

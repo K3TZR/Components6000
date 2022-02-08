@@ -173,7 +173,7 @@ extension Tcp: GCDAsyncSocketDelegate {
   }
 
   public func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
-    _log("TcpCommand: socket disconnected \(err == nil ? "" : "with error")", .debug, #function, #file, #line)
+    _log("TcpCommand: socket disconnected \(err == nil ? "" : "with error \(err!.localizedDescription)")", err == nil ? .debug : .warning, #function, #file, #line)
     statusPublisher.send(
       TcpStatus(.didDisconnect,
                 host: "",

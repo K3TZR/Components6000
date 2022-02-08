@@ -9,7 +9,6 @@ import ComposableArchitecture
 import SwiftUI
 
 import Shared
-import Picker
 
 // ----------------------------------------------------------------------------
 // MARK: - View(s)
@@ -80,11 +79,11 @@ struct ConnectionView_Previews: PreviewProvider {
 }
 
 private func testPickerSelection1() -> PickerSelection {
-  PickerSelection(testPacket1(), nil)
+  PickerSelection(testPacket1(), nil, nil)
 }
 
 private func testPickerSelection2() -> PickerSelection {
-  PickerSelection(testPacket2(), "newStation")
+  PickerSelection(testPacket2(), "newStation", nil)
 }
 
 private func testPacket1() -> Packet {

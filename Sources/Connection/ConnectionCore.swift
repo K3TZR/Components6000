@@ -9,7 +9,6 @@ import Foundation
 import ComposableArchitecture
 
 import Shared
-import Picker
 
 public struct ConnectionState: Equatable {
 
@@ -34,7 +33,6 @@ public let connectionReducer = Reducer<ConnectionState, ConnectionAction, Connec
 
     switch action {
     case .connect(let selection, let disconnectHandle):
-      // handled downstream
       return .none
 
     case .cancelButton:

@@ -119,7 +119,6 @@ public struct Packet: Identifiable, Equatable, Hashable {
     guard publicUdpPort == knownPacket.publicUdpPort else { return true }
     guard publicUpnpTlsPort == knownPacket.publicUpnpTlsPort else { return true }
     guard publicUpnpUdpPort == knownPacket.publicUpnpUdpPort else { return true }
-    guard publicTlsPort == knownPacket.publicTlsPort else { return true }
     // user fields
     guard callsign == knownPacket.callsign else { return true }
     guard model == knownPacket.model else { return true }

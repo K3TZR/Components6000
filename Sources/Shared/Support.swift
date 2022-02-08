@@ -63,6 +63,18 @@ public enum ConnectionType: String, Equatable {
   case nonGui = "Station"
 }
 
+public struct PickerSelection: Equatable {
+  public init(_ packet: Packet, _ station: String? = nil, _ disconnectHandle: Handle? = nil) {
+    self.packet = packet
+    self.station = station
+    self.disconnectHandle = disconnectHandle
+  }
+
+  public var packet: Packet
+  public var station: String?
+  public var disconnectHandle: Handle?
+}
+
 public enum ButtonType: Equatable {
   case primary(String)
   case secondary(String)
@@ -130,6 +142,7 @@ public extension String {
   var fValue          : Float           { Float(self) ?? 0 }
   var handle          : Handle?         { self.hasPrefix("0x") ? UInt32(String(self.dropFirst(2)), radix: 16) : UInt32(self, radix: 16) }
   var iValue          : Int             { Int(self) ?? 0 }
+  var iValueOpt       : Int?            { self == "-1" ? nil : Int(self) }
   var list            : [String]        { self.components(separatedBy: ",") }
   var mhzToHz         : Hz              { Hz( (Double(self) ?? 0) * 1_000_000 ) }
   var objectId        : ObjectId?       { UInt16(self, radix: 10) }

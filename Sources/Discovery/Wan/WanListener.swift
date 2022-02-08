@@ -12,6 +12,39 @@ import Combine
 import Login
 import Shared
 
+public enum WanStatusType {
+  case connect
+  case publicIp
+  case settings
+}
+
+public struct WanStatus: Equatable {
+  
+  public init(
+    _ type: WanStatusType,
+    _ name: String?,
+    _ callsign: String?,
+    _ serial: String?,
+    _ wanHandle: String?,
+    _ publicIp: String?
+  )
+  {
+    self.type = type
+    self.name = name
+    self.callsign = callsign
+    self.serial = serial
+    self.wanHandle = wanHandle
+    self.publicIp = publicIp
+  }
+  
+  public var type: WanStatusType
+  public var name: String?
+  public var callsign: String?
+  public var serial: String?
+  public var wanHandle: String?
+  public var publicIp: String?
+}
+
 public enum WanListenerError: Error {
   case kFailedToObtainIdToken
   case kFailedToConnect
@@ -62,14 +95,14 @@ final class WanListener: NSObject, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  public private(set) var isListening: Bool = false
+//  public private(set) var isListening: Bool = false
   
-  @Published public var callsign: String?
-  @Published public var handle: Handle?
-  @Published public var publicIp: String?
-  @Published public var serial: String?
-  @Published public var testResult: SmartlinkTestResult?
-  @Published public var userName: String?
+//  @Published public var callsign: String?
+//  @Published public var handle: Handle?
+//  @Published public var publicIp: String?
+//  @Published public var serial: String?
+//  @Published public var testResult: SmartlinkTestResult?
+//  @Published public var userName: String?
   
   static let kTimeout: Double = 5.0
   
@@ -81,7 +114,14 @@ final class WanListener: NSObject, ObservableObject {
   
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
-  
+
+  var _callsign: String?
+  var _firstName: String?
+  var _lastName: String?
+  var _serial: String?
+  var _wanHandle: String?
+  var _publicIp: String?
+
   private var _appName: String?
   private var _authentication = Authentication()
   private var _cancellables = Set<AnyCancellable>()
@@ -175,7 +215,6 @@ final class WanListener: NSObject, ObservableObject {
   func stop() {
     _cancellables.removeAll()
     _tcpSocket.disconnect()
-    self.isListening = false
   }
   
   // ------------------------------------------------------------------------------
@@ -192,7 +231,6 @@ final class WanListener: NSObject, ObservableObject {
     do {
       try _tcpSocket.connect(toHost: kSmartlinkHost, onPort: kSmartlinkPort, withTimeout: _timeout)
       _log("Discovery: Wan Listener TCP Socket connection initiated", .debug, #function, #file, #line)
-      DispatchQueue.main.async { self.isListening = true }
       
     } catch _ {
       throw WanListenerError.kFailedToConnect
@@ -242,8 +280,6 @@ extension WanListener: GCDAsyncSocketDelegate {
     _tcpSocket.startTLS(tlsSettings)
     
     _log("Discovery: Wan Listener TLS Socket connection initiated", .debug, #function, #file, #line)
-    
-    DispatchQueue.main.async { self.isListening = true }
   }
   
   public func socketDidSecure(_ sock: GCDAsyncSocket) {
@@ -256,7 +292,6 @@ extension WanListener: GCDAsyncSocketDelegate {
     sendTlsCommand("application register appName=\(kAppName) platform=\(kPlatform) token=\(_idToken!)", timeout: _timeout, tag: 0)
     
     // start reading
-    DispatchQueue.main.async { self.isListening = true }
     _log("Discovery: Wan Listener is listening", .debug, #function, #file, #line)
     _tcpSocket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
   }
@@ -278,7 +313,7 @@ extension WanListener: GCDAsyncSocketDelegate {
          err == nil ? .debug : .warning,
          #function, #file, #line)
     
-    DispatchQueue.main.async { self.isListening = false }
+//    DispatchQueue.main.async { self.isListening = false }
     _currentHost = ""
     _currentPort = 0
   }

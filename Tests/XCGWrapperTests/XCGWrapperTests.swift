@@ -162,7 +162,7 @@ class XCGWrapperTests: XCTestCase {
     do {
       let logString = try String(contentsOf: logFolderUrl.appendingPathComponent( "/" + appName + ".log"), encoding: .utf8)
       let logLines = logString.components(separatedBy: .newlines)
-      var adjustedLogLines = logLines.map { String($0.dropFirst(24)) }
+      let adjustedLogLines = logLines.map { String($0.dropFirst(24)) }
 
       XCTAssert( adjustedLogLines == logContents, "File contents incorrect, (warning filter)" )
 
@@ -188,7 +188,7 @@ class XCGWrapperTests: XCTestCase {
     let logFolderUrl = URL.appSupport.appendingPathComponent( domain + "." + appName + "/Logs" )
     try? fileManager.removeItem(at: logFolderUrl)
 
-    let wrapper = XCGWrapper( logLevel: .error )
+    _ = XCGWrapper( logLevel: .error )
 
     var logEntry = LogEntry("XCGWrapperTests: debug message", .debug, #function, #file, #line)
     logProxy.logPublisher.send(logEntry)
@@ -210,7 +210,7 @@ class XCGWrapperTests: XCTestCase {
     do {
       let logString = try String(contentsOf: logFolderUrl.appendingPathComponent( "/" + appName + ".log"), encoding: .utf8)
       let logLines = logString.components(separatedBy: .newlines)
-      var adjustedLogLines = logLines.map { String($0.dropFirst(24)) }
+      let adjustedLogLines = logLines.map { String($0.dropFirst(24)) }
 
       XCTAssert( adjustedLogLines == logContents, "File contents incorrect, (error filter)" )
 
