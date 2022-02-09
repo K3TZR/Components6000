@@ -1,6 +1,6 @@
 //
-//  ConnectionCore.swift
-//  
+//  ClientCore.swift
+//  Components6000/ClientStatus
 //
 //  Created by Douglas Adams on 1/19/22.
 //
@@ -10,7 +10,7 @@ import ComposableArchitecture
 
 import Shared
 
-public struct ConnectionState: Equatable {
+public struct ClientState: Equatable {
 
   public init(pickerSelection: PickerSelection) {
     self.pickerSelection = pickerSelection
@@ -18,25 +18,17 @@ public struct ConnectionState: Equatable {
   var pickerSelection: PickerSelection
 }
 
-public enum ConnectionAction: Equatable {
+public enum ClientAction: Equatable {
   // UI controls
   case cancelButton
   case connect(PickerSelection, Handle?)
 }
 
-public struct ConnectionEnvironment {
+public struct ClientEnvironment {
   public init() {}
 }
 
-public let connectionReducer = Reducer<ConnectionState, ConnectionAction, ConnectionEnvironment>
+public let clientReducer = Reducer<ClientState, ClientAction, ClientEnvironment>
   { state, action, environment in
-
-    switch action {
-    case .connect(let selection, let disconnectHandle):
       return .none
-
-    case .cancelButton:
-      // handled downstream
-      return .none
-    }
   }

@@ -11,13 +11,13 @@ import Dispatch
 import AppKit
 
 import Discovery
-import Connection
+import ClientStatus
 import Shared
 
 struct PacketEffectId: Hashable {}
 struct ClientEffectId: Hashable {}
 struct TestEffectId: Hashable {}
-struct WanStatusSubscriptionId: Hashable {}
+struct WanEffectId: Hashable {}
 
 public struct PickerState: Equatable {
   public init(connectionType: ConnectionType = .gui,
@@ -33,15 +33,14 @@ public struct PickerState: Equatable {
     self.testResult = testResult
   }
   
+  public var alert: AlertState<PickerAction>?
+  public var clientState: ClientState?
   public var connectionType: ConnectionType
   public var defaultSelection: PickerSelection?
   public var discovery: Discovery
+  public var forceUpdate = false
   public var pickerSelection: PickerSelection?
   public var testResult: SmartlinkTestResult?
-  public var forceUpdate = false
-  public var alert: AlertState<PickerAction>?
-  public var connectionState: ConnectionState?
-
 }
 
 public enum PickerAction: Equatable {
@@ -51,19 +50,19 @@ public enum PickerAction: Equatable {
   case cancelButton
   case connectButton(PickerSelection)
   case defaultButton(PickerSelection)
-  case testButton(PickerSelection)
   case selection(PickerSelection?)
+  case testButton(PickerSelection)
 
   // sheet/alert related
   case alertCancelled
-  case connectionAction(ConnectionAction)
+  case clientAction(ClientAction)
 
   // effect related
-  case clientChange(ClientChange)
   case checkConnections(PickerSelection)
+  case clientChange(ClientChange)
+  case openSelection(PickerSelection)
   case packetChange(PacketChange)
   case testResultReceived(SmartlinkTestResult)
-  case openSelection(PickerSelection)
   case wanStatus(WanStatus)
 }
 
@@ -71,42 +70,53 @@ public struct PickerEnvironment {
   public init(
     queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
     discoveryEffect: @escaping () -> Effect<PickerAction, Never> = liveDiscoveryEffect,
-    testEffect: @escaping () -> Effect<PickerAction, Never> = liveTestEffect
+    testEffect: @escaping () -> Effect<PickerAction, Never> = liveTestEffect,
+    wanEffect: @escaping () -> Effect<PickerAction, Never> = liveWanEffect
   )
   {
     self.queue = queue
     self.discoveryEffect = discoveryEffect
     self.testEffect = testEffect
+    self.wanEffect = wanEffect
   }
   
   var queue: () -> AnySchedulerOf<DispatchQueue>
   var discoveryEffect: () -> Effect<PickerAction, Never>
   var testEffect: () -> Effect<PickerAction, Never>
+  var wanEffect: () -> Effect<PickerAction, Never>
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
-  connectionReducer
+  clientReducer
     .optional()
     .pullback(
-      state: \PickerState.connectionState,
-      action: /PickerAction.connectionAction,
-      environment: { _ in ConnectionEnvironment() }
+      state: \PickerState.clientState,
+      action: /PickerAction.clientAction,
+      environment: { _ in ClientEnvironment() }
     ),
   Reducer { state, action, environment in
     switch action {
       // ----------------------------------------------------------------------------
-      // MARK: - Picker UI actions
-
+      // MARK: - Initialization
+      
+    case .onAppear:
+      // subscribe to Discovery & Wan effects
+      return .merge(environment.discoveryEffect(), environment.wanEffect())
+      
+      // ----------------------------------------------------------------------------
+      // MARK: - UI actions
+      
     case .cancelButton:
-      // stop subscribing to Discovery broadcasts
-      // handled downstream
-      return .cancel(ids: PacketEffectId(), ClientEffectId())
+      // stop subscriptions
+      // handled upstream
+      return .cancel(ids: PacketEffectId(), ClientEffectId(), WanEffectId())
 
     case .connectButton(let selection):
       if selection.packet.source == .smartlink {
-          // get wan specific params (wanHandle)
-          state.discovery.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
-          return .none
+        // get wan specific params (wanHandle)
+        state.discovery.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
+        // reply will generate a wanStatus action
+        return .none
       } else {
         return Effect(value: .checkConnections(selection))
       }
@@ -117,13 +127,9 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       } else {
         state.defaultSelection = selection
       }
-      // handled downstream
+      // handled upstream
       return .none
 
-    case .onAppear:
-      // subscribe to Discovery broadcasts (long-running Effect)
-      return .merge(environment.discoveryEffect(), wanStatus())
-      
     case .selection(let selection):
       state.pickerSelection = selection
       if let selection = selection {
@@ -146,26 +152,25 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       state.testResult = nil
       // try to send a Test
       if state.discovery.smartlinkTest(selection.packet.serial) {
-        // SENT, wait for response
+        // reply will generate a testResultReceived action
         return environment.testEffect()
       
       } else {
-        // NOT SENT, alert
+        // NOT SENT?
         NSSound.beep()
         return .none
       }
       
       // ----------------------------------------------------------------------------
-      // MARK: - Connection actions
+      // MARK: - Client actions
       
-    case .connectionAction(.cancelButton):
-      state.connectionState = nil
+    case .clientAction(.cancelButton):
+      state.clientState = nil
       return .none
 
-    case .connectionAction(.connect(let selection, let disconnectHandle)):
-      state.connectionState = nil
-      // handled downstream (open radio)
-      // stop subscribing to Discovery broadcasts
+    case .clientAction(.connect(let selection, let disconnectHandle)):
+      state.clientState = nil
+      // tell upstream to open a connection
       return Effect(value: .openSelection(PickerSelection(selection.packet, selection.station, disconnectHandle)))
 
       // ----------------------------------------------------------------------------
@@ -176,27 +181,11 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .none
 
       // ----------------------------------------------------------------------------
-      // MARK: - Picker Effect actions
+      // MARK: - Actions sent by publishers
 
     case .clientChange(let update):
       // process a GuiClient change
       return .none
-      
-    case .checkConnections(let selection):
-      // are there multiple Gui connections?
-      if state.connectionType == .gui && selection.packet.guiClients.count > 0 {
-        // YES, may need a disconnect, let the user choose
-        state.connectionState = ConnectionState(pickerSelection: selection)
-        return .none
-      
-      } else {
-        // simple open
-        return Effect(value: .openSelection(selection))
-      }
-
-    case .openSelection(_):
-      // handled downstream
-      return .cancel(ids: PacketEffectId(), ClientEffectId())
       
     case .packetChange(let update):
       // process a DiscoveryPacket change
@@ -207,17 +196,33 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       state.testResult = result
       return .cancel(ids: TestEffectId())
       
-    case .connectionAction(_):
-      return .none
-      
     case.wanStatus(let status):
       if state.pickerSelection != nil && status.type == .connect && status.wanHandle != nil {
         state.pickerSelection!.packet.wanHandle = status.wanHandle!
-        return .concatenate(
-          .cancel(id: WanStatusSubscriptionId()),
-          Effect(value: .openSelection(state.pickerSelection!)))
+        // tell upstream to open a connection
+        return Effect(value: .openSelection(state.pickerSelection!))
       }
       return .none
+
+      // ----------------------------------------------------------------------------
+      // MARK: - Actions sent by other actions
+
+    case .checkConnections(let selection):
+      // are there any Gui connections?
+      if state.connectionType == .gui && selection.packet.guiClients.count > 0 {
+        // YES, may need a disconnect, let the user choose
+        state.clientState = ClientState(pickerSelection: selection)
+        return .none
+      
+      } else {
+        // tell upstream to open a connection
+        return Effect(value: .openSelection(selection))
+      }
+
+    case .openSelection(_):
+      // handled upstream
+      // stop subscriptions
+      return .cancel(ids: PacketEffectId(), ClientEffectId(), WanEffectId(), TestEffectId())
     }
   }
 )

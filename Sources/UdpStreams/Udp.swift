@@ -12,13 +12,15 @@ import Combine
 
 import Shared
 
+// ----------------------------------------------------------------------------
+// MARK: - Public structs and enums
+
 public enum UdpStatusType {
   case didBind
   case didUnBind
   case failedToBind
   case readError
 }
-
 
 public struct UdpStatus: Identifiable, Equatable {
   public static func == (lhs: UdpStatus, rhs: UdpStatus) -> Bool {
@@ -175,7 +177,10 @@ final public class Udp: NSObject {
     
     _isRegistered = false
     
-    statusPublisher.send(UdpStatus( .didUnBind, receivePort: _receivePort, sendPort: sendPort, error: nil ))
+    statusPublisher.send( UdpStatus(.didUnBind,
+                                    receivePort: _receivePort,
+                                    sendPort: sendPort,
+                                    error: nil ))
   }
   
   /// Register UDP client handle
@@ -195,7 +200,7 @@ final public class Udp: NSObject {
 
         // send a Registration command
         let cmd = "client udp_register handle=" + clientHandle!.hex
-        self.send(cmd.data(using: String.Encoding.ascii, allowLossyConversion: false)!)
+        self.send( cmd.data(using: String.Encoding.ascii, allowLossyConversion: false)! )
 
         // pause
         usleep(self.kRegistrationDelay)

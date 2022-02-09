@@ -1,6 +1,6 @@
 //
 //  RemoteRxAudioStream.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 2/9/16.
 //  Copyright © 2016 Douglas Adams. All rights reserved.

@@ -14,8 +14,6 @@ extension Radio {
   // MARK: - ReplyHandlers
 
   /// Add a Reply Handler for a specific Sequence/Command
-  ///   executes on the parseQ
-  ///
   /// - Parameters:
   ///   - sequenceId:     sequence number of the Command
   ///   - replyTuple:     a Reply Tuple

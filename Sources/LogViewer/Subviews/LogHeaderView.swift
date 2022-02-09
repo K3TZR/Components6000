@@ -1,6 +1,6 @@
 //
 //  SwiftUIView.swift
-//  
+//  Components6000/LogViewer
 //
 //  Created by Douglas Adams on 1/8/22.
 //

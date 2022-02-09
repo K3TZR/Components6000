@@ -1,6 +1,6 @@
 //
 //  Xvtr.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 6/24/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -86,7 +86,7 @@ public final class Xvtr: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Xvtr {
+extension Xvtr: DynamicModel {
   /// Parse an Xvtr status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray

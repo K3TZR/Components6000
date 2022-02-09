@@ -30,40 +30,7 @@ public final class Radio: Equatable {
   public var replyHandlers : [SequenceNumber: ReplyTuple] {
     get { Radio.objectQ.sync { _replyHandlers } }
     set { Radio.objectQ.sync(flags: .barrier) { _replyHandlers = newValue }}}
-  
-  
-  // Dynamic Model Collections
-//  @Published public var amplifiers = [AmplifierId: Amplifier]()
-//  @Published public var bandSettings = [BandId: BandSetting]()
-//  @Published public var daxIqStreams = [DaxIqStreamId: DaxIqStream]()
-//  @Published public var daxMicAudioStreams = [DaxMicStreamId: DaxMicAudioStream]()
-//  @Published public var daxRxAudioStreams = [DaxRxStreamId: DaxRxAudioStream]()
-//  @Published public var daxTxAudioStreams = [DaxTxStreamId: DaxTxAudioStream]()
-//  @Published public var equalizers = [Equalizer.EqType: Equalizer]()
-//  @Published public var memories = [MemoryId: Memory]()
-//  @Published public var meters = [MeterId: Meter]()
-//  @Published public var panadapters = [PanadapterStreamId: Panadapter]()
-//  @Published public var profiles = [ProfileId: Profile]()
-//  @Published public var remoteRxAudioStreams = [RemoteRxStreamId: RemoteRxAudioStream]()
-//  @Published public var remoteTxAudioStreams = [RemoteTxStreamId: RemoteTxAudioStream]()
-//  @Published public var slices = [SliceId: Slice]()
-//  @Published public var tnfs = [TnfId: Tnf]()
-//  @Published public var usbCables = [UsbCableId: UsbCable]()
-//  @Published public var waterfalls = [WaterfallStreamId: Waterfall]()
-//  @Published public var xvtrs = [XvtrId: Xvtr]()
-  
-  // Static Models
-//  @Published public private(set) var atu: Atu!
-//  @Published public private(set) var cwx: Cwx!
-//  @Published public private(set) var gps: Gps!
-//  @Published public private(set) var interlock: Interlock!
-  //  @Published public private(set) var netCwStream: NetCwStream!
-//  @Published public private(set) var transmit: Transmit!
-//  @Published public private(set) var wan: Wan!
-//  @Published public private(set) var waveform: Waveform!
-  //  @Published public private(set) var wanServer: WanServer!
-  
-  
+    
   @Published public internal(set) var antennaList = [AntennaPort]()
   @Published public internal(set) var atuPresent = false
   @Published public internal(set) var availablePanadapters = 0
@@ -256,8 +223,7 @@ public final class Radio: Equatable {
     let separator = bundleIdentifier.lastIndex(of: ".")!
     _appName = String(bundleIdentifier.suffix(from: bundleIdentifier.index(separator, offsetBy: 1)))
     _domain = String(bundleIdentifier.prefix(upTo: separator))
-    
-    
+        
     // initialize the static models (only one of each is ever created)
     _objects.atu = Atu()
     _objects.cwx = Cwx()
@@ -280,7 +246,6 @@ public final class Radio: Equatable {
       }
     
     _cancellableCommandStatus = command.statusPublisher
-//      .receive(on: _parseQ)
       .sink { [weak self] status in
         self?.tcpStatus(status)
       }
@@ -347,7 +312,6 @@ public final class Radio: Equatable {
       _log("Radio: Invalid state on connect, apiState != .clientDisconnected", .warning, #function, #file, #line)
       return false
     }
-    
     // attempt to connect
     return _tcp.connect(packet)
   }
@@ -363,7 +327,6 @@ public final class Radio: Equatable {
   ///   - flag:           use "D"iagnostic form
   ///   - callback:       a callback function (if any)
   public func send(_ command: String, diagnostic flag: Bool = false, replyTo callback: ReplyHandler? = nil) {
-    
     // tell TcpCommands to send the command
     let sequenceNumber = _tcp.send(command, diagnostic: flag)
     
@@ -450,9 +413,8 @@ public final class Radio: Equatable {
   func tcpStatus(_ status: TcpStatus) {
     switch status.statusType {
       
-    case .didConnect:     updateState(to: .tcpConnected(host: status.host, port: status.port))
-    case .didSecure:      updateState(to: .tcpConnected(host: status.host, port: status.port))
-    case .didDisconnect:  updateState(to: .tcpDisconnected(reason: status.reason ?? "User Initiated"))
+    case .didConnect, .didSecure:   updateState(to: .tcpConnected(host: status.host, port: status.port))
+    case .didDisconnect:            updateState(to: .tcpDisconnected(reason: status.reason ?? "User Initiated"))
     }
   }
  
@@ -476,7 +438,6 @@ public final class Radio: Equatable {
       // Connection -----------------------------------------------------------------------------
     case .tcpConnected (let host, let port):
       _log("Radio: TCP connected to \(host), port \(port)", .debug, #function, #file, #line)
-      //      NC.post(.tcpDidConnect, object: nil)
       
       if packet.source == .smartlink {
         _log("Radio: Validate Wan handle = \(packet.wanHandle)", .debug, #function, #file, #line)
@@ -485,8 +446,6 @@ public final class Radio: Equatable {
       } else {
         // bind a UDP port for the Streams
         if _udp.bind(packet) == false { _tcp.disconnect() }
-        
-        // FIXME: clientHandle is not used by bind????
       }
       
     case .wanHandleValidated (let success):
@@ -504,9 +463,6 @@ public final class Radio: Equatable {
       // if a Wan connection, register
       if packet.source == .smartlink { _udp.register(clientHandle: connectionHandle) }
       
-      // a UDP port has been bound, inform observers
-      //      NC.post(.udpDidBind, object: nil)
-      
     case .clientConnected where packet.source == .smartlink:
         // when connecting to a WAN radio, the public IP address of the connected
         // client must be obtained from the radio.  This value is used to determine
@@ -523,7 +479,6 @@ public final class Radio: Equatable {
       // Disconnection --------------------------------------------------------------------------
     case .tcpDisconnected (let reason):
       _log("Radio: Tcp Disconnected, \(reason ?? "User initiated")", .debug, #function, #file, #line)
-      //      NC.post(.tcpDidDisconnect, object: reason)
       
       // stop all streams
       _udp.unbind(reason: reason ?? "User initiated")
@@ -556,15 +511,6 @@ public final class Radio: Equatable {
   ///   - responseValue:          the response contained in the Reply to the Command
   ///   - reply:                  the descriptive text contained in the Reply to the Command
   private func clientIpReplyHandler(_ command: String, seqNum: UInt, responseValue: String, reply: String) {
-    // was an error code returned?
-//    if responseValue == Shared.kNoError {
-//      // NO, the reply value is the IP address
-//      let localIP = reply.isValidIP4() ? reply : "0.0.0.0"
-//
-//    } else {
-//      // YES, use the ip of the local interface
-//      let localIP = _tcp.interfaceIpAddress
-//    }
     connectionCompletion()
   }
 
@@ -627,51 +573,21 @@ public final class Radio: Equatable {
   // MARK: - Private methods
 
   /// Remove all Radio objects
-  private func removeAllObjects() {
-    
+  private func removeAllObjects() {    
     // ----- remove all objects -----, NOTE: order is important
-    
-    // notify all observers, then remove
-//    daxRxAudioStreams.forEach( { NC.post(.daxRxAudioStreamWillBeRemoved, object: $0.value as Any?) } )
     _objects.daxRxAudioStreams.removeAll()
-    
-//    daxIqStreams.forEach( { NC.post(.daxIqStreamWillBeRemoved, object: $0.value as Any?) } )
     _objects.daxIqStreams.removeAll()
-    
-//    daxMicAudioStreams.forEach( {NC.post(.daxMicAudioStreamWillBeRemoved, object: $0.value as Any?)} )
     _objects.daxMicAudioStreams.removeAll()
-    
-//    daxTxAudioStreams.forEach( { NC.post(.daxTxAudioStreamWillBeRemoved, object: $0.value as Any?) } )
     _objects.daxTxAudioStreams.removeAll()
-    
-//    remoteRxAudioStreams.forEach( { NC.post(.remoteRxAudioStreamWillBeRemoved, object: $0.value as Any?) } )
     _objects.remoteRxAudioStreams.removeAll()
-    
-//    remoteTxAudioStreams.forEach( { NC.post(.remoteTxAudioStreamWillBeRemoved, object: $0.value as Any?) } )
     _objects.remoteTxAudioStreams.removeAll()
-    
-//    tnfs.forEach( { NC.post(.tnfWillBeRemoved, object: $0.value as Any?) } )
     _objects.tnfs.removeAll()
-    
-//    slices.forEach( { NC.post(.sliceWillBeRemoved, object: $0.value as Any?) } )
     _objects.slices.removeAll()
-    
-    _objects.panadapters.forEach {
-      let waterfallId = $0.value.waterfallId
-      let waterfall = _objects.waterfalls[waterfallId]
-      
-      // notify all observers
-//      NC.post(.panadapterWillBeRemoved, object: $0.value as Any?)
-//      NC.post(.waterfallWillBeRemoved, object: waterfall as Any?)
-    }
     _objects.panadapters.removeAll()
     _objects.waterfalls.removeAll()
-    
     _objects.profiles.forEach {
-//      NC.post(.profileWillBeRemoved, object: $0.value.list as Any?)
       $0.value.list.removeAll()
     }
-    
     _objects.equalizers.removeAll()
     _objects.memories.removeAll()
     _metersAreStreaming = false

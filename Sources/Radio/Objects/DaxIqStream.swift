@@ -1,6 +1,6 @@
 //
 //  DaxIqStream.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 3/9/17.
 //  Copyright © 2017 Douglas Adams & Mario Illgen. All rights reserved.
@@ -89,7 +89,7 @@ public final class DaxIqStream: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModelWithStream extension
 
-extension DaxIqStream {
+extension DaxIqStream: DynamicModelWithStream {
   /// Parse a Stream status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray

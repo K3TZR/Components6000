@@ -1,6 +1,6 @@
 //
-//  ConnectionView.swift
-//  
+//  ClientView.swift
+//  Components6000/ClientStatus
 //
 //  Created by Douglas Adams on 1/19/22.
 //
@@ -15,10 +15,10 @@ import Shared
 
 // assumes that the number of GuiClients is 1 or 2
 
-public struct ConnectionView: View {
-  let store: Store<ConnectionState,ConnectionAction>
+public struct ClientView: View {
+  let store: Store<ClientState,ClientAction>
 
-  public init(store: Store<ConnectionState,ConnectionAction>) {
+  public init(store: Store<ClientState,ClientAction>) {
     self.store = store
   }
 
@@ -56,22 +56,22 @@ public struct ConnectionView: View {
 // ----------------------------------------------------------------------------
 // MARK: - Preview(s)
 
-struct ConnectionView_Previews: PreviewProvider {
+struct ClientView_Previews: PreviewProvider {
   static var previews: some View {
-    ConnectionView(
+    ClientView(
       store: Store(
-        initialState: ConnectionState( pickerSelection: testPickerSelection1() ),
-        reducer: connectionReducer,
-        environment: ConnectionEnvironment()
+        initialState: ClientState( pickerSelection: testPickerSelection1() ),
+        reducer: clientReducer,
+        environment: ClientEnvironment()
       )
     )
       .previewDisplayName("Gui connect (disconnect not required)")
 
-    ConnectionView(
+    ClientView(
       store: Store(
-        initialState: ConnectionState( pickerSelection: testPickerSelection2() ),
-        reducer: connectionReducer,
-        environment: ConnectionEnvironment()
+        initialState: ClientState( pickerSelection: testPickerSelection2() ),
+        reducer: clientReducer,
+        environment: ClientEnvironment()
       )
     )
       .previewDisplayName("Gui connect (disconnect required)")

@@ -33,7 +33,7 @@ public struct TcpMessage: Equatable, Identifiable {
 }
 
 // ----------------------------------------------------------------------------
-// MARK: - Public methods
+// MARK: - Internal methods
 
 func sentMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   
@@ -42,7 +42,6 @@ func sentMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
     .receive(on: DispatchQueue.main)
     // convert to TcpMessage format
     .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
-//    .print()
     .eraseToEffect()
     .cancellable(id: SentCommandSubscriptionId())
 }
@@ -51,20 +50,21 @@ func receivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   
   // subscribe to the publisher of received TcpMessages
   tcp.receivedPublisher
-    // eliminate replies without errors or data
+    // eliminate replies unless they have errors or data
     .filter { allowToPass($0.text) }
     .receive(on: DispatchQueue.main)
-    // convert to TcpMessage format
+    // convert to an ApiAction
     .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
-//    .print()
     .eraseToEffect()
     .cancellable(id: ReceivedCommandSubscriptionId())
 }
 
 func logAlerts() -> Effect<ApiAction, Never> {
   
+  // subscribe to the publisher of LogEntries with Warning or Error levels
   LogProxy.sharedInstance.alertPublisher
     .receive(on: DispatchQueue.main)
+    // convert to an ApiAction
     .map { logEntry in .logAlert(logEntry) }
     .eraseToEffect()
     .cancellable(id: LogAlertSubscriptionId())

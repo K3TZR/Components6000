@@ -1,6 +1,6 @@
 //
 //  Meter.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 6/2/15.
 //  Copyright (c) 2015 Douglas Adams, K3TZR
@@ -122,7 +122,7 @@ public final class Meter: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Meter {
+extension Meter: DynamicModel {
   /// Parse a Meter status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray

@@ -49,8 +49,13 @@ public struct DefaultConnection: Codable, Equatable {
 }
 
 // ----------------------------------------------------------------------------
-// MARK: - Pure functions used by ApiViewer
+// MARK: - Pure functions used by ApiCore
 
+/// Start / Stop Listening for local packet broadcasts
+/// - Parameters:
+///   - mode:         mode (local, smartlink, both, none)
+///   - discovery:    a reference to the Discovery object
+/// - Returns:        an Alert or nil
 func startStopLanListener(_ mode: ConnectionMode, discovery: Discovery) -> AlertState<ApiAction>? {
   switch mode {
     
@@ -65,6 +70,13 @@ func startStopLanListener(_ mode: ConnectionMode, discovery: Discovery) -> Alert
   return nil
 }
 
+/// Start / Stop Listening for smartlink packet messages
+/// - Parameters:
+///   - mode:         mode (local, smartlink, both, none)
+///   - discovery:    a reference to the Discovery object
+///   - using:        the email address registered to smartlink
+///   - forceLogin:   if set, force the user to login first
+/// - Returns:        an Alert or nil
 func startStopWanListener(_ mode: ConnectionMode, discovery: Discovery, using smartlinkEmail: String, forceLogin: Bool = false) -> AlertState<ApiAction>? {
   switch mode {
     
@@ -79,7 +91,9 @@ func startStopWanListener(_ mode: ConnectionMode, discovery: Discovery, using sm
   return nil
 }
 
-
+/// Start listening for local packet broadcasts
+/// - Parameter discovery:   a reference to the Discovery object
+/// - Returns:               an Alert or nil
 func startLanListener(_ discovery: Discovery) -> AlertState<ApiAction>? {
   do {
     try discovery.startLanListener()
@@ -93,6 +107,11 @@ func startLanListener(_ discovery: Discovery) -> AlertState<ApiAction>? {
   }
 }
 
+/// Start listening for smartlink packet messages
+/// - Parameter discovery:   a reference to the Discovery object
+///   - using:                                     the email address registered to smartlink
+///   - forceLogin:                             if set, force the user to login first
+/// - Returns:               an Alert or nil
 func startWanListener(_ discovery: Discovery, using smartlinkEmail: String, forceLogin: Bool = false) -> AlertState<ApiAction>? {
   do {
     try discovery.startWanListener(smartlinkEmail: smartlinkEmail, forceLogin: forceLogin)
@@ -106,6 +125,10 @@ func startWanListener(_ discovery: Discovery, using smartlinkEmail: String, forc
   }
 }
 
+/// Start listening for smartlink packet messages
+/// - Parameter discovery:   a reference to the Discovery object
+///   - using:                                     the return value from a login attempt
+/// - Returns:               an Alert or nil
 func startWanListener(_ discovery: Discovery, using loginResult: LoginResult) -> AlertState<ApiAction>? {
   do {
     try discovery.startWanListener(using: loginResult)
@@ -119,6 +142,8 @@ func startWanListener(_ discovery: Discovery, using loginResult: LoginResult) ->
   }
 }
 
+/// Read the user defaults entry for a default connection and transform it into a DefaultConnection struct
+/// - Returns:         a DefaultConnection struct or nil
 func getDefaultConnection() -> DefaultConnection? {
   if let defaultData = UserDefaults.standard.object(forKey: "defaultConnection") as? Data {
     let decoder = JSONDecoder()
@@ -131,6 +156,7 @@ func getDefaultConnection() -> DefaultConnection? {
   return nil
 }
 
+/// Write the user defaults entry for a default connection using a DefaultConnection struct
 func setDefaultConnection(_ conn: DefaultConnection?) {
   if conn == nil {
     UserDefaults.standard.removeObject(forKey: "defaultConnection")
@@ -143,5 +169,3 @@ func setDefaultConnection(_ conn: DefaultConnection?) {
     }
   }
 }
-
-

@@ -1,6 +1,6 @@
 //
 //  Cwx.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 6/30/15.
 //  Copyright © 2015 Douglas Adams. All rights reserved.
@@ -238,7 +238,7 @@ public final class Cwx: ObservableObject {
 // ----------------------------------------------------------------------------
 // MARK: - StaticModel extension
 
-extension Cwx {
+extension Cwx: StaticModel {
   /// Parse Cwx key/value pairs, called by Radio
   ///   PropertiesParser protocol method, executes on the parseQ
   ///

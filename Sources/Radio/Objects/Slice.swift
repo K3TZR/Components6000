@@ -1,6 +1,6 @@
 //
 //  xLib6001.Slice.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 6/2/15.
 //  Copyright (c) 2015 Douglas Adams, K3TZR
@@ -395,7 +395,7 @@ public final class Slice: ObservableObject , Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Slice {
+extension Slice: DynamicModel {
   /// Parse a Slice status message
   ///   Format: <sliceId> <key=value> <key=value> ...<key=value>
   ///

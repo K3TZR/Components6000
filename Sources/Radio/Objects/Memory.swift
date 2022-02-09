@@ -1,6 +1,6 @@
 //
 //  Memory.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 8/20/15.
 //  Copyright © 2015 Douglas Adams. All rights reserved.
@@ -184,7 +184,7 @@ public final class Memory: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Memory {
+extension Memory: DynamicModel {
   /// Parse a Memory status message
   /// - Parameters:
   ///   - properties:     a KeyValuesArray

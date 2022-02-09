@@ -1,6 +1,6 @@
 //
 //  DaxRxAudioStream.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 2/24/17.
 //  Copyright © 2017 Douglas Adams & Mario Illgen. All rights reserved.
@@ -85,7 +85,7 @@ public final class DaxRxAudioStream: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModelWithStream extension
 
-extension DaxRxAudioStream {
+extension DaxRxAudioStream: DynamicModelWithStream {
   /// Parse an AudioStream status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray

@@ -1,6 +1,6 @@
 //
 //  Amplifier.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 8/7/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.

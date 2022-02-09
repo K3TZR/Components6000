@@ -293,7 +293,6 @@ extension Radio {
     send("client low_bw_connect", replyTo: callback)
   }
   
-  
   public func requestMicList(callback: ReplyHandler? = nil) {
     send("mic list", replyTo: callback == nil ? defaultReplyHandler : callback)
   }
@@ -499,14 +498,10 @@ extension Radio {
   public func removeTnf(id: TnfId, callback: ReplyHandler? = nil) {
     send("tnf remove " + " \(id)", replyTo: callback)
     
-    // notify all observers
-    //    NC.post(.tnfWillBeRemoved, object: self as Any?)
-    
     // remove it immediately (Tnf does not send status on removal)
     _objects.tnfs[id] = nil
     
     _log("Tnf, removed: id = \(id)", .debug, #function, #file, #line)
-    //    NC.post(.tnfHasBeenRemoved, object: id as Any?)
   }
   public func requestTnf(at frequency: Hz, callback: ReplyHandler? = nil) {
     send("tnf create " + "freq" + "=\(frequency.hzToMhz)", replyTo: callback)

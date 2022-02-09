@@ -1,6 +1,6 @@
 //
 //  UsbCable.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 6/25/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -122,7 +122,7 @@ public final class UsbCable: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension UsbCable {
+extension UsbCable: DynamicModel {
   /// Parse a USB Cable status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray

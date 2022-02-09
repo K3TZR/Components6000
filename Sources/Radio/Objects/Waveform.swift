@@ -1,6 +1,6 @@
 //
 //  Waveform.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 8/17/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -38,7 +38,7 @@ public final class Waveform: ObservableObject {
 // ----------------------------------------------------------------------------
 // MARK: - StaticModel extension
 
-extension Waveform {
+extension Waveform: StaticModel {
   /// Parse a Waveform status message
   ///   format: <key=value> <key=value> ...<key=value>
   ///

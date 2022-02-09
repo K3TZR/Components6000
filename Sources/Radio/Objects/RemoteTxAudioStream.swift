@@ -1,6 +1,6 @@
 //
 //  RemoteTxAudioStream.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 2/9/16.
 //  Copyright © 2016 Douglas Adams. All rights reserved.
@@ -118,7 +118,7 @@ public final class RemoteTxAudioStream: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension RemoteTxAudioStream {
+extension RemoteTxAudioStream: DynamicModel {
   /// Parse an RemoteTxAudioStream status message
   /// - Parameters:
   ///   - keyValues:          a KeyValuesArray

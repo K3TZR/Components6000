@@ -11,6 +11,9 @@ import Combine
 
 import Shared
 
+// ----------------------------------------------------------------------------
+// MARK: - Public structs and enums
+
 public enum TcpStatusType {
   case didConnect
   case didSecure
@@ -144,13 +147,16 @@ final public class Tcp: NSObject {
     return success
   }
   
-  public func readNext() {
-    _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
-  }
-  
   /// Disconnect TCP from the Radio (hardware)
   public func disconnect() {
     _socket.disconnect()
+  }
+
+  // ----------------------------------------------------------------------------
+  // MARK: - Internal methods
+
+  func readNext() {
+    _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
   }
 }
 
@@ -163,28 +169,24 @@ extension Tcp: GCDAsyncSocketDelegate {
     // TLS connection complete
     _log("TcpCommand: TLS socket did secure", .debug, #function, #file, #line)
     readNext()
-    statusPublisher.send(
-      TcpStatus(.didSecure,
-                host: sock.connectedHost ?? "",
-                port: sock.connectedPort,
-                error: nil)
-    )
+    statusPublisher.send( TcpStatus(.didSecure,
+                                    host: sock.connectedHost ?? "",
+                                    port: sock.connectedPort,
+                                    error: nil))
   }
   
   public func socket(_ sock: GCDAsyncSocket, didReceive trust: SecTrust, completionHandler: @escaping (Bool) -> Void) {
-    // there are no validations for the radio connection
+    // no validation required
     _log("TcpCommand: TLS socket did receive trust", .debug, #function, #file, #line)
     completionHandler(true)
   }
 
   public func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
     _log("TcpCommand: socket disconnected \(err == nil ? "" : "with error \(err!.localizedDescription)")", err == nil ? .debug : .warning, #function, #file, #line)
-    statusPublisher.send(
-      TcpStatus(.didDisconnect,
-                host: "",
-                port: 0,
-                error: err)
-    )
+    statusPublisher.send( TcpStatus(.didDisconnect,
+                                    host: "",
+                                    port: 0,
+                                    error: err))
   }
   
   public func socket(_ sock: GCDAsyncSocket, didConnectToHost host: String, port: UInt16) {
@@ -200,15 +202,14 @@ extension Tcp: GCDAsyncSocketDelegate {
     } else {
       // NO, we're connected
       _log("TcpCommand: socket connected to Local \(host) on port \(port)", .debug, #function, #file, #line)
-      statusPublisher.send(
-        TcpStatus(.didConnect,
-                  host: host,
-                  port: port,
-                  error: nil)
-      )
-      // trigger the next read
+      statusPublisher.send( TcpStatus(.didConnect,
+                                      host: host,
+                                      port: port,
+                                      error: nil))
+      // mark the beginning
       _startTime = Date()
-//      _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
+
+      // trigger the next read
       readNext()
     }
   }

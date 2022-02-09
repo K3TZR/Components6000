@@ -43,11 +43,11 @@ public func liveTestEffect() -> Effect<PickerAction, Never> {
   )
 }
 
-func wanStatus() -> Effect<PickerAction, Never> {
+public func liveWanEffect() -> Effect<PickerAction, Never> {
   
   Discovery.sharedInstance.wanStatusPublisher
     .receive(on: DispatchQueue.main)
     .map { status in .wanStatus(status) }
     .eraseToEffect()
-    .cancellable(id: WanStatusSubscriptionId())
+    .cancellable(id: WanEffectId())
 }

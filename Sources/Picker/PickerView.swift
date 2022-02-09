@@ -10,7 +10,7 @@ import Combine
 import ComposableArchitecture
 
 import Discovery
-import Connection
+import ClientStatus
 import Shared
 
 // ----------------------------------------------------------------------------
@@ -74,14 +74,14 @@ public struct PickerView: View {
       // Connection sheet
       .sheet(
         isPresented: viewStore.binding(
-          get: { $0.connectionState != nil },
-          send: PickerAction.connectionAction(.cancelButton)),
+          get: { $0.clientState != nil },
+          send: PickerAction.clientAction(.cancelButton)),
         content: {
           IfLetStore(
-            store.scope(state: \.connectionState,
-                        action: PickerAction.connectionAction
+            store.scope(state: \.clientState,
+                        action: PickerAction.clientAction
                        ),
-            then: ConnectionView.init(store:)
+            then: ClientView.init(store:)
           )
         }
       )

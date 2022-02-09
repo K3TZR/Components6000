@@ -20,7 +20,7 @@ let package = Package(
     .library(name: "SecureStorage", targets: ["SecureStorage"]),
     .library(name: "Login", targets: ["Login"]),
     .library(name: "Radio", targets: ["Radio"]),
-    .library(name: "Connection", targets: ["Connection"]),
+    .library(name: "ClientStatus", targets: ["ClientStatus"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
@@ -30,7 +30,7 @@ let package = Package(
   ],
   targets: [
     .target(
-      name: "Connection",
+      name: "ClientStatus",
       dependencies: [
         "Shared",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -65,7 +65,7 @@ let package = Package(
       dependencies: [
         "Login",
         "Picker",
-        "Connection",
+        "ClientStatus",
         "Discovery",
         "TcpCommands",
         "UdpStreams",
@@ -96,6 +96,7 @@ let package = Package(
       name: "Picker",
       dependencies: [
         "Discovery",
+        "ClientStatus",
         "Shared",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]

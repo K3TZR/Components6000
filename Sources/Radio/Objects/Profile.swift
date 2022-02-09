@@ -1,6 +1,6 @@
 //
 //  Profile.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 8/17/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -81,7 +81,7 @@ public final class Profile: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Profile {
+extension Profile: DynamicModel {
   
   /// Parse a Profile status message
   /// - Parameters:

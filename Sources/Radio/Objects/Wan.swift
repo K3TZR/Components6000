@@ -1,6 +1,6 @@
 //
 //  Wan.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 8/17/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -16,7 +16,7 @@ import Shared
 ///      processing of the Wan-related activities. Wan objects are added,
 ///      removed and updated by the incoming TCP messages.
 ///
-public final class Wan  {
+public final class Wan : StaticModel {
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties

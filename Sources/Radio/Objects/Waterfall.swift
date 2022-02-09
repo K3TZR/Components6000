@@ -1,6 +1,6 @@
 //
 //  Waterfall.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 5/31/15.
 //  Copyright (c) 2015 Douglas Adams, K3TZR
@@ -113,7 +113,7 @@ public final class Waterfall: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Waterfall {
+extension Waterfall: DynamicModel {
   /// Parse a Waterfall status message
   ///   StatusParser protocol method, executes on the parseQ
   ///

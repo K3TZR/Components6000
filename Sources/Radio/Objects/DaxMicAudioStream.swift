@@ -1,6 +1,6 @@
 //
 //  DaxMicAudioStream.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Mario Illgen on 27.03.17.
 //  Copyright © 2017 Douglas Adams & Mario Illgen. All rights reserved.
@@ -90,7 +90,7 @@ public final class DaxMicAudioStream: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModelWithStream extension
 
-extension DaxMicAudioStream {
+extension DaxMicAudioStream: DynamicModelWithStream {
   /// Parse a DAX Mic AudioStream status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray

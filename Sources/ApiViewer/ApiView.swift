@@ -9,7 +9,7 @@ import SwiftUI
 import ComposableArchitecture
 
 import Login
-import Connection
+import ClientStatus
 import Picker
 import LogViewer
 import Shared
@@ -54,7 +54,7 @@ public struct ApiView: View {
         // alert dialogs
         .alert(
           self.store.scope(state: \.alert),
-          dismiss: .alertCancelled
+          dismiss: .alertDismissed
         )
         
         // Picker sheet
@@ -86,21 +86,6 @@ public struct ApiView: View {
             )
           }
         )
-        
-        // Connection sheet
-//        .sheet(
-//          isPresented: viewStore.binding(
-//            get: { $0.connectionState != nil },
-//            send: ApiAction.connectionAction(.cancelButton)),
-//          content: {
-//            IfLetStore(
-//              store.scope(state: \.connectionState,
-//                          action: ApiAction.connectionAction
-//                         ),
-//              then: ConnectionView.init(store:)
-//            )
-//          }
-//        )
         
       } else {
         LogView(store: Store(

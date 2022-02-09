@@ -21,7 +21,7 @@ extension Tcp {
       receivedPublisher.send(TcpMessage(timeInterval: Date().timeIntervalSince( _startTime!), direction: .received, text: String(text)))
     }
     // trigger the next read
-    _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
+    readNext()
   }
 
 }

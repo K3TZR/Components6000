@@ -12,19 +12,6 @@ import Shared
 // --------------------------------------------------------------------------------
 // MARK: - Protocols
 
-/// Logging is deferred to the hosting application
-//public protocol LogHandler: AnyObject {
-//    /// Method to process Log entries
-//    /// - Parameters:
-//    ///   - msg:        the message
-//    ///   - level:      a message severity level
-//    ///   - function:   name of the function posting the message
-//    ///   - file:       file containing the function posting the message
-//    ///   - line:       line number of the function posting the message
-//    ///   - source:     a String describing the source
-//    func logMessage(_ msg: String, _ level: MessageLevel, _ function: StaticString, _ file: StaticString, _ line: Int)
-//}
-
 /// Models for which there will only be one instance
 ///   Static Model objects are created / destroyed in the Radio class.
 ///   Static Model object properties are set in the instance's parseProperties method.

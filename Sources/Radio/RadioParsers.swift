@@ -51,8 +51,6 @@ extension Radio {
   }
   
   /// Parse a Reply
-  ///   executed on the parseQ
-  ///
   /// - Parameters:
   ///   - commandSuffix:      a Reply Suffix
   func parseReply(_ replySuffix: Substring) {
@@ -150,8 +148,6 @@ extension Radio {
   }
   
   /// Parse a Client status message
-  ///   executed on the parseQ
-  ///
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray
   ///   - radio:          the current Radio class
@@ -198,7 +194,6 @@ extension Radio {
         //              NC.post(.guiClientHasBeenUpdated, object: client as Any?)
       }
     }
-    
     // parse remaining properties
     for property in properties.dropFirst(2) {
       
@@ -269,9 +264,8 @@ extension Radio {
       }
     }
   }
+
   /// Parse an Interlock status message
-  ///   executed on the parseQ
-  ///
   /// - Parameters:
   ///   - radio:          the current Radio class
   ///   - properties:     a KeyValuesArray
@@ -346,8 +340,6 @@ extension Radio {
   }
   
   /// Parse the Reply to a Version command, reply format: <key=value>#<key=value>#...<key=value>
-  ///   executed on the parseQ
-  ///
   /// - Parameters:
   ///   - properties:          a KeyValuesArray
   func parseVersionReply(_ properties: KeyValuesArray) {
@@ -432,9 +424,6 @@ extension Radio {
     if !_radioInitialized {
       // YES, notify all observers
       _radioInitialized = true
-      
-      // TODO: ???
-      //      NC.post(.radioHasBeenAdded, object: self as Any?)
     }
   }
   
@@ -474,8 +463,6 @@ extension Radio {
   }
   
   /// Parse a Stream status message
-  ///   executed on the parseQ
-  ///
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray
   ///   - radio:          the current Radio class
@@ -521,8 +508,6 @@ extension Radio {
   }
   
   /// Parse a Static Net Properties status message
-  ///   PropertiesParser protocol method, executes on the parseQ
-  ///
   /// - Parameters:
   ///   - properties:      a KeyValuesArray
   private func parseStaticNetProperties(_ properties: KeyValuesArray) {
@@ -545,8 +530,6 @@ extension Radio {
   }
   
   /// Parse an Oscillator Properties status message
-  ///   PropertiesParser protocol method, executes on the parseQ
-  ///
   /// - Parameters:
   ///   - properties:      a KeyValuesArray
   private func parseOscillatorProperties(_ properties: KeyValuesArray) {

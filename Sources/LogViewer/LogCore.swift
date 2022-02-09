@@ -12,13 +12,11 @@ import SwiftUI
 public struct LogState: Equatable {
   public init(domain: String,
               appName: String,
-//              backName: String = "Back",
               fontSize: CGFloat = 12
   )
   {
     self.domain = domain
     self.appName = appName
-//    self.backName = backName
     self.fontSize = fontSize
     self.logLevel = LogLevel(rawValue: UserDefaults.standard.string(forKey: "logLevel") ?? "debug") ?? .debug
     self.filterBy = LogFilter(rawValue: UserDefaults.standard.string(forKey: "filterBy") ?? "none") ?? .none
@@ -32,7 +30,6 @@ public struct LogState: Equatable {
   public var showTimestamps: Bool { didSet { UserDefaults.standard.set(showTimestamps, forKey: "showTimestamps") } }
 
   // normal state
-//  public var backName: String
   public var domain: String
   public var alert: AlertView?
   public var appName: String
@@ -46,7 +43,6 @@ public struct LogState: Equatable {
 public enum LogAction: Equatable {
   // UI actions
   case alertDismissed
-//  case backButton
   case clearButton
   case emailButton
   case filterBy(LogFilter)
@@ -69,15 +65,18 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
   state, action, environment in
   
   switch action {
+    // ----------------------------------------------------------------------------
+    // MARK: - Initialization
     
-  case .alertDismissed:
-    state.alert = nil
-    return .none
+  case .onAppear:
+    if let url = getLogUrl(for: state.domain, appName: state.appName) {
+      state.logUrl = url
+    }
+    return Effect(value: .refreshButton(state.logUrl!))
+
+    // ----------------------------------------------------------------------------
+    // MARK: - UI actions
     
-//  case .backButton:
-//    // handled downstream
-//    return .none
-//
   case .clearButton:
     state.logMessages.removeAll()
     return .none
@@ -118,12 +117,6 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     state.logLevel = level
     return Effect(value: .refreshButton(state.logUrl!))
 
-  case .onAppear:
-    if let url = getLogUrl(for: state.domain, appName: state.appName) {
-      state.logUrl = url
-    }
-    return Effect(value: .refreshButton(state.logUrl!))
-
   case let .refreshButton(url):
     if let messages = readLogFile(at: url ) {
       state.logMessages = filter(messages, level: state.logLevel, filter: state.filterBy, filterText: state.filterByText, showTimes: state.showTimestamps)
@@ -141,6 +134,13 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
   case .timestampsButton:
     state.showTimestamps.toggle()
     return Effect(value: .refreshButton(state.logUrl!))
+    
+    // ----------------------------------------------------------------------------
+    // MARK: - Action sent when an Alert is closed
+    
+  case .alertDismissed:
+    state.alert = nil
+    return .none
   }
 }
-//  .debug("LOG ")
+//  .debug("LOGVIEWER ")

@@ -138,13 +138,13 @@ public enum ApiAction: Equatable {
   case toggleButton(WritableKeyPath<ApiState, Bool>)
   
   // sheet/alert related
-  case alertCancelled
+  case alertDismissed
   case loginAction(LoginAction)
   case pickerAction(PickerAction)
 
   // Effects related
   case filterMessages(MessagesFilter, String)
-  case findDefault
+  case checkForDefault
   case logAlert(LogEntry)
   case tcpAction(TcpMessage)
   case finishInitialization
@@ -193,10 +193,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       }
     }
             
-    switch action {
-      
+    switch action {      
       // ----------------------------------------------------------------------------
-      // MARK: - ApiView initialization
+      // MARK: - Initialization
       
     case .onAppear:
       // if the first time, start Logger, Discovery and the Listeners
@@ -207,14 +206,16 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
 
     case .finishInitialization:
+      // instantiate the Logger
       state.xcgWrapper = XCGWrapper()
+      // instantiate Discovery
       state.discovery = Discovery.sharedInstance
       // listen for broadcast packets
       listenForPackets(state.discovery)
       return .none
 
       // ----------------------------------------------------------------------------
-      // MARK: - ApiView control actions
+      // MARK: - ApiView UI actions
       
     case .apiViewButton:
       state.viewType = .api
@@ -235,6 +236,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .connectionModePicker(let mode):
       state.connectionMode = mode
+      // reconfigure the listeners
       listenForPackets(state.discovery)
       return .none
       
@@ -243,15 +245,16 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
     case .forceLoginButton:
+      // get the current mode
       let savedMode = state.connectionMode
       // stop all listeners
       state.connectionMode = .none
       listenForPackets(state.discovery)
-      // set the flag and restart listeners
+      // set the force flag, restore the mode and restart listeners
       state.forceWanLogin = true
       state.connectionMode = savedMode
       listenForPackets(state.discovery)
-      // reset the flag
+      // turn off the force flag
       state.forceWanLogin = false
       return .none
       
@@ -261,10 +264,12 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .messagesPicker(let filter):
       state.messagesFilterBy = filter
+      // re-filter on change
       return Effect(value: .filterMessages(state.messagesFilterBy, state.messagesFilterByText))
 
     case .messagesFilterTextField(let text):
       state.messagesFilterByText = text
+      // re-filter on change
       return Effect(value: .filterMessages(state.messagesFilterBy, state.messagesFilterByText))
 
     case .objectsPicker(let filterBy):
@@ -280,9 +285,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
     case .startStopButton:
+      // current state?
       if state.radio == nil {
-        // NOT connected, is there a default
-        return Effect(value: .findDefault)
+        // NOT connected, check for a default
+        return Effect(value: .checkForDefault)
         
       } else {
         // CONNECTED, disconnect
@@ -301,13 +307,15 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
       // ----------------------------------------------------------------------------
-      // MARK: - Picker actions
+      // MARK: - Actions sent upstream by the picker (i.e. Picker -> ApiViewer)
       
     case .pickerAction(.cancelButton):
+      // close the Picker sheet
       state.pickerState = nil
       return .none
       
     case .pickerAction(.openSelection(let selection)):
+      // close the Picker sheet
       state.pickerState = nil
       // instantiate a Radio object
       state.radio = Radio(selection.packet,
@@ -345,8 +353,8 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
       // ----------------------------------------------------------------------------
-      // MARK: - Login actions
-      
+      // MARK: - Actions sent upstream by Login (i.e. Login -> ApiViewer)
+
     case .loginAction(.cancelButton):
       state.loginState = nil
       return .none
@@ -358,16 +366,17 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
       // ----------------------------------------------------------------------------
-      // MARK: - Alert actions
+      // MARK: - Action sent when an Alert is closed
       
-    case .alertCancelled:
+    case .alertDismissed:
       state.alert = nil
       return .none
       
       // ----------------------------------------------------------------------------
-      // MARK: - ApiEffects actions
+      // MARK: - Actions sent by other actions or publishers
             
     case .filterMessages(let filterBy, let filterText):
+      // re-filter messages
       switch (filterBy, filterText) {
         
       case (.all, _):        state.filteredMessages = state.messages
@@ -383,19 +392,21 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       }
       return .none
 
-   case .findDefault:
-      // is there a saved default with a matching broadcast packet?
+   case .checkForDefault:
+      // is there a saved default?
       if let saved = state.defaultConnection {
         // YES, find a matching discovered packet
         for packet in state.discovery!.packets where saved.source == packet.source.rawValue && saved.serial == packet.serial {
+          // found one
           return Effect(value: .pickerAction(.openSelection(PickerSelection(packet, saved.station, nil))))
         }
       }
-      // NO, open the Picker
+      // NO default or failed to find a match, open the Picker
       state.pickerState = PickerState(connectionType: state.isGui ? .gui : .nonGui)
       return .none
       
     case .logAlert(let logEntry):
+      // a Warning or Error has been logged. alert the user
       state.alert = .init(title: TextState(
                               """
                               An ERROR or WARNING was logged:
@@ -408,12 +419,15 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
 
     case .tcpAction(let message):
-      // process received TCP messages
+      // process TCP messages (both sent and received)
+      // ignore "ping" messages unless showPings is true
       if message.direction == .sent && message.text.contains("ping") && state.showPings == false { return .none }
+      // add the message to the collection
       state.messages.append(message)
       state.update.toggle()
+      // trigger a re-filter
       return Effect(value: .filterMessages(state.messagesFilterBy, state.messagesFilterByText))
     }
   }
 )
-//  .debug("API ")
+//  .debug("APIVIEWER ")

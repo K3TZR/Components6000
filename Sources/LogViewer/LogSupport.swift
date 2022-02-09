@@ -78,17 +78,11 @@ func readLogFile(at url: URL) -> IdentifiedArrayOf<LogLine>? {
 /// - Parameter text:     the entry
 /// - Returns:            a Color
 func lineColor(_ text: String) -> Color {
-  if text.contains("[Debug]") {
-    return .gray
-  } else if  text.contains("[Info]") {
-    return .primary
-  } else if  text.contains("[Warning]") {
-    return .orange
-  } else if  text.contains("[Error]") {
-    return .red
-  } else {
-    return .primary
-  }
+  if text.contains("[Debug]") { return .gray }
+  else if text.contains("[Info]") { return .primary }
+  else if text.contains("[Warning]") { return .orange }
+  else if text.contains("[Error]") { return .red }
+  else { return .primary }
 }
 
 /// Filter an array of Log entries

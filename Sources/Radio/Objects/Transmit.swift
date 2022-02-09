@@ -1,6 +1,6 @@
 //
 //  Transmit.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 8/16/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -170,7 +170,7 @@ public final class Transmit: ObservableObject {
 // ----------------------------------------------------------------------------
 // MARK: - StaticModel extension
 
-extension Transmit {
+extension Transmit: StaticModel {
   /// Parse a Transmit status message
   /// - Parameter properties:       a KeyValuesArray
   func parseProperties(_ properties: KeyValuesArray) {

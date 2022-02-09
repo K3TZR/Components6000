@@ -22,7 +22,7 @@ extension Udp: GCDAsyncUdpSocketDelegate {
         self?._isRegistered = true
         
         // publish
-        self?.streamPublisher.send(vita)
+        self?.streamPublisher.send( vita )
         
       } else {
         self?._log("UdpStream: Unable to decode Vita packet", .warning, #function, #file, #line)

@@ -41,12 +41,12 @@ public struct LoginEnvironment {
 let loginReducer = Reducer<LoginState, LoginAction, LoginEnvironment>
   { state, action, environment in
     
-    switch action {
-    case .cancelButton:
-      return .none
-      
-    case .loginButton(let result):
-      return .none
-    }
-  
+//    switch action {
+//    case .cancelButton:
+//      return .none
+//
+//    case .loginButton(let result):
+//      return .none
+//    }
+    return .none
   }

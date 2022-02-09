@@ -12,7 +12,7 @@ import SwiftUI
 import Shared
 
 // ----------------------------------------------------------------------------
-// MARK: - View(s)
+// MARK: - View
 
 /// A View to display the contents of the app's log
 ///
@@ -36,6 +36,7 @@ public struct LogView: View {
         LogFooter(store: store)
       }
       .frame(minWidth: 700)
+      
       .alert(
         item: viewStore.binding(
           get: { $0.alert },

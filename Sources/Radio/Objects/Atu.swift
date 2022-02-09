@@ -1,6 +1,6 @@
 //
 //  Atu.swift
-//  Components6000/Radio
+//  Components6000/Radio/Objects
 //
 //  Created by Douglas Adams on 8/15/17.
 //  Copyright © 2017 Douglas Adams. All rights reserved.
@@ -86,7 +86,7 @@ public final class Atu: ObservableObject {
 // ----------------------------------------------------------------------------
 // MARK: - StaticModel extension
 
-extension Atu {
+extension Atu: StaticModel {
   /// Parse an Atu status message
   /// - Parameter properties:       a KeyValuesArray
   func parseProperties(_ properties: KeyValuesArray) {
