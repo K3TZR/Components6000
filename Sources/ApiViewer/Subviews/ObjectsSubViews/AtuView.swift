@@ -1,6 +1,6 @@
 //
 //  AtuView.swift
-//  Components6000/ApiViewer
+//  Components6000/ApiViewer/Subviews/ObjectsSubViews
 //
 //  Created by Douglas Adams on 1/23/22.
 //
@@ -17,7 +17,7 @@ struct AtuView: View {
   var body: some View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
-        let atu = viewStore.radio!.atu!
+        let atu = Objects.sharedInstance.atu!
         HStack(spacing: 20) {
           Text("ATU").padding(.leading, 90)
           Text("Enabled \(atu.enabled ? "Y" : "N")")

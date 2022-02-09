@@ -1,6 +1,6 @@
 //
 //  SwiftUIView.swift
-//  Components6000/ApiViewer
+//  Components6000/ApiViewer/Subviews/ObjectsSubViews
 //
 //  Created by Douglas Adams on 1/24/22.
 //
@@ -8,14 +8,16 @@
 import SwiftUI
 import ComposableArchitecture
 
+import Radio
+
 struct AmplifierView: View {
   let store: Store<ApiState, ApiAction>
   
   var body: some View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
-        let amplifiers = Array(viewStore.radio!.amplifiers.values)
-        
+        let amplifiers = Array(Objects.sharedInstance.amplifiers.values)
+
         ForEach(amplifiers, id: \.id) { amplifier in
           HStack(spacing: 20) {
             Text("Amplifier").frame(width: 100, alignment: .trailing)

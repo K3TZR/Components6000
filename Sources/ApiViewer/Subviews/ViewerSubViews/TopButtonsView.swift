@@ -1,6 +1,6 @@
 //
 //  TopButtonsView.swift
-//  Components6000/ApiViewer
+//  Components6000/ApiViewer/Subviews/ViewerSubViews
 //
 //  Created by Douglas Adams on 1/8/22.
 //
@@ -30,7 +30,6 @@ struct TopButtonsView: View {
           Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .toggleButton(\.isGui)))
           Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .toggleButton(\.showTimes)))
           Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .toggleButton(\.showPings)))
-//          Toggle("WanLogin", isOn: viewStore.binding(get: \.wanLogin, send: .toggleButton(\.wanLogin))).disabled(viewStore.connectionMode == .local)
         }
 
         Spacer()

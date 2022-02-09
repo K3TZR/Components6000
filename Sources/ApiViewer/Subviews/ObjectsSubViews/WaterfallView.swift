@@ -1,6 +1,6 @@
 //
 //  WaterfallView.swift
-//  Components6000/ApiViewer
+//  Components6000/ApiViewer/Subviews/ObjectsSubViews
 //
 //  Created by Douglas Adams on 1/24/22.
 //
@@ -8,6 +8,7 @@
 import SwiftUI
 import ComposableArchitecture
 
+import Radio
 import Shared
 
 struct WaterfallView: View {
@@ -18,8 +19,8 @@ struct WaterfallView: View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
         
-        let waterfalls = Array(viewStore.radio!.waterfalls.values)
-        
+        let waterfalls = Array(Objects.sharedInstance.waterfalls.values)
+
         ForEach(waterfalls) { waterfall in
           if waterfall.panadapterId == panadapterId {
             HStack(spacing: 20) {
@@ -32,7 +33,6 @@ struct WaterfallView: View {
             }
           }
         }
-//        .frame(maxWidth: .infinity, alignment: .leading)
       }
     }
   }

@@ -1,6 +1,6 @@
 //
 //  PanadapterView.swift
-//  Components6000/ApiViewer
+//  Components6000/ApiViewer/Subviews/ObjectsSubViews
 //
 //  Created by Douglas Adams on 1/24/22.
 //
@@ -8,6 +8,7 @@
 import SwiftUI
 import ComposableArchitecture
 
+import Radio
 import Shared
 
 struct PanadapterView: View {
@@ -19,8 +20,8 @@ struct PanadapterView: View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
         
-        let panadapters = Array(viewStore.radio!.panadapters.values)
-        
+        let panadapters = Array(Objects.sharedInstance.panadapters.values)
+
         ForEach(panadapters) { panadapter in
           if panadapter.clientHandle == handle {
             HStack(spacing: 20) {
@@ -33,7 +34,6 @@ struct PanadapterView: View {
             SliceView(store: store, panadapterId: panadapter.id, showMeters: showMeters)
           }
         }
-//        .frame(maxWidth: .infinity, alignment: .leading)
       }
     }
   }

@@ -1,6 +1,6 @@
 //
 //  TnfView.swift
-//  Components6000/ApiViewer
+//  Components6000/ApiViewer/Subviews/ObjectsSubViews
 //
 //  Created by Douglas Adams on 1/23/22.
 //
@@ -8,14 +8,16 @@
 import SwiftUI
 import ComposableArchitecture
 
+import Radio
+
 struct TnfView: View {
   let store: Store<ApiState, ApiAction>
   
   var body: some View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
-        let tnfs = Array(viewStore.radio!.tnfs.values)
-        
+        let tnfs = Array(Objects.sharedInstance.tnfs.values)
+
         ForEach(tnfs, id: \.id) { tnf in
           HStack(spacing: 20) {
             Text("Tnf").frame(width: 100, alignment: .trailing)

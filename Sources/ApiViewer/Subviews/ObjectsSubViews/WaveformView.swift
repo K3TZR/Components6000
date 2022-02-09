@@ -1,6 +1,6 @@
 //
 //  WaveformView.swift
-//  Components6000/ApiViewer
+//  Components6000/ApiViewer/Subviews/ObjectsSubViews
 //
 //  Created by Douglas Adams on 1/23/22.
 //
@@ -14,7 +14,6 @@ struct WaveformView: View {
   var body: some View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
-        //        let waveforms = viewStore.radio!.waveforms
         
         HStack(spacing: 20) {
           Text("WAVEFORM -> ").frame(width: 140, alignment: .leading)

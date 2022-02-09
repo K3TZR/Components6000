@@ -1,6 +1,6 @@
 //
 //  NonGuiClientView.swift
-//  
+//  Components6000/ApiViewer/Subviews/ObjectsSubViews
 //
 //  Created by Douglas Adams on 1/25/22.
 //
@@ -19,7 +19,6 @@ struct NonGuiClientView: View {
           HStack(spacing: 20) {
             Text("NONGUI CLIENT -> ").frame(width: 140, alignment: .leading)
             Text(viewStore.radio!.station).frame(width: 120, alignment: .leading)
-//            Text("Handle \(viewStore.radio!.connectionHandle!.hex)")
           }
           if viewStore.objectsFilterBy == .streams { StreamView(store: store) }
           if viewStore.objectsFilterBy == .transmit { TransmitView(store: store) }

@@ -28,8 +28,8 @@ struct MeterView: View {
   var body: some View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
-        let meters = Array(viewStore.radio!.meters.values).sorted {$0.id < $1.id}
-        
+        let meters = Array(Objects.sharedInstance.meters.values).sorted {$0.id < $1.id}
+
         VStack(alignment: .leading) {
           ForEach(meters, id: \.id) { meter in
             HStack(spacing: 0) {

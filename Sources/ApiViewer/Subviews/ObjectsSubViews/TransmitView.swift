@@ -1,6 +1,6 @@
 //
 //  TransmitView.swift
-//  Components6000/ApiViewer
+//  Components6000/ApiViewer/Subviews/ObjectsSubViews
 //
 //  Created by Douglas Adams on 1/23/22.
 //
@@ -8,13 +8,15 @@
 import SwiftUI
 import ComposableArchitecture
 
+import Radio
+
 struct TransmitView: View {
   let store: Store<ApiState, ApiAction>
   
   var body: some View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
-        let transmit = viewStore.radio!.transmit!
+        let transmit = Objects.sharedInstance.transmit!
         let width: CGFloat = 80
         
         VStack {

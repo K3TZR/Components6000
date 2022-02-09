@@ -1,6 +1,6 @@
 //
 //  StreamView.swift
-//  Components6000/ApiViewer
+//  Components6000/ApiViewer/Subviews/ObjectsSubViews
 //
 //  Created by Douglas Adams on 1/23/22.
 //
@@ -8,6 +8,7 @@
 import SwiftUI
 import ComposableArchitecture
 
+import Radio
 import Shared
 
 struct StreamView: View {
@@ -16,13 +17,13 @@ struct StreamView: View {
   var body: some View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
-        let remoteRx = Array(viewStore.radio!.remoteRxAudioStreams.values)
-        let remoteTx = Array(viewStore.radio!.remoteTxAudioStreams.values)
-        let daxMic = Array(viewStore.radio!.daxMicAudioStreams.values)
-        let daxRx = Array(viewStore.radio!.daxRxAudioStreams.values)
-        let daxTx = Array(viewStore.radio!.daxTxAudioStreams.values)
-        let daxIq = Array(viewStore.radio!.daxIqStreams.values)
-        
+        let remoteRx = Array(Objects.sharedInstance.remoteRxAudioStreams.values)
+        let remoteTx = Array(Objects.sharedInstance.remoteTxAudioStreams.values)
+        let daxMic = Array(Objects.sharedInstance.daxMicAudioStreams.values)
+        let daxRx = Array(Objects.sharedInstance.daxRxAudioStreams.values)
+        let daxTx = Array(Objects.sharedInstance.daxTxAudioStreams.values)
+        let daxIq = Array(Objects.sharedInstance.daxIqStreams.values)
+
         VStack(alignment: .leading) {
           ForEach(remoteRx) { stream in
             if viewStore.radio!.connectionHandle == stream.clientHandle {

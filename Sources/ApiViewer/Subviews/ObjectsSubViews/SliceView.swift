@@ -1,6 +1,6 @@
 //
 //  SliceView.swift
-//  
+//  Components6000/ApiViewer/Subviews/ObjectsSubViews
 //
 //  Created by Douglas Adams on 1/24/22.
 //
@@ -8,6 +8,7 @@
 import SwiftUI
 import ComposableArchitecture
 
+import Radio
 import Shared
 
 struct SliceView: View {
@@ -19,8 +20,8 @@ struct SliceView: View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
         
-        let slices = Array(viewStore.radio!.slices.values)
-          
+        let slices = Array(Objects.sharedInstance.slices.values)
+
           ForEach(slices) { slice in
             if slice.panadapterId == panadapterId {
               HStack(spacing: 20) {
