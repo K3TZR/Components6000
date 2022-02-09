@@ -17,6 +17,7 @@ import Shared
 struct PacketEffectId: Hashable {}
 struct ClientEffectId: Hashable {}
 struct TestEffectId: Hashable {}
+struct WanStatusSubscriptionId: Hashable {}
 
 public struct PickerState: Equatable {
   public init(connectionType: ConnectionType = .gui,
@@ -59,9 +60,11 @@ public enum PickerAction: Equatable {
 
   // effect related
   case clientChange(ClientChange)
+  case checkConnections(PickerSelection)
   case packetChange(PacketChange)
   case testResultReceived(SmartlinkTestResult)
   case openSelection(PickerSelection)
+  case wanStatus(WanStatus)
 }
 
 public struct PickerEnvironment {
@@ -96,21 +99,16 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
 
     case .cancelButton:
       // stop subscribing to Discovery broadcasts
+      // handled downstream
       return .cancel(ids: PacketEffectId(), ClientEffectId())
 
     case .connectButton(let selection):
-      // are there multiple Gui connections?
-      if state.connectionType == .gui && selection.packet.guiClients.count > 0 {
-        // YES, may need a disconnect, let the user choose
-        state.connectionState = ConnectionState(pickerSelection: selection)
-        return .none
-      
+      if selection.packet.source == .smartlink {
+          // get wan specific params (wanHandle)
+          state.discovery.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
+          return .none
       } else {
-        // NO, handled downstream (open radio)
-        // stop subscribing to Discovery broadcasts
-        return .concatenate(
-          .cancel(ids: PacketEffectId(), ClientEffectId()),
-          Effect(value: .openSelection(selection)))
+        return Effect(value: .checkConnections(selection))
       }
 
     case .defaultButton(let selection):
@@ -119,11 +117,12 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       } else {
         state.defaultSelection = selection
       }
+      // handled downstream
       return .none
 
     case .onAppear:
       // subscribe to Discovery broadcasts (long-running Effect)
-      return environment.discoveryEffect()
+      return .merge(environment.discoveryEffect(), wanStatus())
       
     case .selection(let selection):
       state.pickerSelection = selection
@@ -167,9 +166,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       state.connectionState = nil
       // handled downstream (open radio)
       // stop subscribing to Discovery broadcasts
-      return .concatenate(
-        .cancel(ids: PacketEffectId(), ClientEffectId()),
-        Effect(value: .openSelection(PickerSelection(selection.packet, selection.station, disconnectHandle))))
+      return Effect(value: .openSelection(PickerSelection(selection.packet, selection.station, disconnectHandle)))
 
       // ----------------------------------------------------------------------------
       // MARK: - Alert actions
@@ -185,10 +182,22 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // process a GuiClient change
       return .none
       
+    case .checkConnections(let selection):
+      // are there multiple Gui connections?
+      if state.connectionType == .gui && selection.packet.guiClients.count > 0 {
+        // YES, may need a disconnect, let the user choose
+        state.connectionState = ConnectionState(pickerSelection: selection)
+        return .none
+      
+      } else {
+        // simple open
+        return Effect(value: .openSelection(selection))
+      }
+
     case .openSelection(_):
       // handled downstream
-      return .none
-
+      return .cancel(ids: PacketEffectId(), ClientEffectId())
+      
     case .packetChange(let update):
       // process a DiscoveryPacket change
       state.forceUpdate.toggle()
@@ -199,6 +208,15 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .cancel(ids: TestEffectId())
       
     case .connectionAction(_):
+      return .none
+      
+    case.wanStatus(let status):
+      if state.pickerSelection != nil && status.type == .connect && status.wanHandle != nil {
+        state.pickerSelection!.packet.wanHandle = status.wanHandle!
+        return .concatenate(
+          .cancel(id: WanStatusSubscriptionId()),
+          Effect(value: .openSelection(state.pickerSelection!)))
+      }
       return .none
     }
   }

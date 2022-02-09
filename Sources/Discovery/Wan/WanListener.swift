@@ -125,8 +125,7 @@ final class WanListener: NSObject, ObservableObject {
   private var _appName: String?
   private var _authentication = Authentication()
   private var _cancellables = Set<AnyCancellable>()
-  private var _currentHost: String?
-  private var _currentPort: UInt16 = 0
+  private var _domain: String?
   private var _idToken: IdToken? = nil
   private let _pingQ = DispatchQueue(label: "WanListener.pingQ")
   private var _platform: String?
@@ -140,7 +139,7 @@ final class WanListener: NSObject, ObservableObject {
   
   private let kSmartlinkHost = "smartlink.flexradio.com"
   private let kSmartlinkPort: UInt16 = 443
-  private let kAppName = "Components6000.Discovery"
+//  private let kAppName = "Components6000.Discovery"
   private let kPlatform = "macOS"
   
   // ------------------------------------------------------------------------------
@@ -149,14 +148,16 @@ final class WanListener: NSObject, ObservableObject {
   convenience init(_ discovery: Discovery, timeout: Double = kTimeout) {
     self.init()
     
+    _appName = (Bundle.main.infoDictionary!["CFBundleName"] as! String)
     _timeout = timeout
     _discovery = discovery
-    
+
     // get a socket & set it's parameters
     _tcpSocket = GCDAsyncSocket(delegate: self, delegateQueue: _socketQ)
     _tcpSocket.isIPv4PreferredOverIPv6 = true
     _tcpSocket.isIPv6Enabled = false
     
+
     _log("Discovery: Wan Listener TCP Socket initialized", .debug, #function, #file, #line)
   }
   
@@ -268,11 +269,8 @@ extension WanListener: GCDAsyncSocketDelegate {
   public func socket(_ sock: GCDAsyncSocket,
                      didConnectToHost host: String,
                      port: UInt16) {
-    // Connected to the SmartLink server, save the ip & port
-    _currentHost = host
-    _currentPort = port
     
-    _log("Discovery: Wan Listener TCP Socket connection established", .debug, #function, #file, #line)
+    _log("Discovery: Wan Listener TCP Socket didConnectToHost, \(host):\(port)", .debug, #function, #file, #line)
     
     // initiate a secure (TLS) connection to the Smartlink server
     var tlsSettings = [String : NSObject]()
@@ -283,14 +281,14 @@ extension WanListener: GCDAsyncSocketDelegate {
   }
   
   public func socketDidSecure(_ sock: GCDAsyncSocket) {
-    _log("Discovery: Wan Listener TLS Socket did secure", .debug, #function, #file, #line)
+    _log("Discovery: Wan Listener TLS socketDidSecure", .debug, #function, #file, #line)
     
     // start pinging SmartLink server
     startPinging()
     
     // register the Application / token pair with the SmartLink server
-    sendTlsCommand("application register appName=\(kAppName) platform=\(kPlatform) token=\(_idToken!)", timeout: _timeout, tag: 0)
-    
+    sendTlsCommand("application register name=\(_appName!) platform=\(kPlatform) token=\(_idToken!)", timeout: _timeout, tag: 0)
+
     // start reading
     _log("Discovery: Wan Listener is listening", .debug, #function, #file, #line)
     _tcpSocket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
@@ -309,13 +307,8 @@ extension WanListener: GCDAsyncSocketDelegate {
   public func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
     // Disconnected from the Smartlink server
     let error = (err == nil ? "" : " with error: " + err!.localizedDescription)
-    _log("Discovery: Wan Listener TCP socket disconnected \(error) from: Host=\(_currentHost ?? "nil") Port=\(_currentPort)",
-         err == nil ? .debug : .warning,
-         #function, #file, #line)
-    
-//    DispatchQueue.main.async { self.isListening = false }
-    _currentHost = ""
-    _currentPort = 0
+    _log("Discovery: Wan Listener TCP socketDidDisconnect \(error)",
+         err == nil ? .debug : .warning, #function, #file, #line)
   }
   
   public func socket(_ sock: GCDAsyncSocket, shouldTimeoutWriteWithTag tag: Int, elapsed: TimeInterval, bytesDone length: UInt) -> TimeInterval {

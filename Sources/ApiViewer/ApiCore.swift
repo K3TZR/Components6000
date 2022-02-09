@@ -148,7 +148,6 @@ public enum ApiAction: Equatable {
   case logAlert(LogEntry)
   case tcpAction(TcpMessage)
   case finishInitialization
-  case wanStatus(WanStatus)
 }
 
 public struct ApiEnvironment {
@@ -203,7 +202,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // if the first time, start Logger, Discovery and the Listeners
       if state.xcgWrapper == nil {
         // listen for log alerts, capture TCP messages (sent & received)
-        return .merge(logAlerts(), wanStatus(), sentMessages(state.tcp), receivedMessages(state.tcp), Effect(value: .finishInitialization))
+        return .merge(logAlerts(), sentMessages(state.tcp), receivedMessages(state.tcp), Effect(value: .finishInitialization))
       }
       return .none
 
@@ -310,32 +309,27 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .pickerAction(.openSelection(let selection)):
       state.pickerState = nil
-      if selection.packet.source == .smartlink {
-        state.discovery?.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
-        return .none
-      } else {
-        // instantiate a Radio object
-        state.radio = Radio(selection.packet,
-                            connectionType: state.isGui ? .gui : .nonGui,
-                            command: state.tcp,
-                            stream: Udp(),
-                            stationName: "Api6000",
-                            programName: "Api6000",
-                            disconnectHandle: selection.disconnectHandle,
-                            testerModeEnabled: true)
-        // try to connect
-        if state.radio!.connect(selection.packet) {
-          // connected
-          if state.clearOnConnect {
-            state.messages.removeAll()
-            state.filteredMessages.removeAll()
-          }
-        } else {
-          // failed
-          state.alert = AlertState(title: TextState("Failed to connect to Radio \(selection.packet.nickname)"))
+      // instantiate a Radio object
+      state.radio = Radio(selection.packet,
+                          connectionType: state.isGui ? .gui : .nonGui,
+                          command: state.tcp,
+                          stream: Udp(),
+                          stationName: "Api6000",
+                          programName: "Api6000",
+                          disconnectHandle: selection.disconnectHandle,
+                          testerModeEnabled: true)
+      // try to connect
+      if state.radio!.connect(selection.packet) {
+        // connected
+        if state.clearOnConnect {
+          state.messages.removeAll()
+          state.filteredMessages.removeAll()
         }
-        return .none
+      } else {
+        // failed
+        state.alert = AlertState(title: TextState("Failed to connect to Radio \(selection.packet.nickname)"))
       }
+      return .none
       
     case .pickerAction(.defaultButton(let selection)):
       // set / reset the default connection
@@ -419,10 +413,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.messages.append(message)
       state.update.toggle()
       return Effect(value: .filterMessages(state.messagesFilterBy, state.messagesFilterByText))
-
-    case .wanStatus(let status):
-      print("\(status)")
-      return .none
     }
   }
 )

@@ -42,6 +42,7 @@ func sentMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
     .receive(on: DispatchQueue.main)
     // convert to TcpMessage format
     .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
+//    .print()
     .eraseToEffect()
     .cancellable(id: SentCommandSubscriptionId())
 }
@@ -55,6 +56,7 @@ func receivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
     .receive(on: DispatchQueue.main)
     // convert to TcpMessage format
     .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
+//    .print()
     .eraseToEffect()
     .cancellable(id: ReceivedCommandSubscriptionId())
 }
@@ -66,15 +68,6 @@ func logAlerts() -> Effect<ApiAction, Never> {
     .map { logEntry in .logAlert(logEntry) }
     .eraseToEffect()
     .cancellable(id: LogAlertSubscriptionId())
-}
-
-func wanStatus() -> Effect<ApiAction, Never> {
-  
-  Discovery.sharedInstance.wanStatusPublisher
-    .receive(on: DispatchQueue.main)
-    .map { status in .wanStatus(status) }
-    .eraseToEffect()
-    .cancellable(id: WanStatusSubscriptionId())
 }
 
 // ----------------------------------------------------------------------------

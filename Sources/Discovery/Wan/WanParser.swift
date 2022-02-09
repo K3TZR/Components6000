@@ -68,7 +68,8 @@ extension WanListener {
     switch token {
       
     case .application:        parseApplication(Array(properties.dropFirst()))
-    case .radio:              parseRadio(Array(properties.dropFirst()), msg: msg)
+    case .radio:
+      parseRadio(Array(properties.dropFirst()), msg: msg)
     case .Received:           break   // ignore message on Test connection
     }
   }
@@ -105,7 +106,8 @@ extension WanListener {
     // which secondary message type?
     switch token {
       
-    case .connectReady:       parseRadioConnectReady(Array(properties.dropFirst()))
+    case .connectReady:
+      parseRadioConnectReady(Array(properties.dropFirst()))
     case .list:               parseRadioList(msg.dropFirst(11))
     case .testConnection:     parseTestConnectionResults(Array(properties.dropFirst()))
     }
@@ -114,6 +116,9 @@ extension WanListener {
   /// Parse a received "application" message
   /// - Parameter properties:         a KeyValuesArray
   private func parseApplicationInfo(_ properties: KeyValuesArray) {
+    
+    _log("Discovery: Wan Parser ApplicationInfo received", .debug, #function, #file, #line)
+
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys
@@ -144,6 +149,8 @@ extension WanListener {
   /// - Parameter properties:         a KeyValuesArray
   private func parseUserSettings(_ properties: KeyValuesArray) {
     
+    _log("Discovery: Wan Parser UserSettings received", .debug, #function, #file, #line)
+
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys
@@ -170,6 +177,9 @@ extension WanListener {
   /// Parse a received "connect ready" message
   /// - Parameter properties:         a KeyValuesArray
   private func parseRadioConnectReady(_ properties: KeyValuesArray) {
+    
+    _log("Discovery: Wan Parser ConnectReady received", .debug, #function, #file, #line)
+
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys
@@ -201,6 +211,8 @@ extension WanListener {
     // several radios are possible, separate list into its components
     let radioMessages = msg.components(separatedBy: "|")
     
+    _log("Discovery: Wan Parser RadioList received", .debug, #function, #file, #line)
+
     for message in radioMessages where message != "" {
       if var packet = _discovery?.populatePacket( message.keyValuesArray() ) {
         // now continue to fill the radio parameters
@@ -260,7 +272,7 @@ extension WanListener {
       case .upnpUdpPortWorking:         result.upnpUdpPortWorking = property.value.tValue
       }
     }
-    _log("Discovery: smartlink test \(result.success ? "success" : "failure")", result.success ? .debug : .warning, #function, #file, #line)
+    _log("Discovery: WanParser TestConnectionResults received, \(result.success ? "success" : "failure")", result.success ? .debug : .warning, #function, #file, #line)
     // publish the result
     _discovery?.testPublisher.send(result)
   }

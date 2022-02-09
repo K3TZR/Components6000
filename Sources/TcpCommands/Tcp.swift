@@ -144,6 +144,10 @@ final public class Tcp: NSObject {
     return success
   }
   
+  public func readNext() {
+    _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
+  }
+  
   /// Disconnect TCP from the Radio (hardware)
   public func disconnect() {
     _socket.disconnect()
@@ -158,6 +162,7 @@ extension Tcp: GCDAsyncSocketDelegate {
   public func socketDidSecure(_ sock: GCDAsyncSocket) {
     // TLS connection complete
     _log("TcpCommand: TLS socket did secure", .debug, #function, #file, #line)
+    readNext()
     statusPublisher.send(
       TcpStatus(.didSecure,
                 host: sock.connectedHost ?? "",
@@ -203,7 +208,8 @@ extension Tcp: GCDAsyncSocketDelegate {
       )
       // trigger the next read
       _startTime = Date()
-      _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
+//      _socket.readData(to: GCDAsyncSocket.lfData(), withTimeout: -1, tag: 0)
+      readNext()
     }
   }
 }
