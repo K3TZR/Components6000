@@ -95,6 +95,45 @@ class PickerTests: XCTestCase {
     store.send(.cancelButton)
   }
 
+  func testClientSubscription() {
+    let store = TestStore(
+      initialState: .init(),
+      reducer: pickerReducer,
+      environment: PickerEnvironment(
+        queue: { self.testScheduler.eraseToAnyScheduler() },
+        discoveryEffect: mockClientSubscriptions
+      )
+    )
+    store.send(.onAppear)
+    
+    var testPacket = Packet()
+    
+    testPacket.id = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+    testPacket.nickname = "Dougs 6500"
+    testPacket.status = "Available"
+    testPacket.serial = "1234-5678-9012-3456"
+    testPacket.publicIp = "10.0.1.200"
+    testPacket.guiClientHandles = "1"
+    testPacket.guiClientPrograms = "SmartSDR-Windows"
+    testPacket.guiClientStations = "Windows"
+    testPacket.guiClientHosts = ""
+    testPacket.guiClientIps = "192.168.1.200"
+    
+    let testGuiClient = GuiClient(handle: 1, station: "Windows", program: "SmartSDR-Windows", clientId: nil, host: "201.0.1.2", ip: "192.168.1.200", isLocalPtt: true, isThisClient: true)
+    
+    testScheduler.advance()
+    // PUBLISH a Packet added
+    mockClientPublisher.send( ClientChange(.added, client: testGuiClient ))
+    
+    testScheduler.advance()
+    // Receive the added Packet
+    store.receive( .clientChange( ClientChange(.added, client: testGuiClient ))) {
+      $0.discovery.packets = [testPacket]
+      $0.discovery.stations = [testPacket]
+    }
+    store.send(.cancelButton)
+  }
+
   // ----------------------------------------------------------------------------
   // MARK: - testIsKnownPacket
 

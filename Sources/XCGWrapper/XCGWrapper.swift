@@ -16,9 +16,10 @@ public final class XCGWrapper: Equatable {
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
   
-  var log: XCGLogger {
-    get { _logQ.sync { _log } }
-    set { _logQ.sync(flags: .barrier) {_log = newValue }}}
+  public let log: XCGLogger
+//  {
+//    get { _logQ.sync { _log } }
+//    set { _logQ.sync(flags: .barrier) {_log = newValue }}}
   
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
@@ -27,7 +28,7 @@ public final class XCGWrapper: Equatable {
   private var _defaultLogUrl: URL!
   private var _log: XCGLogger!
   private var _logCancellable: AnyCancellable?
-  private var _logQ = DispatchQueue(label: "XCGWrapper.logQ", attributes: [.concurrent])
+//  private var _logQ = DispatchQueue(label: "XCGWrapper.logQ", attributes: [.concurrent])
 
   private let kMaxLogFiles: UInt8  = 10
   private let kMaxTime: TimeInterval = 60 * 60 // 1 Hour
@@ -37,27 +38,35 @@ public final class XCGWrapper: Equatable {
   }
 
   // ----------------------------------------------------------------------------
-  // MARK: - Initialization
+  // MARK: - Singleton
   
-  public init(logLevel: XCGLogger.Level = .verbose) {
+  public init(_ logLevel: LogLevel = .debug) {
+    var xcgLogLevel: XCGLogger.Level
+    switch logLevel {
+    case .debug:
+      xcgLogLevel = XCGLogger.Level.debug
+    case .info:
+      xcgLogLevel = XCGLogger.Level.info
+    case .warning:
+      xcgLogLevel = XCGLogger.Level.warning
+    case .error:
+      xcgLogLevel = XCGLogger.Level.error
+    }
     
-    let bundleIdentifier = Bundle.main.bundleIdentifier ?? "net.k3tzr.XCGWrapper"
-    let separator = bundleIdentifier.lastIndex(of: ".")!
-    let appName = String(bundleIdentifier.suffix(from: bundleIdentifier.index(separator, offsetBy: 1)))
-    let domain = String(bundleIdentifier.prefix(upTo: separator))
+    let info = getBundleInfo()
     
-    _log = XCGLogger(identifier: appName, includeDefaultDestinations: false)
+    log = XCGLogger(identifier: info.appName, includeDefaultDestinations: false)
     
-    let defaultLogName = appName + ".log"
-    _defaultFolder = URL.appSupport.path + "/" + bundleIdentifier + "/Logs"
+    let defaultLogName = info.appName + ".log"
+    _defaultFolder = URL.appSupport.path + "/" + info.domain + "." + info.appName  + "/Logs"
 
 #if DEBUG
     // for DEBUG only
     // Create a destination for the system console log (via NSLog)
-    let systemDestination = AppleSystemLogDestination(identifier: appName + ".systemDestination")
+    let systemDestination = AppleSystemLogDestination(identifier: info.appName + ".systemDestination")
     
     // Optionally set some configuration options
-    systemDestination.outputLevel           = logLevel
+    systemDestination.outputLevel           = xcgLogLevel
     systemDestination.showFileName          = false
     systemDestination.showFunctionName      = false
     systemDestination.showLevel             = true
@@ -70,14 +79,14 @@ public final class XCGWrapper: Equatable {
 #endif
     
     // Get / Create a file log destination
-    if let logs = setupLogFolder(appName: appName, domain: domain) {
+    if let logs = setupLogFolder(info) {
       let fileDestination = AutoRotatingFileDestination(writeToFile: logs.appendingPathComponent(defaultLogName),
-                                                        identifier: appName + ".autoRotatingFileDestination",
-                                                        shouldAppend: true,
-                                                        appendMarker: "- - - - - App was restarted - - - - -")
+                                                        identifier: info.appName + ".autoRotatingFileDestination")
+//                                                        shouldAppend: true,
+//                                                        appendMarker: "- - - - - App was restarted - - - - -")
       
       // Optionally set some configuration options
-      fileDestination.outputLevel             = logLevel
+      fileDestination.outputLevel             = xcgLogLevel
       fileDestination.showDate                = true
       fileDestination.showFileName            = false
       fileDestination.showFunctionName        = false
@@ -120,31 +129,4 @@ public final class XCGWrapper: Equatable {
       fatalError("Logging failure:, unable to find / create Log folder")
     }
   }
-  
-  // ----------------------------------------------------------------------------
-  // MARK: - Internal methods
-  
-  func setupLogFolder(appName: String, domain: String) -> URL? {
-    createAsNeeded(domain + "." + appName + "/Logs")
-  }
-  
-  // ----------------------------------------------------------------------------
-  // MARK: - Private methods
-  
-  private func createAsNeeded(_ folder: String) -> URL? {
-    let fileManager = FileManager.default
-    let folderUrl = URL.appSupport.appendingPathComponent( folder )
-    // try to create it
-    do {
-      try fileManager.createDirectory( at: folderUrl, withIntermediateDirectories: true, attributes: nil)
-    } catch {
-      return nil
-    }
-    return folderUrl
-  }
-}
-
-
-extension URL {
-  static var appSupport : URL { return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first! }
 }

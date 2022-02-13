@@ -17,10 +17,10 @@ import Shared
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums used by ApiViewer
 
-struct ReceivedCommandSubscriptionId: Hashable {}
-struct SentCommandSubscriptionId: Hashable {}
-struct LogAlertSubscriptionId: Hashable {}
-struct WanStatusSubscriptionId: Hashable {}
+struct ReceivedCommandId: Hashable {}
+struct SentCommandId: Hashable {}
+struct LogAlertId: Hashable {}
+struct WanStatusId: Hashable {}
 
 public struct DefaultConnection: Codable, Equatable {
 
@@ -117,7 +117,7 @@ func startWanListener(_ discovery: Discovery, using smartlinkEmail: String, forc
     try discovery.startWanListener(smartlinkEmail: smartlinkEmail, forceLogin: forceLogin)
     return nil
   } catch WanListenerError.kFailedToObtainIdToken {
-    return AlertState(title: TextState("Discovery: Wan Logoin required"))
+    return AlertState(title: TextState("Discovery: Wan Login required"))
   } catch WanListenerError.kFailedToConnect {
     return AlertState(title: TextState("Discovery: Wan Listener, Failed to Connect"))
   } catch {
@@ -144,7 +144,7 @@ func startWanListener(_ discovery: Discovery, using loginResult: LoginResult) ->
 
 /// Read the user defaults entry for a default connection and transform it into a DefaultConnection struct
 /// - Returns:         a DefaultConnection struct or nil
-func getDefaultConnection() -> DefaultConnection? {
+public func getDefaultConnection() -> DefaultConnection? {
   if let defaultData = UserDefaults.standard.object(forKey: "defaultConnection") as? Data {
     let decoder = JSONDecoder()
     if let defaultConnection = try? decoder.decode(DefaultConnection.self, from: defaultData) {
@@ -157,7 +157,7 @@ func getDefaultConnection() -> DefaultConnection? {
 }
 
 /// Write the user defaults entry for a default connection using a DefaultConnection struct
-func setDefaultConnection(_ conn: DefaultConnection?) {
+public func setDefaultConnection(_ conn: DefaultConnection?) {
   if conn == nil {
     UserDefaults.standard.removeObject(forKey: "defaultConnection")
   } else {

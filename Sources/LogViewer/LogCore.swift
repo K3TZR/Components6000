@@ -10,18 +10,20 @@ import Shared
 import SwiftUI
 
 public struct LogState: Equatable {
-  public init(domain: String,
-              appName: String,
+  public init(logLevel: LogLevel = LogLevel(rawValue: UserDefaults.standard.string(forKey: "logLevel") ?? "debug") ?? .debug,
+              filterBy: LogFilter = LogFilter(rawValue: UserDefaults.standard.string(forKey: "filterBy") ?? "none") ?? .none,
+              filterByText: String = UserDefaults.standard.string(forKey: "filterByText") ?? "",
+              showTimestamps: Bool = UserDefaults.standard.bool(forKey: "showTimestamps"),
               fontSize: CGFloat = 12
   )
   {
-    self.domain = domain
-    self.appName = appName
+//    self.domain = domain
+//    self.appName = appName
     self.fontSize = fontSize
-    self.logLevel = LogLevel(rawValue: UserDefaults.standard.string(forKey: "logLevel") ?? "debug") ?? .debug
-    self.filterBy = LogFilter(rawValue: UserDefaults.standard.string(forKey: "filterBy") ?? "none") ?? .none
-    self.filterByText = UserDefaults.standard.string(forKey: "filterByText") ?? ""
-    self.showTimestamps = UserDefaults.standard.bool(forKey: "showTimestamps")
+    self.logLevel = logLevel
+    self.filterBy = filterBy
+    self.filterByText = filterByText
+    self.showTimestamps = showTimestamps
   }
   // State held in User Defaults
   public var filterBy: LogFilter { didSet { UserDefaults.standard.set(filterBy.rawValue, forKey: "filterBy") } }
@@ -30,9 +32,9 @@ public struct LogState: Equatable {
   public var showTimestamps: Bool { didSet { UserDefaults.standard.set(showTimestamps, forKey: "showTimestamps") } }
 
   // normal state
-  public var domain: String
+//  public var domain: String
   public var alert: AlertView?
-  public var appName: String
+//  public var appName: String
   public var logUrl: URL?
   public var fontSize: CGFloat = 12
   public var logMessages = IdentifiedArrayOf<LogLine>()
@@ -50,15 +52,23 @@ public enum LogAction: Equatable {
   case fontSize(CGFloat)
   case loadButton
   case logLevel(LogLevel)
-  case onAppear
-  case refreshButton(URL)
+  case onAppear(LogLevel)
+  case refreshButton(URL, LogLevel)
   case saveButton
   case timestampsButton
 }
 
 public struct LogEnvironment {
-  
-  public init() {}
+  public init(
+    queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
+    uuid: @escaping () -> UUID = { .init() }
+  )
+  {
+    self.queue = queue
+    self.uuid = uuid
+  }
+  var queue: () -> AnySchedulerOf<DispatchQueue>
+  var uuid: () -> UUID
 }
 
 public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
@@ -68,11 +78,10 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     // ----------------------------------------------------------------------------
     // MARK: - Initialization
     
-  case .onAppear:
-    if let url = getLogUrl(for: state.domain, appName: state.appName) {
-      state.logUrl = url
-    }
-    return Effect(value: .refreshButton(state.logUrl!))
+  case .onAppear(let logLevel):
+    let info = getBundleInfo()
+    state.logUrl = URL.appSupport.appendingPathComponent(info.domain + "." + info.appName + "/Logs/" + info.appName + ".log" )
+    return Effect(value: .refreshButton(state.logUrl!, logLevel))
 
     // ----------------------------------------------------------------------------
     // MARK: - UI actions
@@ -85,13 +94,13 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     state.alert = AlertView(title: "Email: NOT IMPLEMENTED")
     return .none
     
-  case let .filterBy(filter):
+  case .filterBy(let filter):
     state.filterBy = filter
-    return Effect(value: .refreshButton(state.logUrl!))
+    return Effect(value: .refreshButton(state.logUrl!, state.logLevel))
 
-  case let .filterByText(text):
+  case .filterByText(let text):
     state.filterByText = text
-    return Effect(value: .refreshButton(state.logUrl!))
+    return Effect(value: .refreshButton(state.logUrl!, state.logLevel))
 
   case let .fontSize(value):
     state.fontSize = value
@@ -104,7 +113,7 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
         let fileString = try String(contentsOf: url)
         let fileArray = fileString.components(separatedBy: "\n")
         for item in fileArray {
-          state.logMessages.append(LogLine(text: item, color: lineColor(item)))
+          state.logMessages.append(LogLine(uuid: environment.uuid(), text: item, color: lineColor(item)))
         }
 
       } catch {
@@ -113,13 +122,13 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     }
     return .none
     
-  case let .logLevel(level):
+  case .logLevel(let level):
     state.logLevel = level
-    return Effect(value: .refreshButton(state.logUrl!))
+    return Effect(value: .refreshButton(state.logUrl!, level))
 
-  case let .refreshButton(url):
-    if let messages = readLogFile(at: url ) {
-      state.logMessages = filter(messages, level: state.logLevel, filter: state.filterBy, filterText: state.filterByText, showTimes: state.showTimestamps)
+  case .refreshButton(let logUrl, let level):
+    if let messages = readLogFile(at: logUrl, environment: environment ) {
+      state.logMessages = filter(messages, level: level, filter: state.filterBy, filterText: state.filterByText, showTimes: state.showTimestamps)
     }
     return .none
     
@@ -133,7 +142,10 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     
   case .timestampsButton:
     state.showTimestamps.toggle()
-    return Effect(value: .refreshButton(state.logUrl!))
+    if state.logUrl != nil {
+      return Effect(value: .refreshButton(state.logUrl!, state.logLevel))
+    }
+    return .none
     
     // ----------------------------------------------------------------------------
     // MARK: - Action sent when an Alert is closed

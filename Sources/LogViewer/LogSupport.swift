@@ -16,11 +16,13 @@ import Shared
 
 public struct LogLine: Identifiable, Equatable {
 
-  public init(text: String, color: Color = .primary) {
+  public init(uuid: UUID, text: String, color: Color = .primary) {
+    self.uuid = uuid
     self.text = text
     self.color = color
   }
-  public var id = UUID()
+  public var id: UUID { uuid }
+  public var uuid: UUID
   public var text: String
   public var color: Color
 }
@@ -56,16 +58,16 @@ func getLogUrl(for domain: String, appName: String) -> URL? {
 /// Read a Log file
 /// - Parameter url:    the URL of the file
 /// - Returns:          an array of log entries
-func readLogFile(at url: URL) -> IdentifiedArrayOf<LogLine>? {
+func readLogFile(at url: URL, environment: LogEnvironment) -> IdentifiedArrayOf<LogLine>? {
   var messages = IdentifiedArrayOf<LogLine>()
 
   do {
     // get the contents of the file
     let logString = try String(contentsOf: url, encoding: .ascii)
     // parse it into lines
-    let lines = logString.components(separatedBy: "\n")
+    let lines = logString.components(separatedBy: "\n").dropLast()
     for line in lines {
-      messages.append(LogLine(text: line, color: lineColor(line)))
+      messages.append(LogLine(uuid: environment.uuid(), text: line, color: lineColor(line)))
     }
     return messages
 

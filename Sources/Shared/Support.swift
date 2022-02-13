@@ -125,6 +125,10 @@ extension FileManager {
   }
 }
 
+extension URL {
+  public static var appSupport : URL { return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first! }
+}
+
 public extension Bool {
   var as1or0Int: Int { self ? 1 : 0 }
   var as1or0: String { self ? "1" : "0" }
@@ -406,6 +410,30 @@ extension String {
     }
     return newString
   }
+}
+
+public func getBundleInfo() -> (domain: String, appName: String) {
+  let bundleIdentifier = Bundle.main.bundleIdentifier ?? "net.k3tzr.XCGWrapper"
+  let separator = bundleIdentifier.lastIndex(of: ".")!
+  let appName = String(bundleIdentifier.suffix(from: bundleIdentifier.index(separator, offsetBy: 1)))
+  let domain = String(bundleIdentifier.prefix(upTo: separator))
+  return (domain, appName)
+}
+
+public func setupLogFolder(_ info: (domain: String, appName: String)) -> URL? {
+  func createAsNeeded(_ folder: String) -> URL? {
+    let fileManager = FileManager.default
+    let folderUrl = URL.appSupport.appendingPathComponent( folder )
+    // try to create it
+    do {
+      try fileManager.createDirectory( at: folderUrl, withIntermediateDirectories: true, attributes: nil)
+    } catch {
+      return nil
+    }
+    return folderUrl
+  }
+
+  return createAsNeeded(info.domain + "." + info.appName + "/Logs")
 }
 
 // ----------------------------------------------------------------------------

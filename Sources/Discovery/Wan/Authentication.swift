@@ -120,7 +120,7 @@ final class Authentication {
         // save the email & picture
         updateClaims(from: result[0])
         // save the Refresh Token
-        _ = _secureStore.set(account: _smartlinkEmail, data: refreshToken)
+        _ = _secureStore.set(account: loginResult.email, data: refreshToken)
         // save Id Token
         _previousIdToken = result[0]
         return result[0]

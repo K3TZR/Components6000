@@ -89,7 +89,7 @@ public struct ApiView: View {
         
       } else {
         LogView(store: Store(
-          initialState: LogState(domain: viewStore.domain, appName: viewStore.appName, fontSize: viewStore.fontSize),
+          initialState: LogState(fontSize: viewStore.fontSize),
           reducer: logReducer,
           environment: LogEnvironment() )
         )
@@ -108,7 +108,7 @@ struct ApiView_Previews: PreviewProvider {
   static var previews: some View {
     ApiView(
       store: Store(
-        initialState: ApiState(domain: "net.k3tzr", appName: "Api6000"),
+        initialState: ApiState(),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )

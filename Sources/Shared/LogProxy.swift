@@ -45,16 +45,15 @@ final public class LogProxy {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  public static var sharedInstance = LogProxy()
   public var logPublisher = PassthroughSubject<LogEntry, Never>()
   public var alertPublisher = PassthroughSubject<LogEntry, Never>()
   public var publishLog = true
 
   // ----------------------------------------------------------------------------
-  // MARK: - Initialization
+  // MARK: - Singleton
   
-  // "private" prevents others from calling init()
-  private init() {}
+  public static var sharedInstance = LogProxy()
+  private init() {} // "private" prevents others from calling init()
   
   // ----------------------------------------------------------------------------
   // MARK: - Public methods

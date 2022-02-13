@@ -150,21 +150,23 @@ public final class Discovery: Equatable, ObservableObject {
     if let knownPacketId = isKnownRadio(newPacket) {
       // YES, has it changed?
       if newPacket.isDifferent(from: packets[id: knownPacketId]!) {
-        // YES, parse the GuiClient fields, identify additions
+        // YES, parse the GuiClient fields
         newPacket = parseGuiClients(newPacket)
-        identifyAdditions(in: newPacket, from: packets[id: knownPacketId]!)
-        identifyDeletions(in: newPacket, from: packets[id: knownPacketId]!)
-
+        let oldPacket = packets[id: knownPacketId]!
+        
         // maintain the id from the known packet, update the timestamp
         newPacket.id = knownPacketId
         newPacket.lastSeen = Date()
         // update the known packet
         packets[id: knownPacketId] = newPacket
 
-        // publish and Log
+        // publish and log the packet
         packetPublisher.send(PacketChange(.updated, packet: newPacket))
         _log("Discovery: \(newPacket.source.rawValue) packet updated, \(newPacket.serial)", .debug, #function, #file, #line)
 
+        // find, publish & log client additions / deletions
+        findClientAdditions(in: newPacket, from: oldPacket)
+        findClientDeletions(in: newPacket, from: oldPacket)
         return
       
       } else {
@@ -174,16 +176,16 @@ public final class Discovery: Equatable, ObservableObject {
         return
       }
     }
-    // NO, not seen before, parse the GuiClient fields
+    // NO, not seen before, parse the GuiClient fields then add it
     newPacket = parseGuiClients(newPacket)
+    packets.append(newPacket)
 
+    // publish & log
+    packetPublisher.send(PacketChange(.added, packet: newPacket))
     _log("Discovery: \(newPacket.source.rawValue) packet added, \(newPacket.serial)", .debug, #function, #file, #line)
 
-    // add it and publish
-    packets.append(newPacket)
-    packetPublisher.send(PacketChange(.added, packet: newPacket))
-
-    identifyAdditions(in: newPacket)
+    // find, publish & log client additions
+    findClientAdditions(in: newPacket)
   }
 
   // ----------------------------------------------------------------------------
@@ -217,10 +219,12 @@ public final class Discovery: Equatable, ObservableObject {
     return updatedPacket
   }
   
-  private func identifyAdditions(in newPacket: Packet, from oldPacket: Packet? = nil) {
+  private func findClientAdditions(in newPacket: Packet, from oldPacket: Packet? = nil) {
     
     for guiClient in newPacket.guiClients {
       if oldPacket == nil || oldPacket?.guiClients[id: guiClient.id] == nil {
+        
+        // publish & log
         clientPublisher.send(ClientChange(.added, client: guiClient))
         _log("Discovery: \(newPacket.source.rawValue) guiClient added, \(guiClient.station)", .debug, #function, #file, #line)
         
@@ -235,10 +239,12 @@ public final class Discovery: Equatable, ObservableObject {
     }
   }
 
-  private func identifyDeletions(in newPacket: Packet, from oldPacket: Packet) {
+  private func findClientDeletions(in newPacket: Packet, from oldPacket: Packet) {
     
     for guiClient in oldPacket.guiClients {
       if newPacket.guiClients[id: guiClient.id] == nil {
+        
+        // publish & log
         clientPublisher.send(ClientChange(.deleted, client: guiClient))
         _log("Discovery: \(newPacket.source.rawValue) guiClient deleted, \(guiClient.station)", .debug, #function, #file, #line)
         

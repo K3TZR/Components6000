@@ -45,7 +45,7 @@ public struct LogView: View {
         content: { Alert(title: Text($0.title)) }
       )
 
-      .onAppear() { viewStore.send(.onAppear) }
+      .onAppear() { viewStore.send(.onAppear(viewStore.logLevel)) }
     }
   }
 }
@@ -57,7 +57,7 @@ struct LogView_Previews: PreviewProvider {
   static var previews: some View {
     LogView(
       store: Store(
-        initialState: LogState(domain: "net.k3tzr", appName: "Api6000"),
+        initialState: LogState(),
         reducer: logReducer,
         environment: LogEnvironment()
       )

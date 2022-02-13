@@ -136,24 +136,20 @@ let package = Package(
       dependencies: ["ApiViewer"]
     ),
     .testTarget(
-      name: "LogViewerTests",
-      dependencies: ["LogViewer"]
-    ),
-    .testTarget(
       name: "SecureStorageTests",
       dependencies: ["SecureStorage"]
-    ),
-    .testTarget(
-      name: "XCGWrapperTests",
-      dependencies: ["XCGWrapper"]
     ),
     .testTarget(
       name: "TcpCommandsTests",
       dependencies: ["TcpCommands", "Discovery"]
     ),
     .testTarget(
-      name: "LogProxyTests",
-      dependencies: ["Shared"]
+      name: "LoggingTests",
+      dependencies: [
+        "Shared",
+        "XCGWrapper",
+        "LogViewer",
+      ]
     ),
     .testTarget(
       name: "RadioTests",

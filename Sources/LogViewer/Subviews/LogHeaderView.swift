@@ -58,7 +58,7 @@ struct LogHeader_Previews: PreviewProvider {
   static var previews: some View {
     LogHeader(
       store: Store(
-        initialState: LogState(domain: "net.k3tzr", appName: "Api6000"),
+        initialState: LogState(),
         reducer: logReducer,
         environment: LogEnvironment()
       )

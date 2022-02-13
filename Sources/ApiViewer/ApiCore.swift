@@ -12,7 +12,6 @@ import SwiftUI
 
 import Login
 import Picker
-//import Connection
 import Discovery
 import TcpCommands
 import UdpStreams
@@ -20,6 +19,9 @@ import Radio
 import XCGWrapper
 import Shared
 import LogViewer
+
+public typealias Logger = (LogLevel) -> Void
+public typealias Discoverer = () -> Void
 
 public enum ViewType: Equatable {
   case api
@@ -53,6 +55,40 @@ public enum MessagesFilter: String, CaseIterable {
 
 
 public struct ApiState: Equatable {
+
+  public init(
+    clearOnConnect: Bool = UserDefaults.standard.bool(forKey: "clearOnConnect"),
+    clearOnDisconnect: Bool  = UserDefaults.standard.bool(forKey: "clearOnDisconnect"),
+    clearOnSend: Bool  = UserDefaults.standard.bool(forKey: "clearOnSend"),
+    connectionMode: ConnectionMode = ConnectionMode(rawValue: UserDefaults.standard.string(forKey: "connectionMode") ?? "both") ?? .both,
+    defaultConnection: DefaultConnection? = getDefaultConnection(),
+    fontSize: CGFloat = UserDefaults.standard.double(forKey: "fontSize") == 0 ? 12 : UserDefaults.standard.double(forKey: "fontSize"),
+    isGui: Bool = UserDefaults.standard.bool(forKey: "isGui"),
+    messagesFilterBy: MessagesFilter = MessagesFilter(rawValue: UserDefaults.standard.string(forKey: "messagesFilterBy") ?? "all") ?? .all,
+    messagesFilterByText: String = UserDefaults.standard.string(forKey: "messagesFilterByText") ?? "",
+    objectsFilterBy: ObjectsFilter = ObjectsFilter(rawValue: UserDefaults.standard.string(forKey: "objectsFilterBy") ?? "core") ?? .core,
+    radio: Radio? = nil,
+    showPings: Bool = UserDefaults.standard.bool(forKey: "showPings"),
+    showTimes: Bool = UserDefaults.standard.bool(forKey: "showTimes"),
+    smartlinkEmail: String = UserDefaults.standard.string(forKey: "smartlinkEmail") ?? ""
+  )
+  {
+    self.clearOnConnect = clearOnConnect
+    self.clearOnDisconnect = clearOnDisconnect
+    self.clearOnSend = clearOnSend
+    self.connectionMode = connectionMode
+    self.defaultConnection = defaultConnection
+    self.fontSize = fontSize
+    self.isGui = isGui
+    self.messagesFilterBy = messagesFilterBy
+    self.messagesFilterByText = messagesFilterByText
+    self.objectsFilterBy = objectsFilterBy
+    self.radio = radio
+    self.showPings = showPings
+    self.showTimes = showTimes
+    self.smartlinkEmail = smartlinkEmail
+  }
+
   // State held in User Defaults
   public var clearOnConnect: Bool { didSet { UserDefaults.standard.set(clearOnConnect, forKey: "clearOnConnect") } }
   public var clearOnDisconnect: Bool { didSet { UserDefaults.standard.set(clearOnDisconnect, forKey: "clearOnDisconnect") } }
@@ -61,18 +97,15 @@ public struct ApiState: Equatable {
   public var defaultConnection: DefaultConnection? { didSet { setDefaultConnection(defaultConnection) } }
   public var fontSize: CGFloat { didSet { UserDefaults.standard.set(fontSize, forKey: "fontSize") } }
   public var isGui: Bool { didSet { UserDefaults.standard.set(isGui, forKey: "isGui") } }
-  public var wanLogin: Bool { didSet { UserDefaults.standard.set(wanLogin, forKey: "wanLogin") } }
-  public var showTimes: Bool { didSet { UserDefaults.standard.set(showTimes, forKey: "showTimes") } }
-  public var showPings: Bool { didSet { UserDefaults.standard.set(showPings, forKey: "showPings") } }
-  public var smartlinkEmail: String { didSet { UserDefaults.standard.set(smartlinkEmail, forKey: "smartlinkEmail") } }
-  public var objectsFilterBy: ObjectsFilter { didSet { UserDefaults.standard.set(objectsFilterBy.rawValue, forKey: "objectsFilterBy") } }
   public var messagesFilterBy: MessagesFilter { didSet { UserDefaults.standard.set(messagesFilterBy.rawValue, forKey: "messagesFilterBy") } }
   public var messagesFilterByText: String { didSet { UserDefaults.standard.set(messagesFilterByText, forKey: "messagesFilterByText") } }
+  public var objectsFilterBy: ObjectsFilter { didSet { UserDefaults.standard.set(objectsFilterBy.rawValue, forKey: "objectsFilterBy") } }
+  public var showPings: Bool { didSet { UserDefaults.standard.set(showPings, forKey: "showPings") } }
+  public var showTimes: Bool { didSet { UserDefaults.standard.set(showTimes, forKey: "showTimes") } }
+  public var smartlinkEmail: String { didSet { UserDefaults.standard.set(smartlinkEmail, forKey: "smartlinkEmail") } }
   
   // normal state
   public var alert: AlertState<ApiAction>?
-  public var appName: String
-  public var domain: String
   public var clearNow = false
   public var commandToSend = ""
   public var discovery: Discovery? = nil
@@ -84,37 +117,10 @@ public struct ApiState: Equatable {
   public var radio: Radio?
   public var reverse = false
   public var tcp = Tcp()
-  public var update = false
+//  public var update = false
   public var viewType: ViewType = .api
-  public var xcgWrapper: XCGWrapper?
   
   public var cancellables = Set<AnyCancellable>()
-  
-  public init(
-    domain: String,
-    appName: String,
-    isGui: Bool = UserDefaults.standard.bool(forKey: "isGui"),
-    radio: Radio? = nil
-  )
-  {
-    self.appName = appName
-    clearOnConnect = UserDefaults.standard.bool(forKey: "clearOnConnect")
-    clearOnDisconnect = UserDefaults.standard.bool(forKey: "clearOnDisconnect")
-    clearOnSend = UserDefaults.standard.bool(forKey: "clearOnSend")
-    connectionMode = ConnectionMode(rawValue: UserDefaults.standard.string(forKey: "connectionMode") ?? "both") ?? .both
-    defaultConnection = getDefaultConnection()
-    self.domain = domain
-    fontSize = UserDefaults.standard.double(forKey: "fontSize") == 0 ? 12 : UserDefaults.standard.double(forKey: "fontSize")
-    self.isGui = isGui
-    messagesFilterBy = MessagesFilter(rawValue: UserDefaults.standard.string(forKey: "messagesFilterBy") ?? "all") ?? .all
-    messagesFilterByText = UserDefaults.standard.string(forKey: "messagesFilterByText") ?? ""
-    objectsFilterBy = ObjectsFilter(rawValue: UserDefaults.standard.string(forKey: "objectsFilterBy") ?? "core") ?? .core
-    self.radio = radio
-    showPings = UserDefaults.standard.bool(forKey: "showPings")
-    showTimes = UserDefaults.standard.bool(forKey: "showTimes")
-    smartlinkEmail = UserDefaults.standard.string(forKey: "smartlinkEmail") ?? ""
-    wanLogin = UserDefaults.standard.bool(forKey: "wanLogin")
-  }
 }
 
 public enum ApiAction: Equatable {
@@ -148,17 +154,21 @@ public enum ApiAction: Equatable {
   case logAlert(LogEntry)
   case tcpAction(TcpMessage)
   case finishInitialization
+  case cancelEffects
 }
 
 public struct ApiEnvironment {
   public init(
-    queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main }
+    queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
+    logger: @escaping Logger = { _ = XCGWrapper($0) }
   )
   {
     self.queue = queue
+    self.logger = logger
   }
   
   var queue: () -> AnySchedulerOf<DispatchQueue>
+  var logger: Logger
 }
 
 // swiftlint:disable trailing_closure
@@ -198,8 +208,8 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // MARK: - Initialization
       
     case .onAppear:
-      // if the first time, start Logger, Discovery and the Listeners
-      if state.xcgWrapper == nil {
+      // if the first time, start various effects
+      if state.discovery == nil {
         // listen for log alerts, capture TCP messages (sent & received)
         return .merge(logAlerts(), sentMessages(state.tcp), receivedMessages(state.tcp), Effect(value: .finishInitialization))
       }
@@ -207,7 +217,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
 
     case .finishInitialization:
       // instantiate the Logger
-      state.xcgWrapper = XCGWrapper()
+      _ = environment.logger(.debug)
       // instantiate Discovery
       state.discovery = Discovery.sharedInstance
       // listen for broadcast packets
@@ -424,9 +434,12 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       if message.direction == .sent && message.text.contains("ping") && state.showPings == false { return .none }
       // add the message to the collection
       state.messages.append(message)
-      state.update.toggle()
+//      state.update.toggle()
       // trigger a re-filter
       return Effect(value: .filterMessages(state.messagesFilterBy, state.messagesFilterByText))
+
+    case .cancelEffects:
+      return .cancel(ids: LogAlertId(), SentCommandId(), ReceivedCommandId())
     }
   }
 )

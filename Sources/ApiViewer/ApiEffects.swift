@@ -43,7 +43,7 @@ func sentMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
     // convert to TcpMessage format
     .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
-    .cancellable(id: SentCommandSubscriptionId())
+    .cancellable(id: SentCommandId())
 }
 
 func receivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
@@ -56,7 +56,7 @@ func receivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
     // convert to an ApiAction
     .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
-    .cancellable(id: ReceivedCommandSubscriptionId())
+    .cancellable(id: ReceivedCommandId())
 }
 
 func logAlerts() -> Effect<ApiAction, Never> {
@@ -67,7 +67,7 @@ func logAlerts() -> Effect<ApiAction, Never> {
     // convert to an ApiAction
     .map { logEntry in .logAlert(logEntry) }
     .eraseToEffect()
-    .cancellable(id: LogAlertSubscriptionId())
+    .cancellable(id: LogAlertId())
 }
 
 // ----------------------------------------------------------------------------
