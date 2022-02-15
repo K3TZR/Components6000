@@ -379,7 +379,7 @@ class PickerTests: XCTestCase {
         .receive(on: testScheduler)
         .map { update in .packetChange(update) }
         .eraseToEffect()
-        .cancellable(id: PacketEffectId())
+        .cancellable(id: DiscoveryPacketSubscriptionId())
   }
   
   public func mockClientSubscriptions() -> Effect<PickerAction, Never> {

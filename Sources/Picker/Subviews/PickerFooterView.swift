@@ -7,7 +7,7 @@
 
 import SwiftUI
 import ComposableArchitecture
-import Discovery
+import LanDiscovery
 
 // ----------------------------------------------------------------------------
 // MARK: - View
@@ -48,47 +48,47 @@ struct PickerFooterView: View {
 // ----------------------------------------------------------------------------
 // MARK: - Preview
 
-struct PickerFooterView_Previews: PreviewProvider {
-  static var previews: some View {
-    
-    PickerFooterView(store: Store(
-      initialState: PickerState(connectionType: .gui, testResult: testResultFail),
-      reducer: pickerReducer,
-      environment: PickerEnvironment() )
-    )
-      .previewDisplayName("Test false")
-    
-    PickerFooterView(store: Store(
-      initialState: PickerState(connectionType: .nonGui, testResult: testResultSuccess1),
-      reducer: pickerReducer,
-      environment: PickerEnvironment() )
-    )
-      .previewDisplayName("Test true (FORWARDING)")
-
-    PickerFooterView(store: Store(
-      initialState: PickerState(connectionType: .nonGui, testResult: testResultSuccess2),
-      reducer: pickerReducer,
-      environment: PickerEnvironment() )
-    )
-      .previewDisplayName("Test true (UPNP)")
-  }
-}
-
-
-var testResultFail: SmartlinkTestResult {
-  SmartlinkTestResult()
-}
-
-var testResultSuccess1: SmartlinkTestResult {
-  var result = SmartlinkTestResult()
-  result.forwardTcpPortWorking = true
-  result.forwardUdpPortWorking = true
-  return result
-}
-
-var testResultSuccess2: SmartlinkTestResult {
-  var result = SmartlinkTestResult()
-  result.upnpTcpPortWorking = true
-  result.upnpUdpPortWorking = true
-  return result
-}
+//struct PickerFooterView_Previews: PreviewProvider {
+//  static var previews: some View {
+//    
+//    PickerFooterView(store: Store(
+//      initialState: PickerState(connectionType: .gui, testResult: testResultFail, discovery: LanDiscovery()),
+//      reducer: pickerReducer,
+//      environment: PickerEnvironment() )
+//    )
+//      .previewDisplayName("Test false")
+//    
+//    PickerFooterView(store: Store(
+//      initialState: PickerState(connectionType: .nonGui, testResult: testResultSuccess1, discovery: LanDiscovery()),
+//      reducer: pickerReducer,
+//      environment: PickerEnvironment() )
+//    )
+//      .previewDisplayName("Test true (FORWARDING)")
+//
+//    PickerFooterView(store: Store(
+//      initialState: PickerState(connectionType: .nonGui, testResult: testResultSuccess2, discovery: LanDiscovery()),
+//      reducer: pickerReducer,
+//      environment: PickerEnvironment() )
+//    )
+//      .previewDisplayName("Test true (UPNP)")
+//  }
+//}
+//
+//
+//var testResultFail: SmartlinkTestResult {
+//  SmartlinkTestResult()
+//}
+//
+//var testResultSuccess1: SmartlinkTestResult {
+//  var result = SmartlinkTestResult()
+//  result.forwardTcpPortWorking = true
+//  result.forwardUdpPortWorking = true
+//  return result
+//}
+//
+//var testResultSuccess2: SmartlinkTestResult {
+//  var result = SmartlinkTestResult()
+//  result.upnpTcpPortWorking = true
+//  result.upnpUdpPortWorking = true
+//  return result
+//}

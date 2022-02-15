@@ -15,39 +15,38 @@ import Shared
 // ----------------------------------------------------------------------------
 // MARK: - Production effects
 
-public func liveDiscoveryEffect() -> Effect<PickerAction, Never> {
-  
+public func subscribeToDiscoveryPackets() -> Effect<PickerAction, Never> {
   Effect.concatenate(
     Discovery.sharedInstance.packetPublisher
       .receive(on: DispatchQueue.main)
       .map { update in .packetChange(update) }
       .eraseToEffect()
-      .cancellable(id: PacketEffectId()),
+      .cancellable(id: DiscoveryPacketSubscriptionId()),
     
     Discovery.sharedInstance.clientPublisher
       .receive(on: DispatchQueue.main)
       .map { update in .clientChange(update) }
       .eraseToEffect()
-      .cancellable(id: ClientEffectId())
+      .cancellable(id: DiscoveryClientSubscriptionId())
   )
 }
 
-public func liveTestEffect() -> Effect<PickerAction, Never> {
-  
+public func subscribeToTestResult() -> Effect<PickerAction, Never> {
   Effect(
     Discovery.sharedInstance.testPublisher
       .receive(on: DispatchQueue.main)
       .map { result in .testResultReceived(result) }
       .eraseToEffect()
-      .cancellable(id: TestEffectId())
+      .cancellable(id: TestResultSubscriptionId())
   )
 }
 
-public func liveWanEffect() -> Effect<PickerAction, Never> {
-  
-  Discovery.sharedInstance.wanStatusPublisher
-    .receive(on: DispatchQueue.main)
-    .map { status in .wanStatus(status) }
-    .eraseToEffect()
-    .cancellable(id: WanEffectId())
+public func subscribeToWanStatus() -> Effect<PickerAction, Never> {
+  Effect(
+    Discovery.sharedInstance.wanStatusPublisher
+      .receive(on: DispatchQueue.main)
+      .map { status in .wanStatus(status) }
+      .eraseToEffect()
+      .cancellable(id: WanStatusSubscriptionId())
+  )
 }

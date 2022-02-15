@@ -9,6 +9,9 @@
 import Foundation
 import ComposableArchitecture
 
+// ----------------------------------------------------------------------------
+// MARK: - Public structs and enums
+
 public enum PacketSource: String, Equatable {
   case local = "Local"
   case smartlink = "Smartlink"
@@ -29,6 +32,9 @@ public struct PacketChange: Equatable {
     self.packet = packet
   }
 }
+
+// ----------------------------------------------------------------------------
+// MARK: - Packet struct
 
 public struct Packet: Identifiable, Equatable, Hashable {
   
@@ -91,6 +97,50 @@ public struct Packet: Identifiable, Equatable, Hashable {
 //  public var wanConnected = false                 //  X         ignored
 
   // ----------------------------------------------------------------------------
+  // MARK: - Private enums
+  
+  private enum DiscoveryTokens : String {
+    case lastSeen                   = "last_seen"
+    
+    case availableClients           = "available_clients"
+    case availablePanadapters       = "available_panadapters"
+    case availableSlices            = "available_slices"
+    case callsign
+    case discoveryProtocolVersion   = "discovery_protocol_version"
+    case version                    = "version"
+    case fpcMac                     = "fpc_mac"
+    case guiClientHandles           = "gui_client_handles"
+    case guiClientHosts             = "gui_client_hosts"
+    case guiClientIps               = "gui_client_ips"
+    case guiClientPrograms          = "gui_client_programs"
+    case guiClientStations          = "gui_client_stations"
+    case inUseHost                  = "inuse_host"
+    case inUseHostWan               = "inusehost"
+    case inUseIp                    = "inuse_ip"
+    case inUseIpWan                 = "inuseip"
+    case licensedClients            = "licensed_clients"
+    case maxLicensedVersion         = "max_licensed_version"
+    case maxPanadapters             = "max_panadapters"
+    case maxSlices                  = "max_slices"
+    case model
+    case nickname                   = "nickname"
+    case port
+    case publicIp                   = "ip"
+    case publicIpWan                = "public_ip"
+    case publicTlsPort              = "public_tls_port"
+    case publicUdpPort              = "public_udp_port"
+    case publicUpnpTlsPort          = "public_upnp_tls_port"
+    case publicUpnpUdpPort          = "public_upnp_udp_port"
+    case radioLicenseId             = "radio_license_id"
+    case radioName                  = "radio_name"
+    case requiresAdditionalLicense  = "requires_additional_license"
+    case serial                     = "serial"
+    case status
+    case upnpSupported              = "upnp_supported"
+    case wanConnected               = "wan_connected"
+  }
+
+  // ----------------------------------------------------------------------------
   // MARK: - Public methods
   
   public static func ==(lhs: Packet, rhs: Packet) -> Bool {
@@ -128,5 +178,96 @@ public struct Packet: Identifiable, Equatable, Hashable {
   
   public func hash(into hasher: inout Hasher) {
     hasher.combine(publicIp)
+  }
+
+  /// Parse the GuiClient CSV fields in this packet
+  public func parseGuiClients() -> Packet {
+    var updatedPacket = self
+
+    guard guiClientPrograms != "" && guiClientStations != "" && guiClientHandles != "" else { return self }
+    
+    let programs  = guiClientPrograms.components(separatedBy: ",")
+    let stations  = guiClientStations.components(separatedBy: ",")
+    let handles   = guiClientHandles.components(separatedBy: ",")
+    let ips       = guiClientIps.components(separatedBy: ",")
+    
+    guard programs.count == handles.count && stations.count == handles.count && ips.count == handles.count else { return self }
+    
+    for i in 0..<handles.count {
+      // valid handle, non-blank other fields?
+      if let handle = handles[i].handle, stations[i] != "", programs[i] != "" , ips[i] != "" {
+        
+        updatedPacket.guiClients.append(
+          GuiClient(handle: handle,
+                    station: stations[i],
+                    program: programs[i],
+                    ip: ips[i])
+        )
+      }
+    }
+    return updatedPacket
+  }
+
+  // ----------------------------------------------------------------------------
+  // MARK: - Static Public methods
+  
+  public static func populate(_ properties: KeyValuesArray) -> Packet {
+    // create a minimal packet with now as "lastSeen"
+    var packet = Packet()
+    
+    // process each key/value pair, <key=value>
+    for property in properties {
+      // check for unknown Keys
+      guard let token = DiscoveryTokens(rawValue: property.key) else {
+        // log it and ignore the Key
+        #if DEBUG
+        fatalError("Discovery: Unknown token - \(property.key) = \(property.value)")
+        #else
+        continue
+        #endif
+      }
+      switch token {
+        
+        // these fields in the received packet are copied to the Packet struct
+      case .callsign:                   packet.callsign = property.value
+      case .guiClientHandles:           packet.guiClientHandles = property.value
+      case .guiClientHosts:             packet.guiClientHosts = property.value
+      case .guiClientIps:               packet.guiClientIps = property.value
+      case .guiClientPrograms:          packet.guiClientPrograms = property.value
+      case .guiClientStations:          packet.guiClientStations = property.value
+      case .inUseHost, .inUseHostWan:   packet.inUseHost = property.value
+      case .inUseIp, .inUseIpWan:       packet.inUseIp = property.value
+      case .model:                      packet.model = property.value
+      case .nickname, .radioName:       packet.nickname = property.value
+      case .port:                       packet.port = property.value.iValue
+      case .publicIp, .publicIpWan:     packet.publicIp = property.value
+      case .publicTlsPort:              packet.publicTlsPort = property.value.iValueOpt
+      case .publicUdpPort:              packet.publicUdpPort = property.value.iValueOpt
+      case .publicUpnpTlsPort:          packet.publicUpnpTlsPort = property.value.iValueOpt
+      case .publicUpnpUdpPort:          packet.publicUpnpUdpPort = property.value.iValueOpt
+      case .serial:                     packet.serial = property.value
+      case .status:                     packet.status = property.value
+      case .upnpSupported:              packet.upnpSupported = property.value.bValue
+      case .version:                    packet.version = property.value
+
+        // these fields in the received packet are NOT copied to the Packet struct
+      case .availableClients:           break // ignored
+      case .availablePanadapters:       break // ignored
+      case .availableSlices:            break // ignored
+      case .discoveryProtocolVersion:   break // ignored
+      case .fpcMac:                     break // ignored
+      case .licensedClients:            break // ignored
+      case .maxLicensedVersion:         break // ignored
+      case .maxPanadapters:             break // ignored
+      case .maxSlices:                  break // ignored
+      case .radioLicenseId:             break // ignored
+      case .requiresAdditionalLicense:  break // ignored
+      case .wanConnected:               break // ignored
+
+        // satisfy the switch statement
+      case .lastSeen:                   break
+      }
+    }
+    return packet
   }
 }

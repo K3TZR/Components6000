@@ -35,19 +35,17 @@ public struct TcpMessage: Equatable, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - Internal methods
 
-func sentMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
-  
+func subscribeToSentMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   // subscribe to the publisher of sent TcpMessages
   tcp.sentPublisher
     .receive(on: DispatchQueue.main)
     // convert to TcpMessage format
     .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
-    .cancellable(id: SentCommandId())
+    .cancellable(id: SentMessagesSubscriptionId())
 }
 
-func receivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
-  
+func subscribeToReceivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   // subscribe to the publisher of received TcpMessages
   tcp.receivedPublisher
     // eliminate replies unless they have errors or data
@@ -56,19 +54,28 @@ func receivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
     // convert to an ApiAction
     .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
-    .cancellable(id: ReceivedCommandId())
+    .cancellable(id: ReceivedMessagesSubscriptionId())
 }
 
-func logAlerts() -> Effect<ApiAction, Never> {
-  
+func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
   // subscribe to the publisher of LogEntries with Warning or Error levels
   LogProxy.sharedInstance.alertPublisher
     .receive(on: DispatchQueue.main)
     // convert to an ApiAction
     .map { logEntry in .logAlert(logEntry) }
     .eraseToEffect()
-    .cancellable(id: LogAlertId())
+    .cancellable(id: LogAlertSubscriptionId())
 }
+
+//func subscribeToDiscoveryPackets(_ packetPublisher: PassthroughSubject<PacketChange, Never>) -> Effect<ApiAction, Never> {
+//  // subscribe to the publisher of Discovery Packets
+//  packetPublisher
+//    .receive(on: DispatchQueue.main)
+//    // convert to an ApiAction
+//    .map { change in .packetChange(change) }
+//    .eraseToEffect()
+//    .cancellable(id: ReceivedPacketId())
+//}
 
 // ----------------------------------------------------------------------------
 // MARK: - Private methods

@@ -7,8 +7,9 @@
 
 import Foundation
 import Combine
-import Shared
 import IdentifiedCollections
+
+import Shared
 import Login
 
 public final class Discovery: Equatable, ObservableObject {
@@ -47,42 +48,48 @@ public final class Discovery: Equatable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
   
-  public func startLanListener() throws {
+  public func startLanListener() {
     guard _lanListener == nil else { return }
     _lanListener = LanListener(self)
-    try _lanListener?.start()
+    _lanListener?.start()
   }
   
   public func stopLanListener() {
     guard _lanListener != nil else { return }
     _lanListener?.stop()
+    removePackets(ofType: .local)
     _lanListener = nil
   }
 
-  public func startWanListener(smartlinkEmail: String?, forceLogin: Bool = false) throws {
-    guard _wanListener == nil else { return }
+  public func startWanListener(smartlinkEmail: String?, forceLogin: Bool = false) -> Bool {
+    guard _wanListener == nil else { return false }
     _wanListener = WanListener(self)
-    try _wanListener?.start(using: smartlinkEmail, forceLogin: forceLogin)
+    if _wanListener!.start(using: smartlinkEmail, forceLogin: forceLogin) {
+      return true
+    } else {
+      _wanListener = nil
+      return false
+    }
   }
 
-  public func startWanListener(using loginResult: LoginResult) throws {
-    guard _wanListener == nil else { return }
+  public func startWanListener(using loginResult: LoginResult) -> Bool {
+    guard _wanListener == nil else { return false }
     _wanListener = WanListener(self)
-    try _wanListener?.start(using: loginResult )
+    if _wanListener!.start(using: loginResult ) {
+      return true
+    } else {
+      _wanListener = nil
+      return false
+    }
   }
 
   public func stopWanListener() {
     guard _wanListener != nil else { return }
     _wanListener?.stop()
+    removePackets(ofType: .smartlink)
     _wanListener = nil
   }
 
-  public func removePackets(ofType source: PacketSource) {
-    for packet in packets where packet.source == source {
-      packets[id: packet.id] = nil
-    }
-  }
-  
   /// Initiate a smartlink connection to a radio
   /// - Parameters:
   ///   - serialNumber:       the serial number of the Radio
@@ -151,7 +158,7 @@ public final class Discovery: Equatable, ObservableObject {
       // YES, has it changed?
       if newPacket.isDifferent(from: packets[id: knownPacketId]!) {
         // YES, parse the GuiClient fields
-        newPacket = parseGuiClients(newPacket)
+        newPacket = newPacket.parseGuiClients()
         let oldPacket = packets[id: knownPacketId]!
         
         // maintain the id from the known packet, update the timestamp
@@ -177,7 +184,7 @@ public final class Discovery: Equatable, ObservableObject {
       }
     }
     // NO, not seen before, parse the GuiClient fields then add it
-    newPacket = parseGuiClients(newPacket)
+    newPacket = newPacket.parseGuiClients()
     packets.append(newPacket)
 
     // publish & log
@@ -191,32 +198,10 @@ public final class Discovery: Equatable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Private methods
   
-  /// Parse the GuiClient CSV fields in a packet
-  private func parseGuiClients(_ newPacket: Packet) -> Packet {
-    var updatedPacket = newPacket
-    
-    guard newPacket.guiClientPrograms != "" && newPacket.guiClientStations != "" && newPacket.guiClientHandles != "" else { return newPacket }
-    
-    let programs  = newPacket.guiClientPrograms.components(separatedBy: ",")
-    let stations  = newPacket.guiClientStations.components(separatedBy: ",")
-    let handles   = newPacket.guiClientHandles.components(separatedBy: ",")
-    let ips       = newPacket.guiClientIps.components(separatedBy: ",")
-    
-    guard programs.count == handles.count && stations.count == handles.count && ips.count == handles.count else { return newPacket }
-    
-    for i in 0..<handles.count {
-      // valid handle, non-blank other fields?
-      if let handle = handles[i].handle, stations[i] != "", programs[i] != "" , ips[i] != "" {
-        
-        updatedPacket.guiClients.append(
-          GuiClient(handle: handle,
-                    station: stations[i],
-                    program: programs[i],
-                    ip: ips[i])
-        )
-      }
+  private func removePackets(ofType source: PacketSource) {
+    for packet in packets where packet.source == source {
+      packets[id: packet.id] = nil
     }
-    return updatedPacket
   }
   
   private func findClientAdditions(in newPacket: Packet, from oldPacket: Packet? = nil) {

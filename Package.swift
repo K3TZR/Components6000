@@ -11,6 +11,7 @@ let package = Package(
   products: [
     .library(name: "Shared", targets: ["Shared"]),
     .library(name: "Discovery", targets: ["Discovery"]),
+    .library(name: "LanDiscovery", targets: ["LanDiscovery"]),
     .library(name: "Picker", targets: ["Picker"]),
     .library(name: "ApiViewer", targets: ["ApiViewer"]),
     .library(name: "LogViewer", targets: ["LogViewer"]),
@@ -84,6 +85,16 @@ let package = Package(
     ),
     .target(
       name: "Discovery",
+      dependencies: [
+        "Shared",
+        "SecureStorage",
+        "Login",
+        .product(name: "JWTDecode", package: "JWTDecode.swift"),
+        .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
+      ]
+    ),
+    .target(
+      name: "LanDiscovery",
       dependencies: [
         "Shared",
         "SecureStorage",

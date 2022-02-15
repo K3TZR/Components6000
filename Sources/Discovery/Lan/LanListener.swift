@@ -63,23 +63,17 @@ final class LanListener: NSObject, ObservableObject {
     _log("Discovery: Lan Listener UDP Socket initialized", .debug, #function, #file, #line)
   }
 
-  func start(checkInterval: TimeInterval = 1.0, timeout: TimeInterval = 10.0) throws {
-    do {
-      try _udpSocket.beginReceiving()
-      DispatchQueue.main.async { self.isListening = true }
-      _log("Discovery: Lan Listener is listening", .debug, #function, #file, #line)
-      
-      // setup a timer to watch for Radio timeouts
-      Timer.publish(every: checkInterval, on: .main, in: .default)
-        .autoconnect()
-        .sink { [self] now in
-          remove(condition: { $0.source == .local && abs($0.lastSeen.timeIntervalSince(now)) > timeout } )
-        }
-        .store(in: &_cancellables)
-
-    } catch {
-      throw LanListenerError.kReceivingError
-    }
+  func start(checkInterval: TimeInterval = 1.0, timeout: TimeInterval = 10.0) {
+    try! _udpSocket.beginReceiving()
+    _log("Discovery: Lan Listener is listening", .debug, #function, #file, #line)
+    
+    // setup a timer to watch for Radio timeouts
+    Timer.publish(every: checkInterval, on: .main, in: .default)
+      .autoconnect()
+      .sink { now in
+        self.remove(condition: { $0.source == .local && abs($0.lastSeen.timeIntervalSince(now)) > timeout } )
+      }
+      .store(in: &_cancellables)
   }
   
   // ----------------------------------------------------------------------------
@@ -117,7 +111,7 @@ final class LanListener: NSObject, ObservableObject {
       // eliminate any Nulls at the end of the payload
       payloadData = payloadData.trimmingCharacters(in: CharacterSet(charactersIn: "\0"))
       
-      return _discovery?.populatePacket( payloadData.keyValuesArray() )
+      return Packet.populate( payloadData.keyValuesArray() )
     }
     return nil
   }

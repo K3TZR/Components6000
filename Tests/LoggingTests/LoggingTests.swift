@@ -31,7 +31,7 @@ class LoggingTests: XCTestCase {
     let logFolderUrl = URL.appSupport.appendingPathComponent( info.domain + "." + info.appName + "/Logs" )
     try? FileManager().removeItem(at: logFolderUrl)
 
-    _ = XCGWrapper()
+    _ = XCGWrapper(LogProxy.sharedInstance.logPublisher, logLevel: .debug)
 
     XCTAssert ( FileManager().fileExists(atPath: logFolderUrl.path) == true, "Failed to create File" )
 
@@ -77,6 +77,9 @@ class LoggingTests: XCTestCase {
     LogEntry("This is a DEBUG entry", .debug, "Function1", "File1", 800)
   ]
   
+//  func test
+  
+  
   func testXCGWrapper() {
     let info = getBundleInfo()
 
@@ -91,7 +94,7 @@ class LoggingTests: XCTestCase {
 
     let logProxy = LogProxy.sharedInstance
         
-    _ = XCGWrapper()
+    _ = XCGWrapper(LogProxy.sharedInstance.logPublisher, logLevel: .debug)
 
     let logContent: [String] =
     [
@@ -160,7 +163,7 @@ class LoggingTests: XCTestCase {
 
     let logProxy = LogProxy.sharedInstance
         
-    _ = XCGWrapper()
+    _ = XCGWrapper(LogProxy.sharedInstance.logPublisher, logLevel: .debug)
     
     // read the log file and separate into lines
     var logLines = [String]()

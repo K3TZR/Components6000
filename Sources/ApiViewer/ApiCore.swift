@@ -20,8 +20,42 @@ import XCGWrapper
 import Shared
 import LogViewer
 
-public typealias Logger = (LogLevel) -> Void
-public typealias Discoverer = () -> Void
+// ----------------------------------------------------------------------------
+// MARK: - Structs and Enums
+
+struct ReceivedMessagesSubscriptionId: Hashable {}
+struct SentMessagesSubscriptionId: Hashable {}
+struct LogAlertSubscriptionId: Hashable {}
+struct WanStatusSubscriptionId: Hashable {}
+struct ReceivedPacketSubscriptionId: Hashable {}
+
+public struct DefaultConnection: Codable, Equatable {
+
+  public init(_ selection: PickerSelection) {
+    self.source = selection.packet.source.rawValue
+    self.serial = selection.packet.serial
+    self.station = selection.station
+  }
+
+  public static func == (lhs: DefaultConnection, rhs: DefaultConnection) -> Bool {
+    guard lhs.source == rhs.source else { return false }
+    guard lhs.serial == rhs.serial else { return false }
+    guard lhs.station == rhs.station else { return false }
+    return true
+  }
+
+  var source: String
+  var serial: String
+  var station: String?
+
+  enum CodingKeys: String, CodingKey {
+    case source
+    case serial
+    case station
+  }
+}
+
+public typealias Logger = (PassthroughSubject<LogEntry, Never>, LogLevel) -> Void
 
 public enum ViewType: Equatable {
   case api
@@ -53,6 +87,8 @@ public enum MessagesFilter: String, CaseIterable {
   case S0
 }
 
+// ----------------------------------------------------------------------------
+// MARK: - State, Actions & Environment
 
 public struct ApiState: Equatable {
 
@@ -149,8 +185,6 @@ public enum ApiAction: Equatable {
   case pickerAction(PickerAction)
 
   // Effects related
-  case filterMessages(MessagesFilter, String)
-  case checkForDefault
   case logAlert(LogEntry)
   case tcpAction(TcpMessage)
   case finishInitialization
@@ -160,7 +194,7 @@ public enum ApiAction: Equatable {
 public struct ApiEnvironment {
   public init(
     queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
-    logger: @escaping Logger = { _ = XCGWrapper($0) }
+    logger: @escaping Logger = { _ = XCGWrapper($0, logLevel: $1) }
   )
   {
     self.queue = queue
@@ -170,6 +204,9 @@ public struct ApiEnvironment {
   var queue: () -> AnySchedulerOf<DispatchQueue>
   var logger: Logger
 }
+
+// ----------------------------------------------------------------------------
+// MARK: - Reducer
 
 // swiftlint:disable trailing_closure
 public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
@@ -181,27 +218,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       environment: { _ in PickerEnvironment() }
     ),
   Reducer { state, action, environment in
-    
-    // ----------------------------------------------------------------------------
-    // MARK: - Helper functions
-    
-    func listenForPackets(_ discovery: Discovery?) {
-      guard discovery != nil else { return }
-      state.alert = startStopLanListener(state.connectionMode, discovery: discovery!)
-      
-      if state.forceWanLogin {
-        // show the Login sheet
-        state.loginState = LoginState(email: state.smartlinkEmail)
-
-      } else {
-        let alert = startStopWanListener(state.connectionMode, discovery: discovery!, using: state.smartlinkEmail, forceLogin: state.forceWanLogin)
-        if alert != nil {
-          state.alert = alert
-          // show the Login sheet
-          state.loginState = LoginState(email: state.smartlinkEmail)
-        }
-      }
-    }
             
     switch action {      
       // ----------------------------------------------------------------------------
@@ -210,18 +226,39 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .onAppear:
       // if the first time, start various effects
       if state.discovery == nil {
-        // listen for log alerts, capture TCP messages (sent & received)
-        return .merge(logAlerts(), sentMessages(state.tcp), receivedMessages(state.tcp), Effect(value: .finishInitialization))
+        // instantiale Discovery
+        state.discovery = Discovery.sharedInstance
+        // instantiate the Logger,
+        _ = environment.logger(LogProxy.sharedInstance.logPublisher, .debug)
+        // subscribe to packets, log alerts and TCP messages (sent & received)
+        return .merge(
+//          subscribeToDiscoveryPackets(state.discovery!.packetPublisher),
+          subscribeToSentMessages(state.tcp),
+          subscribeToReceivedMessages(state.tcp),
+          subscribeToLogAlerts(),
+          Effect(value: .finishInitialization))
       }
       return .none
 
     case .finishInitialization:
-      // instantiate the Logger
-      _ = environment.logger(.debug)
-      // instantiate Discovery
-      state.discovery = Discovery.sharedInstance
-      // listen for broadcast packets
-      listenForPackets(state.discovery)
+      // needed when coming from other than .onAppear
+      Discovery.sharedInstance.stopLanListener()
+      Discovery.sharedInstance.stopWanListener()
+
+      switch state.connectionMode {
+      case .local:        state.discovery!.startLanListener()
+      case .smartlink:
+        if state.discovery!.startWanListener(smartlinkEmail: state.smartlinkEmail, forceLogin: state.forceWanLogin) == false {
+          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
+        }
+      case .both:
+        state.discovery!.startLanListener()
+        if state.discovery!.startWanListener(smartlinkEmail: state.smartlinkEmail, forceLogin: state.forceWanLogin) == false {
+          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
+        }
+      case .none:
+        break
+      }
       return .none
 
       // ----------------------------------------------------------------------------
@@ -246,27 +283,16 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .connectionModePicker(let mode):
       state.connectionMode = mode
-      // reconfigure the listeners
-      listenForPackets(state.discovery)
-      return .none
+      return Effect(value: .finishInitialization)
       
     case .fontSizeStepper(let size):
       state.fontSize = size
       return .none
       
     case .forceLoginButton:
-      // get the current mode
-      let savedMode = state.connectionMode
-      // stop all listeners
-      state.connectionMode = .none
-      listenForPackets(state.discovery)
-      // set the force flag, restore the mode and restart listeners
+      // set the force flag, restart listeners
       state.forceWanLogin = true
-      state.connectionMode = savedMode
-      listenForPackets(state.discovery)
-      // turn off the force flag
-      state.forceWanLogin = false
-      return .none
+      return Effect(value: .finishInitialization)
       
     case .logViewButton:
       state.viewType = .log
@@ -274,13 +300,15 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .messagesPicker(let filter):
       state.messagesFilterBy = filter
-      // re-filter on change
-      return Effect(value: .filterMessages(state.messagesFilterBy, state.messagesFilterByText))
+      // re-filter
+      state.filteredMessages = filterMessages(state, state.messagesFilterBy, state.messagesFilterByText)
+      return .none
 
     case .messagesFilterTextField(let text):
       state.messagesFilterByText = text
-      // re-filter on change
-      return Effect(value: .filterMessages(state.messagesFilterBy, state.messagesFilterByText))
+      // re-filter
+      state.filteredMessages = filterMessages(state, state.messagesFilterBy, state.messagesFilterByText)
+      return .none
 
     case .objectsPicker(let filterBy):
       state.objectsFilterBy = filterBy
@@ -298,7 +326,15 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // current state?
       if state.radio == nil {
         // NOT connected, check for a default
-        return Effect(value: .checkForDefault)
+        // is there a default?
+        if let defaultSelection = hasDefault(state) {
+          // YES, open it
+          return Effect(value: .pickerAction(.openSelection(defaultSelection)))
+        } else {
+          // NO, or failed to find a match, open the Picker
+          state.pickerState = PickerState(connectionType: state.isGui ? .gui : .nonGui)
+          return .none
+        }
         
       } else {
         // CONNECTED, disconnect
@@ -372,7 +408,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .loginAction(.loginButton(let credentials)):
       state.loginState = nil
       state.smartlinkEmail = credentials.email
-      state.alert = startWanListener(state.discovery!, using: credentials)
+      if state.discovery!.startWanListener( using: credentials) == false {
+        state.alert = AlertState(title: TextState("Smartlink login failed"))
+      }
       return .none
       
       // ----------------------------------------------------------------------------
@@ -384,63 +422,103 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
       // ----------------------------------------------------------------------------
       // MARK: - Actions sent by other actions or publishers
-            
-    case .filterMessages(let filterBy, let filterText):
-      // re-filter messages
-      switch (filterBy, filterText) {
-        
-      case (.all, _):        state.filteredMessages = state.messages
-      case (.prefix, ""):    state.filteredMessages = state.messages
-      case (.prefix, _):     state.filteredMessages = state.messages.filter { $0.text.localizedCaseInsensitiveContains("|" + filterText) }
-      case (.includes, _):   state.filteredMessages = state.messages.filter { $0.text.localizedCaseInsensitiveContains(filterText) }
-      case (.excludes, ""):  state.filteredMessages = state.messages
-      case (.excludes, _):   state.filteredMessages = state.messages.filter { !$0.text.localizedCaseInsensitiveContains(filterText) }
-      case (.command, _):    state.filteredMessages = state.messages.filter { $0.text.prefix(1) == "C" }
-      case (.S0, _):         state.filteredMessages = state.messages.filter { $0.text.prefix(3) == "S0|" }
-      case (.status, _):     state.filteredMessages = state.messages.filter { $0.text.prefix(1) == "S" && $0.text.prefix(3) != "S0|"}
-      case (.reply, _):      state.filteredMessages = state.messages.filter { $0.text.prefix(1) == "R" }
-      }
-      return .none
-
-   case .checkForDefault:
-      // is there a saved default?
-      if let saved = state.defaultConnection {
-        // YES, find a matching discovered packet
-        for packet in state.discovery!.packets where saved.source == packet.source.rawValue && saved.serial == packet.serial {
-          // found one
-          return Effect(value: .pickerAction(.openSelection(PickerSelection(packet, saved.station, nil))))
-        }
-      }
-      // NO default or failed to find a match, open the Picker
-      state.pickerState = PickerState(connectionType: state.isGui ? .gui : .nonGui)
-      return .none
-      
+                  
     case .logAlert(let logEntry):
       // a Warning or Error has been logged. alert the user
       state.alert = .init(title: TextState(
                               """
-                              An ERROR or WARNING was logged:
+                              \(logEntry.level == .warning ? "A Warning" : "An Error") was logged:
                               
                               \(logEntry.msg)
-                              \(logEntry.level == .warning ? "Warning" : "Error")
                               """
                               )
       )
       return .none
-
+      
     case .tcpAction(let message):
       // process TCP messages (both sent and received)
       // ignore "ping" messages unless showPings is true
       if message.direction == .sent && message.text.contains("ping") && state.showPings == false { return .none }
       // add the message to the collection
       state.messages.append(message)
-//      state.update.toggle()
-      // trigger a re-filter
-      return Effect(value: .filterMessages(state.messagesFilterBy, state.messagesFilterByText))
+      // re-filter
+      state.filteredMessages = filterMessages(state, state.messagesFilterBy, state.messagesFilterByText)
+      return .none
 
     case .cancelEffects:
-      return .cancel(ids: LogAlertId(), SentCommandId(), ReceivedCommandId())
+      return .cancel(ids: LogAlertSubscriptionId(), SentMessagesSubscriptionId(), ReceivedMessagesSubscriptionId())
     }
   }
 )
 //  .debug("APIVIEWER ")
+
+// ----------------------------------------------------------------------------
+// MARK: - Helper functions
+
+/// FIlter the Messages array
+/// - Parameters:
+///   - state:         the current ApiState
+///   - filterBy:      the selected filter choice
+///   - filterText:    the current filter text
+/// - Returns:         a filtered array
+func filterMessages(_ state: ApiState, _ filterBy: MessagesFilter, _ filterText: String) -> IdentifiedArrayOf<TcpMessage> {
+  var filteredMessages = IdentifiedArrayOf<TcpMessage>()
+  
+  // re-filter messages
+  switch (filterBy, filterText) {
+    
+  case (.all, _):        filteredMessages = state.messages
+  case (.prefix, ""):    filteredMessages = state.messages
+  case (.prefix, _):     filteredMessages = state.messages.filter { $0.text.localizedCaseInsensitiveContains("|" + filterText) }
+  case (.includes, _):   filteredMessages = state.messages.filter { $0.text.localizedCaseInsensitiveContains(filterText) }
+  case (.excludes, ""):  filteredMessages = state.messages
+  case (.excludes, _):   filteredMessages = state.messages.filter { !$0.text.localizedCaseInsensitiveContains(filterText) }
+  case (.command, _):    filteredMessages = state.messages.filter { $0.text.prefix(1) == "C" }
+  case (.S0, _):         filteredMessages = state.messages.filter { $0.text.prefix(3) == "S0|" }
+  case (.status, _):     filteredMessages = state.messages.filter { $0.text.prefix(1) == "S" && $0.text.prefix(3) != "S0|"}
+  case (.reply, _):      filteredMessages = state.messages.filter { $0.text.prefix(1) == "R" }
+  }
+  return filteredMessages
+}
+
+/// Read the user defaults entry for a default connection and transform it into a DefaultConnection struct
+/// - Returns:         a DefaultConnection struct or nil
+public func getDefaultConnection() -> DefaultConnection? {
+  if let defaultData = UserDefaults.standard.object(forKey: "defaultConnection") as? Data {
+    let decoder = JSONDecoder()
+    if let defaultConnection = try? decoder.decode(DefaultConnection.self, from: defaultData) {
+      return defaultConnection
+    } else {
+      return nil
+    }
+  }
+  return nil
+}
+
+/// Write the user defaults entry for a default connection using a DefaultConnection struct
+func setDefaultConnection(_ conn: DefaultConnection?) {
+  if conn == nil {
+    UserDefaults.standard.removeObject(forKey: "defaultConnection")
+  } else {
+    let encoder = JSONEncoder()
+    if let encoded = try? encoder.encode(conn) {
+      UserDefaults.standard.set(encoded, forKey: "defaultConnection")
+    } else {
+      UserDefaults.standard.removeObject(forKey: "defaultConnection")
+    }
+  }
+}
+
+func hasDefault(_ state: ApiState) -> PickerSelection? {
+  // is there a saved default?
+  if let saved = state.defaultConnection {
+    // YES, find a matching discovered packet
+    for packet in state.discovery!.packets where saved.source == packet.source.rawValue && saved.serial == packet.serial {
+      // found one
+      return PickerSelection(packet, saved.station, nil)
+    }
+  }
+  // NO default or failed to find a match
+  return nil
+}
+

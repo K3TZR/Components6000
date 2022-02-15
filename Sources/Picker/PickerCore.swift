@@ -14,10 +14,10 @@ import Discovery
 import ClientStatus
 import Shared
 
-struct PacketEffectId: Hashable {}
-struct ClientEffectId: Hashable {}
-struct TestEffectId: Hashable {}
-struct WanEffectId: Hashable {}
+struct DiscoveryPacketSubscriptionId: Hashable {}
+struct DiscoveryClientSubscriptionId: Hashable {}
+struct TestResultSubscriptionId: Hashable {}
+struct WanStatusSubscriptionId: Hashable {}
 
 public struct PickerState: Equatable {
   public init(connectionType: ConnectionType = .gui,
@@ -68,22 +68,13 @@ public enum PickerAction: Equatable {
 
 public struct PickerEnvironment {
   public init(
-    queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
-    discoveryEffect: @escaping () -> Effect<PickerAction, Never> = liveDiscoveryEffect,
-    testEffect: @escaping () -> Effect<PickerAction, Never> = liveTestEffect,
-    wanEffect: @escaping () -> Effect<PickerAction, Never> = liveWanEffect
+    queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main }
   )
   {
     self.queue = queue
-    self.discoveryEffect = discoveryEffect
-    self.testEffect = testEffect
-    self.wanEffect = wanEffect
   }
   
   var queue: () -> AnySchedulerOf<DispatchQueue>
-  var discoveryEffect: () -> Effect<PickerAction, Never>
-  var testEffect: () -> Effect<PickerAction, Never>
-  var wanEffect: () -> Effect<PickerAction, Never>
 }
 
 public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>.combine(
@@ -101,7 +92,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       
     case .onAppear:
       // subscribe to Discovery & Wan effects
-      return .merge(environment.discoveryEffect(), environment.wanEffect())
+      return .merge(subscribeToDiscoveryPackets(), subscribeToWanStatus())
       
       // ----------------------------------------------------------------------------
       // MARK: - UI actions
@@ -109,7 +100,9 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     case .cancelButton:
       // stop subscriptions
       // handled upstream
-      return .cancel(ids: PacketEffectId(), ClientEffectId(), WanEffectId())
+      return .cancel(ids: DiscoveryPacketSubscriptionId(),
+                     DiscoveryClientSubscriptionId(),
+                     WanStatusSubscriptionId())
 
     case .connectButton(let selection):
       if selection.packet.source == .smartlink {
@@ -153,8 +146,8 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       // try to send a Test
       if state.discovery.smartlinkTest(selection.packet.serial) {
         // reply will generate a testResultReceived action
-        return environment.testEffect()
-      
+        return subscribeToTestResult()
+
       } else {
         // NOT SENT?
         NSSound.beep()
@@ -194,7 +187,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       
     case .testResultReceived(let result):
       state.testResult = result
-      return .cancel(ids: TestEffectId())
+      return .cancel(ids: TestResultSubscriptionId())
       
     case.wanStatus(let status):
       if state.pickerSelection != nil && status.type == .connect && status.wanHandle != nil {
@@ -222,7 +215,10 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     case .openSelection(_):
       // handled upstream
       // stop subscriptions
-      return .cancel(ids: PacketEffectId(), ClientEffectId(), WanEffectId(), TestEffectId())
+      return .cancel(ids: DiscoveryPacketSubscriptionId(),
+                     DiscoveryClientSubscriptionId(),
+                     WanStatusSubscriptionId(),
+                     TestResultSubscriptionId())
     }
   }
 )

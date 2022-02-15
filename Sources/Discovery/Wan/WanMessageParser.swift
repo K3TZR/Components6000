@@ -207,6 +207,7 @@ extension WanListener {
   private func parseRadioList(_ msg: String.SubSequence) {
     var publicTlsPortToUse: Int?
     var publicUdpPortToUse: Int?
+    var packet: Packet
     
     // several radios are possible, separate list into its components
     let radioMessages = msg.components(separatedBy: "|")
@@ -214,36 +215,35 @@ extension WanListener {
     _log("Discovery: Wan Parser RadioList received", .debug, #function, #file, #line)
 
     for message in radioMessages where message != "" {
-      if var packet = _discovery?.populatePacket( message.keyValuesArray() ) {
-        // now continue to fill the radio parameters
-        // favor using the manually defined forwarded ports if they are defined
-        if let tlsPort = packet.publicTlsPort, let udpPort = packet.publicUdpPort {
-          publicTlsPortToUse = tlsPort
-          publicUdpPortToUse = udpPort
-          packet.isPortForwardOn = true;
-        } else if (packet.upnpSupported) {
-          publicTlsPortToUse = packet.publicUpnpTlsPort!
-          publicUdpPortToUse = packet.publicUpnpUdpPort!
-          packet.isPortForwardOn = false
-        }
-        
-        if ( !packet.upnpSupported && !packet.isPortForwardOn ) {
-          /* This will require extra negotiation that chooses
-           * a port for both sides to try
-           */
-          // TODO: We also need to check the NAT for preserve_ports coming from radio here
-          // if the NAT DOES NOT preserve ports then we can't do hole punch
-          packet.requiresHolePunch = true
-        }
-        packet.publicTlsPort = publicTlsPortToUse
-        packet.publicUdpPort = publicUdpPortToUse
-        if let localAddr = _tcpSocket.localHost {
-          packet.localInterfaceIP = localAddr
-        }
-        packet.source = .smartlink
-        // add packet to Packets
-        _discovery?.processPacket(packet)
+      packet = Packet.populate( message.keyValuesArray() )
+      // now continue to fill the radio parameters
+      // favor using the manually defined forwarded ports if they are defined
+      if let tlsPort = packet.publicTlsPort, let udpPort = packet.publicUdpPort {
+        publicTlsPortToUse = tlsPort
+        publicUdpPortToUse = udpPort
+        packet.isPortForwardOn = true;
+      } else if (packet.upnpSupported) {
+        publicTlsPortToUse = packet.publicUpnpTlsPort!
+        publicUdpPortToUse = packet.publicUpnpUdpPort!
+        packet.isPortForwardOn = false
       }
+      
+      if ( !packet.upnpSupported && !packet.isPortForwardOn ) {
+        /* This will require extra negotiation that chooses
+         * a port for both sides to try
+         */
+        // TODO: We also need to check the NAT for preserve_ports coming from radio here
+        // if the NAT DOES NOT preserve ports then we can't do hole punch
+        packet.requiresHolePunch = true
+      }
+      packet.publicTlsPort = publicTlsPortToUse
+      packet.publicUdpPort = publicUdpPortToUse
+      if let localAddr = _tcpSocket.localHost {
+        packet.localInterfaceIP = localAddr
+      }
+      packet.source = .smartlink
+      // add packet to Packets
+      _discovery?.processPacket(packet)
     }
   }
   

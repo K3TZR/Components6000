@@ -13,7 +13,7 @@ import Shared
 import SecureStorage
 import Login
 
-final class Authentication {
+final class WanAuthentication {
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
 

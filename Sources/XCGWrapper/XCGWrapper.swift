@@ -40,7 +40,7 @@ public final class XCGWrapper: Equatable {
   // ----------------------------------------------------------------------------
   // MARK: - Singleton
   
-  public init(_ logLevel: LogLevel = .debug) {
+  public init(_ logPublisher: PassthroughSubject<LogEntry, Never>, logLevel: LogLevel = .debug) {
     var xcgLogLevel: XCGLogger.Level
     switch logLevel {
     case .debug:
@@ -114,7 +114,7 @@ public final class XCGWrapper: Equatable {
       
       _defaultLogUrl = URL(fileURLWithPath: _defaultFolder + "/" + defaultLogName)
 
-      _logCancellable = LogProxy.sharedInstance.logPublisher
+      _logCancellable = logPublisher
         .sink { [self] entry in
           // Log Handler to support XCGLogger
           switch entry.level {

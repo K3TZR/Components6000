@@ -123,7 +123,7 @@ final class WanListener: NSObject, ObservableObject {
   var _publicIp: String?
 
   private var _appName: String?
-  private var _authentication = Authentication()
+  private var _authentication = WanAuthentication()
   private var _cancellables = Set<AnyCancellable>()
   private var _domain: String?
   private var _idToken: IdToken? = nil
@@ -167,8 +167,8 @@ final class WanListener: NSObject, ObservableObject {
   /// Start listening given a Smartlink email
   /// - Parameters:
   ///   - smartlinkEmail:     an email address associated with the Smartlink account
-  func start(using smartlinkEmail: String?, forceLogin: Bool) throws {
-    guard forceLogin == false else { throw WanListenerError.kFailedToObtainIdToken }
+  func start(using smartlinkEmail: String?, forceLogin: Bool) -> Bool {
+    guard forceLogin == false else { return false }
     // obtain an ID Token
     if let idToken = _authentication.getValidIdToken(from: _previousIdToken, or: smartlinkEmail) {
       _previousIdToken = idToken
@@ -176,31 +176,33 @@ final class WanListener: NSObject, ObservableObject {
       // use the ID Token to connect to the Smartlink service
       do {
         try connectToSmartlink(using: idToken)
+        return true
       } catch {
-        throw WanListenerError.kFailedToConnect
+        return false
       }
       
     } else {
-      throw WanListenerError.kFailedToObtainIdToken
+      return false
     }
   }
   
   /// Start listening given a User / Pwd
   /// - Parameters:
   ///   - loginResult:           a struct with email & pwd
-  func start(using loginResult: LoginResult) throws {
+  func start(using loginResult: LoginResult) -> Bool {
     if let idToken = _authentication.requestTokens(using: loginResult) {
       _previousIdToken = idToken
       _log("Discovery: Wan Listener IdToken obtained from login credentials", .debug, #function, #file, #line)
       // use the ID Token to connect to the Smartlink service
       do {
         try connectToSmartlink(using: idToken)
+        return true
       } catch {
-        throw WanListenerError.kFailedToConnect
+        return false
       }
       
     } else {
-      throw WanListenerError.kFailedToObtainIdToken
+      return false
     }
   }
   
