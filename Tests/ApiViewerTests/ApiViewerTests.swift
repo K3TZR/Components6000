@@ -29,94 +29,111 @@ class ApiViewerTests: XCTestCase {
       )
     )
     
-    store.send(.onAppear)
+    store.send(.onAppear) {
+      $0.discovery = Discovery.sharedInstance
+    }
     scheduler.advance()
     
     store.receive( .finishInitialization ) {
-      $0.discovery = Discovery.sharedInstance
-      $0.alert = AlertState(title: TextState("Discovery: Wan Login required"))
-      $0.loginState = LoginState()
+      $0.loginState = LoginState(heading: "Smartlink Login required", email: $0.smartlinkEmail)
+    }
+
+    scheduler.advance()
+    store.send(.loginAction(.loginButton(LoginResult("myUser@some.com", pwd: "myPwd")))) {
+      $0.loginState = nil
+      $0.smartlinkEmail = "myUser@some.com"
+      $0.alert = AlertState(title: TextState("Smartlink login failed"))
+    }
+    
+    store.send(.toggleButton(\.isGui)) {                // isGui (default is "ON")
+      $0.isGui = false
+    }
+    store.send(.toggleButton(\.isGui)) {
+      $0.isGui = true
+    }
+    store.send(.toggleButton(\.showPings)) {            // showPings
+      $0.showPings = true
+    }
+    store.send(.toggleButton(\.showPings)) {
+      $0.showPings = false
+    }
+    store.send(.toggleButton(\.showTimes)) {            // showTimes
+      $0.showTimes = true
+    }
+    store.send(.toggleButton(\.showTimes)) {
+      $0.showTimes = false
+    }
+    store.send(.toggleButton(\.clearOnConnect)) {       // clearOnConnect
+      $0.clearOnConnect = true
+    }
+    store.send(.toggleButton(\.clearOnConnect)) {
+      $0.clearOnConnect = false
+    }
+    store.send(.toggleButton(\.clearOnDisconnect)) {    // clearOnDisconnect
+      $0.clearOnDisconnect = true
+    }
+    store.send(.toggleButton(\.clearOnDisconnect)) {
+      $0.clearOnDisconnect = false
+    }
+    store.send(.toggleButton(\.clearOnSend)) {          // clearOnSend
+      $0.clearOnSend = true
+    }
+    store.send(.toggleButton(\.clearOnSend)) {
+      $0.clearOnSend = false
+    }
+    store.send(.toggleButton(\.reverseLog)) {           // reverseLog
+      $0.reverseLog = true
+    }
+    store.send(.toggleButton(\.reverseLog)) {
+      $0.reverseLog = false
+    }
+    store.send(.fontSizeStepper(8)) {                   // font size
+      $0.fontSize = 8
+    }
+    store.send(.fontSizeStepper(12)) {
+      $0.fontSize = 12
+    }
+    store.send(.commandTextField("info")) {             // Command to send
+      $0.commandToSend = "info"
+    }
+    store.send(.commandTextField("")) {
+      $0.commandToSend = ""
+    }
+    store.send(.forceLoginButton) {                     // Force Wan login
+      $0.forceWanLogin = true
+    }
+    scheduler.advance()
+    store.receive( .finishInitialization) {
+      $0.loginState = LoginState(heading: "Smartlink Login required", email: $0.smartlinkEmail)
+    }
+    store.send(.forceLoginButton) {
+      $0.forceWanLogin = false
+    }
+    
+    // Tcp messages
+    let message1 = TcpMessage(direction: .received, text: "This is a received message", color: .red, timeInterval: 1.0)
+    store.send(.tcpMessageSentOrReceived(message1)) {
+      $0.messages = [message1]
+      $0.filteredMessages = [message1]
+      $0.messages[id: message1.id] = message1
+      $0.filteredMessages[id: message1.id] = message1
+    }
+    let message2 = TcpMessage(direction: .sent, text: "This is a sent message", color: .red, timeInterval: 1.0)
+    store.send(.tcpMessageSentOrReceived(message2)) {
+      $0.messages = [message1, message2]
+      $0.filteredMessages = [message1, message2]
+      $0.messages[id: message2.id] = message2
+      $0.filteredMessages[id: message2.id] = message2
+    }
+    store.send(.clearNowButton) {                       // Clear Now
+      $0.messages = []
+      $0.filteredMessages = []
+    }
+    store.send(.startStopButton) {                      // Start / Stop
+      $0.pickerState = PickerState(connectionType: $0.isGui ? .gui : .nonGui)
     }
 
     store.send( .cancelEffects )
 
-//    store.send(.startStopButton) {
-//      $0.pickerState = nil
-//    }
-//    // isGui (default is "ON")
-//    store.send(.toggleButton(\.isGui)) {
-//      $0.isGui = false
-//    }
-//    store.send(.toggleButton(\.isGui)) {
-//      $0.isGui = true
-//    }
-//    // showTimes
-//    store.send(.toggleButton(\.showTimes)) {
-//      $0.showTimes = true
-//    }
-//    store.send(.toggleButton(\.showTimes)) {
-//      $0.showTimes = false
-//    }
-//    // showPings
-//    store.send(.toggleButton(\.showPings)) {
-//      $0.showPings = true
-//    }
-//    store.send(.toggleButton(\.showPings)) {
-//      $0.showPings = false
-//    }
-//    // clearOnConnect
-//    store.send(.toggleButton(\.clearOnConnect)) {
-//      $0.clearOnConnect = true
-//    }
-//    store.send(.toggleButton(\.clearOnConnect)) {
-//      $0.clearOnConnect = false
-//    }
-//    // clearOnDisconnect
-//    store.send(.toggleButton(\.clearOnDisconnect)) {
-//      $0.clearOnDisconnect = true
-//    }
-//    store.send(.toggleButton(\.clearOnDisconnect)) {
-//      $0.clearOnDisconnect = false
-//    }
-//    // clearOnSend
-//    store.send(.toggleButton(\.clearOnSend)) {
-//      $0.clearOnSend = true
-//    }
-//    store.send(.toggleButton(\.clearOnSend)) {
-//      $0.clearOnSend = false
-//    }
-//    // Command to send
-//    store.send(.commandTextField("info")) {
-//      $0.commandToSend = "info"
-//    }
-//    store.send(.commandTextField("")) {
-//      $0.commandToSend = ""
-//    }
-//    // font size
-//    store.send(.fontSizeStepper(8)) {
-//      $0.fontSize = 8
-//    }
-//    store.send(.fontSizeStepper(12)) {
-//      $0.fontSize = 12
-//    }
-//
-//    // default connection
-//    let selection = PickerSelection(testPacket, nil)
-//    store.send(.pickerAction(.defaultButton(selection))) {
-//      $0.defaultConnection = DefaultConnection(selection)
-//    }
-//    store.send(.clearDefaultButton) {
-//      $0.defaultConnection = nil
-//    }
-//
-//    // clear messages
-//    let message = TcpMessage(direction: .received, text: "This is a received message", color: .red, timeInterval: 1.0)
-//    store.send(.tcpAction(message)) {
-//      $0.messages[id: message.id] = message
-//    }
-//    store.send(.clearNowButton) {
-//      $0.messages.removeAll()
-//      $0.filteredMessages.removeAll()
-//    }
   }
 }

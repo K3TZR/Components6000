@@ -43,8 +43,6 @@ struct ObjectsView_Previews: PreviewProvider {
     ObjectsView(
       store: Store(
         initialState: ApiState(
-          domain: "net.k3tzr",
-          appName: "Api6000",
           isGui: false,
           radio: Radio(testPacket,
                        connectionType: .gui,
@@ -61,8 +59,6 @@ struct ObjectsView_Previews: PreviewProvider {
     ObjectsView(
       store: Store(
         initialState: ApiState(
-          domain: "net.k3tzr",
-          appName: "Api6000",
           isGui: true,
           radio: Radio(testPacket,
                        connectionType: .gui,

@@ -190,30 +190,27 @@ class LoggingTests: XCTestCase {
         
 
     sleep(1)
-    
+
+    var expected = IdentifiedArrayOf<LogLine>()
+    expected.append(LogLine(
+      uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!,
+      text: adjustedLogLines[0],
+      color: logLineColor(adjustedLogLines[0])))
+    expected.append(LogLine(
+      uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+      text: adjustedLogLines[1],
+      color: logLineColor(adjustedLogLines[1])))
+    expected.append(LogLine(
+      uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
+      text: adjustedLogLines[2],
+      color: logLineColor(adjustedLogLines[2])))
+
     // Three entries at this point
     //      "[Info] > xctest Version: 13.2.1 Build: 19566 PID: 19299",
     //      "[Info] > XCGLogger Version: 7.0.1 - Level: Debug",
     //      "[Info] > XCGLogger writing log to: ",
     store.send(.onAppear(.debug)) {
       $0.logUrl = logFileUrl
-    }
-    
-    var expected = IdentifiedArrayOf<LogLine>()
-    expected.append(LogLine(
-      uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000000")!,
-      text: adjustedLogLines[0],
-      color: lineColor(adjustedLogLines[0])))
-    expected.append(LogLine(
-      uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
-      text: adjustedLogLines[1],
-      color: lineColor(adjustedLogLines[1])))
-    expected.append(LogLine(
-      uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
-      text: adjustedLogLines[2],
-      color: lineColor(adjustedLogLines[2])))
-
-    store.receive( .refreshButton(logFileUrl, .debug) ) {
       $0.logMessages = expected
     }
 
@@ -221,28 +218,25 @@ class LoggingTests: XCTestCase {
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!,
       text: logLines[0],
-      color: lineColor(logLines[0])))
+      color: logLineColor(logLines[0])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000004")!,
       text: logLines[1],
-      color: lineColor(logLines[1])))
+      color: logLineColor(logLines[1])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000005")!,
       text: logLines[2],
-      color: lineColor(logLines[2])))
-    
-    store.send(.timestampsButton) {
-      $0.showTimestamps.toggle()
-    }
+      color: logLineColor(logLines[2])))
     
     // Three entries at this point but with TimeStamps
     //      "2022-02-11 20:01:17.130 [Info] > xctest Version: 13.2.1 Build: 19566 PID: 19299",
     //      "2022-02-11 20:01:17.130 [Info] > XCGLogger Version: 7.0.1 - Level: Debug",
     //      "2022-02-11 20:01:17.131 [Info] > XCGLogger writing log to: ",
-    store.receive( .refreshButton(logFileUrl, .debug) ) {
+    store.send(.timestampsButton) {
+      $0.showTimestamps.toggle()
       $0.logMessages = expected
     }
-
+    
     var logEntry = LogEntry("XCGWrapperTests-2: debug message", .debug, #function, #file, #line)
     logProxy.logPublisher.send(logEntry)
     
@@ -270,31 +264,31 @@ class LoggingTests: XCTestCase {
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000006")!,
       text: logLines[0],
-      color: lineColor(logLines[0])))
+      color: logLineColor(logLines[0])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000007")!,
       text: logLines[1],
-      color: lineColor(logLines[1])))
+      color: logLineColor(logLines[1])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000008")!,
       text: logLines[2],
-      color: lineColor(logLines[2])))
+      color: logLineColor(logLines[2])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000009")!,
       text: logLines[3],
-      color: lineColor(logLines[3])))
+      color: logLineColor(logLines[3])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000000A")!,
       text: logLines[4],
-      color: lineColor(logLines[4])))
+      color: logLineColor(logLines[4])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000000B")!,
       text: logLines[5],
-      color: lineColor(logLines[5])))
+      color: logLineColor(logLines[5])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000000C")!,
       text: logLines[6],
-      color: lineColor(logLines[6])))
+      color: logLineColor(logLines[6])))
 
     // Seven entries at this point with TimeStamps
     //      "2022-02-11 20:01:17.130 [Info] > xctest Version: 13.2.1 Build: 19566 PID: 19299",
@@ -308,36 +302,32 @@ class LoggingTests: XCTestCase {
       $0.logMessages = expected
     }
     
-    store.send(.logLevel(.info)) {
-      $0.logLevel = .info
-    }
-
     expected.removeAll()
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000000D")!,
       text: logLines[0],
-      color: lineColor(logLines[0])))
+      color: logLineColor(logLines[0])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000000E")!,
       text: logLines[1],
-      color: lineColor(logLines[1])))
+      color: logLineColor(logLines[1])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000000F")!,
       text: logLines[2],
-      color: lineColor(logLines[2])))
+      color: logLineColor(logLines[2])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000011")!,
       text: logLines[4],
-      color: lineColor(logLines[4])))
+      color: logLineColor(logLines[4])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000012")!,
       text: logLines[5],
-      color: lineColor(logLines[5])))
+      color: logLineColor(logLines[5])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000013")!,
       text: logLines[6],
-      color: lineColor(logLines[6])))
-    
+      color: logLineColor(logLines[6])))
+
     // Six entries at this point but with TimeStamps
     //      "2022-02-11 20:01:17.130 [Info] > xctest Version: 13.2.1 Build: 19566 PID: 19299",
     //      "2022-02-11 20:01:17.130 [Info] > XCGLogger Version: 7.0.1 - Level: Debug",
@@ -345,8 +335,8 @@ class LoggingTests: XCTestCase {
     //      "2022-02-11 20:01:17.131 [Info] > XCGWrapperTests-2: info message",
     //      "2022-02-11 20:01:17.131 [Warning] > XCGWrapperTests-2: warning message",
     //      "2022-02-11 20:01:17.131 [Error] > XCGWrapperTests-2: error message",
-
-    store.receive( .refreshButton(logFileUrl, .info) ) {
+    store.send(.logLevel(.info)) {
+      $0.logLevel = .info
       $0.logMessages = expected
     }
     
@@ -354,19 +344,17 @@ class LoggingTests: XCTestCase {
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000019")!,
       text: logLines[5],
-      color: lineColor(logLines[5])))
+      color: logLineColor(logLines[5])))
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-00000000001A")!,
       text: logLines[6],
-      color: lineColor(logLines[6])))
+      color: logLineColor(logLines[6])))
 
     // Two entries at this point but with TimeStamps
     //      "2022-02-11 20:01:17.131 [Warning] > XCGWrapperTests-2: warning message",
     //      "2022-02-11 20:01:17.131 [Error] > XCGWrapperTests-: error message",
     store.send(.logLevel(.warning)) {
       $0.logLevel = .warning
-    }
-    store.receive( .refreshButton(logFileUrl, .warning) ) {
       $0.logMessages = expected
     }
 
@@ -374,14 +362,12 @@ class LoggingTests: XCTestCase {
     expected.append(LogLine(
       uuid: UUID(uuidString: "00000000-0000-0000-0000-000000000021")!,
       text: logLines[6],
-      color: lineColor(logLines[6])))
+      color: logLineColor(logLines[6])))
 
     // One entry at this point but with TimeStamps
     //      "2022-02-11 20:01:17.131 [Error] > XCGWrapperTests-2: error message",
     store.send(.logLevel(.error)) {
       $0.logLevel = .error
-    }
-    store.receive( .refreshButton(logFileUrl, .error) ) {
       $0.logMessages = expected
     }
     

@@ -43,8 +43,6 @@ struct AtuView_Previews: PreviewProvider {
     AtuView(
       store: Store(
         initialState: ApiState(
-          domain: "net.k3tzr",
-          appName: "Api6000",
           radio: Radio(Packet(),
                        connectionType: .gui,
                        command: Tcp(),

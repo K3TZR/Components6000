@@ -9,6 +9,34 @@ import ComposableArchitecture
 import Shared
 import SwiftUI
 
+// ----------------------------------------------------------------------------
+// MARK: - Structs and Enums
+
+public struct LogLine: Identifiable, Equatable {
+
+  public init(uuid: UUID, text: String, color: Color = .primary) {
+    self.uuid = uuid
+    self.text = text
+    self.color = color
+  }
+  public var id: UUID { uuid }
+  public var uuid: UUID
+  public var text: String
+  public var color: Color
+}
+
+public enum LogFilter: String, CaseIterable, Identifiable {
+  case excludes
+  case includes
+  case none
+  case prefix
+
+  public var id: String { self.rawValue }
+}
+
+// ----------------------------------------------------------------------------
+// MARK: - State, Actions & Environment
+
 public struct LogState: Equatable {
   public init(logLevel: LogLevel = LogLevel(rawValue: UserDefaults.standard.string(forKey: "logLevel") ?? "debug") ?? .debug,
               filterBy: LogFilter = LogFilter(rawValue: UserDefaults.standard.string(forKey: "filterBy") ?? "none") ?? .none,
@@ -17,8 +45,6 @@ public struct LogState: Equatable {
               fontSize: CGFloat = 12
   )
   {
-//    self.domain = domain
-//    self.appName = appName
     self.fontSize = fontSize
     self.logLevel = logLevel
     self.filterBy = filterBy
@@ -32,9 +58,7 @@ public struct LogState: Equatable {
   public var showTimestamps: Bool { didSet { UserDefaults.standard.set(showTimestamps, forKey: "showTimestamps") } }
 
   // normal state
-//  public var domain: String
   public var alert: AlertView?
-//  public var appName: String
   public var logUrl: URL?
   public var fontSize: CGFloat = 12
   public var logMessages = IdentifiedArrayOf<LogLine>()
@@ -71,6 +95,9 @@ public struct LogEnvironment {
   var uuid: () -> UUID
 }
 
+// ----------------------------------------------------------------------------
+// MARK: - Reducer
+
 public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
   state, action, environment in
   
@@ -81,7 +108,8 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
   case .onAppear(let logLevel):
     let info = getBundleInfo()
     state.logUrl = URL.appSupport.appendingPathComponent(info.domain + "." + info.appName + "/Logs/" + info.appName + ".log" )
-    return Effect(value: .refreshButton(state.logUrl!, logLevel))
+    state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
+    return .none
 
     // ----------------------------------------------------------------------------
     // MARK: - UI actions
@@ -96,11 +124,12 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     
   case .filterBy(let filter):
     state.filterBy = filter
-    return Effect(value: .refreshButton(state.logUrl!, state.logLevel))
+    state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
+    return .none
 
   case .filterByText(let text):
-    state.filterByText = text
-    return Effect(value: .refreshButton(state.logUrl!, state.logLevel))
+    state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
+    return .none
 
   case let .fontSize(value):
     state.fontSize = value
@@ -109,27 +138,17 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
   case .loadButton:
     if let url = showOpenPanel() {
       state.logMessages.removeAll()
-      do {
-        let fileString = try String(contentsOf: url)
-        let fileArray = fileString.components(separatedBy: "\n")
-        for item in fileArray {
-          state.logMessages.append(LogLine(uuid: environment.uuid(), text: item, color: lineColor(item)))
-        }
-
-      } catch {
-        return .none
-      }
+      state.logMessages = refreshLog(state, environment, url, state.logLevel)
     }
     return .none
     
   case .logLevel(let level):
     state.logLevel = level
-    return Effect(value: .refreshButton(state.logUrl!, level))
+    state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
+    return .none
 
   case .refreshButton(let logUrl, let level):
-    if let messages = readLogFile(at: logUrl, environment: environment ) {
-      state.logMessages = filter(messages, level: level, filter: state.filterBy, filterText: state.filterByText, showTimes: state.showTimestamps)
-    }
+    state.logMessages = refreshLog(state, environment, logUrl, level)
     return .none
     
   case .saveButton:
@@ -143,7 +162,7 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
   case .timestampsButton:
     state.showTimestamps.toggle()
     if state.logUrl != nil {
-      return Effect(value: .refreshButton(state.logUrl!, state.logLevel))
+      state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
     }
     return .none
     
@@ -156,3 +175,109 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
   }
 }
 //  .debug("LOGVIEWER ")
+
+// ----------------------------------------------------------------------------
+// MARK: - Helper functions
+
+func refreshLog(_ state: LogState, _ environment: LogEnvironment, _ logUrl: URL, _ level: LogLevel) -> IdentifiedArrayOf<LogLine> {
+  if let messages = readLogFile(at: logUrl, environment: environment ) {
+    return filterLog(messages, level: level, filter: state.filterBy, filterText: state.filterByText, showTimes: state.showTimestamps)
+  }
+  return IdentifiedArrayOf<LogLine>()
+}
+
+/// Read a Log file
+/// - Parameter url:    the URL of the file
+/// - Returns:          an array of log entries
+func readLogFile(at url: URL, environment: LogEnvironment) -> IdentifiedArrayOf<LogLine>? {
+  var messages = IdentifiedArrayOf<LogLine>()
+  
+  do {
+    // get the contents of the file
+    let logString = try String(contentsOf: url, encoding: .ascii)
+    // parse it into lines
+    let lines = logString.components(separatedBy: "\n").dropLast()
+    for line in lines {
+      messages.append(LogLine(uuid: environment.uuid(), text: line, color: logLineColor(line)))
+    }
+    return messages
+    
+  } catch {
+    return nil
+  }
+}
+
+/// Filter an array of Log entries
+/// - Parameters:
+///   - messages:       the array
+///   - level:          a log level
+///   - filter:         a filter type
+///   - filterText:     the filter text
+///   - showTimes:      whether to show timestamps
+/// - Returns:          the filtered array of Log entries
+func filterLog(_ messages: IdentifiedArrayOf<LogLine>, level: LogLevel, filter: LogFilter, filterText: String = "", showTimes: Bool = true) -> IdentifiedArrayOf<LogLine> {
+  var lines = IdentifiedArrayOf<LogLine>()
+  var limitedLines = IdentifiedArrayOf<LogLine>()
+
+  // filter the log entries
+  switch level {
+  case .debug:     lines = messages
+  case .info:      lines = messages.filter { $0.text.contains(" [Error] ") || $0.text.contains(" [Warning] ") || $0.text.contains(" [Info] ") }
+  case .warning:   lines = messages.filter { $0.text.contains(" [Error] ") || $0.text.contains(" [Warning] ") }
+  case .error:     lines = messages.filter { $0.text.contains(" [Error] ") }
+  }
+
+  switch filter {
+  case .none:       limitedLines = lines
+  case .prefix:     limitedLines = lines.filter { $0.text.contains(" > " + filterText) }
+  case .includes:   limitedLines = lines.filter { $0.text.contains(filterText) }
+  case .excludes:   limitedLines = lines.filter { !$0.text.contains(filterText) }
+  }
+
+  if !showTimes {
+    for line in limitedLines {
+      let startIndex = line.text.firstIndex(of: "[") ?? line.text.startIndex
+      limitedLines[id: line.id]?.text = String(line.text[startIndex..<line.text.endIndex])
+    }
+  }
+  return limitedLines
+}
+
+/// Determine the color to assign to a Log entry
+/// - Parameter text:     the entry
+/// - Returns:            a Color
+func logLineColor(_ text: String) -> Color {
+  if text.contains("[Debug]") { return .gray }
+  else if text.contains("[Info]") { return .primary }
+  else if text.contains("[Warning]") { return .orange }
+  else if text.contains("[Error]") { return .red }
+  else { return .primary }
+}
+
+/// Display a SavePanel
+/// - Returns:       the URL of the selected file or nil
+func showSavePanel() -> URL? {
+  let savePanel = NSSavePanel()
+  savePanel.allowedFileTypes = ["log"]
+  savePanel.canCreateDirectories = true
+  savePanel.isExtensionHidden = false
+  savePanel.allowsOtherFileTypes = false
+  savePanel.title = "Save the Log"
+  savePanel.message = "Choose a folder and a name to store your Log."
+  savePanel.nameFieldLabel = "File name:"
+
+  let response = savePanel.runModal()
+  return response == .OK ? savePanel.url : nil
+}
+
+/// Display an OpenPanel
+/// - Returns:        the URL of the selected file or nil
+func showOpenPanel() -> URL? {
+  let openPanel = NSOpenPanel()
+  openPanel.allowedFileTypes = ["log"]
+  openPanel.allowsMultipleSelection = false
+  openPanel.canChooseDirectories = false
+  openPanel.canChooseFiles = true
+  let response = openPanel.runModal()
+  return response == .OK ? openPanel.url : nil
+}

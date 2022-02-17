@@ -57,8 +57,6 @@ struct RadioView_Previews: PreviewProvider {
     RadioView(
       store: Store(
         initialState: ApiState(
-          domain: "net.k3tzr",
-          appName: "Api6000",
           radio: Radio(testPacket,
                        connectionType: .gui,
                        command: Tcp(),

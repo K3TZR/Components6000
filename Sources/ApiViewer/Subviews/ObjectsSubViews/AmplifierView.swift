@@ -46,8 +46,6 @@ struct AmplifierView_Previews: PreviewProvider {
     AmplifierView(
       store: Store(
         initialState: ApiState(
-          domain: "net.k3tzr",
-          appName: "Api6000",
           radio: Radio(Packet(),
                        connectionType: .gui,
                        command: Tcp(),

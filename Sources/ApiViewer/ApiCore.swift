@@ -5,45 +5,47 @@
 //  Created by Douglas Adams on 11/24/21.
 //
 
-import ComposableArchitecture
 import Combine
+import ComposableArchitecture
 import Dispatch
 import SwiftUI
 
-import Login
-import Picker
 import Discovery
+import Login
+import LogViewer
+import Picker
+import Radio
+import Shared
 import TcpCommands
 import UdpStreams
-import Radio
 import XCGWrapper
-import Shared
-import LogViewer
 
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums
 
+public typealias Logger = (PassthroughSubject<LogEntry, Never>, LogLevel) -> Void
+
+// cancellation IDs
 struct ReceivedMessagesSubscriptionId: Hashable {}
 struct SentMessagesSubscriptionId: Hashable {}
 struct LogAlertSubscriptionId: Hashable {}
 struct WanStatusSubscriptionId: Hashable {}
 struct ReceivedPacketSubscriptionId: Hashable {}
 
-public struct DefaultConnection: Codable, Equatable {
+public struct TcpMessage: Equatable, Identifiable {
+  public var id = UUID()
+  var direction: TcpMessageDirection
+  var text: String
+  var color: Color
+  var timeInterval: TimeInterval
+}
 
+public struct DefaultConnection: Codable, Equatable {
   public init(_ selection: PickerSelection) {
     self.source = selection.packet.source.rawValue
     self.serial = selection.packet.serial
     self.station = selection.station
   }
-
-  public static func == (lhs: DefaultConnection, rhs: DefaultConnection) -> Bool {
-    guard lhs.source == rhs.source else { return false }
-    guard lhs.serial == rhs.serial else { return false }
-    guard lhs.station == rhs.station else { return false }
-    return true
-  }
-
   var source: String
   var serial: String
   var station: String?
@@ -53,9 +55,21 @@ public struct DefaultConnection: Codable, Equatable {
     case serial
     case station
   }
+
+  public static func == (lhs: DefaultConnection, rhs: DefaultConnection) -> Bool {
+    guard lhs.source == rhs.source else { return false }
+    guard lhs.serial == rhs.serial else { return false }
+    guard lhs.station == rhs.station else { return false }
+    return true
+  }
 }
 
-public typealias Logger = (PassthroughSubject<LogEntry, Never>, LogLevel) -> Void
+public enum ConnectionMode: String {
+  case both
+  case local
+  case none
+  case smartlink
+}
 
 public enum ViewType: Equatable {
   case api
@@ -76,6 +90,7 @@ public enum ObjectsFilter: String, CaseIterable {
   case waveforms
   case xvtrs
 }
+
 public enum MessagesFilter: String, CaseIterable {
   case all
   case prefix
@@ -151,18 +166,18 @@ public struct ApiState: Equatable {
   public var messages = IdentifiedArrayOf<TcpMessage>()
   public var pickerState: PickerState? = nil
   public var radio: Radio?
-  public var reverse = false
+  public var reverseLog = false
   public var tcp = Tcp()
-//  public var update = false
   public var viewType: ViewType = .api
   
   public var cancellables = Set<AnyCancellable>()
 }
 
 public enum ApiAction: Equatable {
+  // initialization
   case onAppear
 
-  // ApiView controls
+  // UI controls
   case apiViewButton
   case clearDefaultButton
   case clearNowButton
@@ -174,7 +189,7 @@ public enum ApiAction: Equatable {
   case messagesPicker(MessagesFilter)
   case messagesFilterTextField(String)
   case objectsPicker(ObjectsFilter)
-  case reverseButton
+//  case reverseButton
   case sendButton
   case startStopButton
   case toggleButton(WritableKeyPath<ApiState, Bool>)
@@ -185,8 +200,8 @@ public enum ApiAction: Equatable {
   case pickerAction(PickerAction)
 
   // Effects related
-  case logAlert(LogEntry)
-  case tcpAction(TcpMessage)
+  case logAlertReceived(LogEntry)
+  case tcpMessageSentOrReceived(TcpMessage)
   case finishInitialization
   case cancelEffects
 }
@@ -246,7 +261,8 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       Discovery.sharedInstance.stopWanListener()
 
       switch state.connectionMode {
-      case .local:        state.discovery!.startLanListener()
+      case .local:
+        state.discovery!.startLanListener()
       case .smartlink:
         if state.discovery!.startWanListener(smartlinkEmail: state.smartlinkEmail, forceLogin: state.forceWanLogin) == false {
           state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
@@ -291,8 +307,11 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .forceLoginButton:
       // set the force flag, restart listeners
-      state.forceWanLogin = true
-      return Effect(value: .finishInitialization)
+      state.forceWanLogin.toggle()
+      if state.forceWanLogin {
+        return Effect(value: .finishInitialization)
+      }
+      return .none
       
     case .logViewButton:
       state.viewType = .log
@@ -313,10 +332,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .objectsPicker(let filterBy):
       state.objectsFilterBy = filterBy
       return.none
-      
-    case .reverseButton:
-      state.reverse.toggle()
-      return .none
       
     case .sendButton:
       _ = state.tcp.send(state.commandToSend)
@@ -408,7 +423,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .loginAction(.loginButton(let credentials)):
       state.loginState = nil
       state.smartlinkEmail = credentials.email
-      if state.discovery!.startWanListener( using: credentials) == false {
+      if state.discovery!.startWanListener( using: credentials) {
+        state.forceWanLogin = false
+      } else {
         state.alert = AlertState(title: TextState("Smartlink login failed"))
       }
       return .none
@@ -421,9 +438,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
       // ----------------------------------------------------------------------------
-      // MARK: - Actions sent by other actions or publishers
+      // MARK: - Actions sent by long-running effects
                   
-    case .logAlert(let logEntry):
+    case .logAlertReceived(let logEntry):
       // a Warning or Error has been logged. alert the user
       state.alert = .init(title: TextState(
                               """
@@ -435,9 +452,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       )
       return .none
       
-    case .tcpAction(let message):
-      // process TCP messages (both sent and received)
-      // ignore "ping" messages unless showPings is true
+    case .tcpMessageSentOrReceived(let message):
+      // a TCP messages (either sent or received) has been captured
+      // ignore sent "ping" messages unless showPings is true
       if message.direction == .sent && message.text.contains("ping") && state.showPings == false { return .none }
       // add the message to the collection
       state.messages.append(message)
@@ -496,6 +513,7 @@ public func getDefaultConnection() -> DefaultConnection? {
 }
 
 /// Write the user defaults entry for a default connection using a DefaultConnection struct
+/// - Parameter conn: a DefaultConnection struct  to be encoded and written to user defaults
 func setDefaultConnection(_ conn: DefaultConnection?) {
   if conn == nil {
     UserDefaults.standard.removeObject(forKey: "defaultConnection")
@@ -522,3 +540,58 @@ func hasDefault(_ state: ApiState) -> PickerSelection? {
   return nil
 }
 
+func subscribeToSentMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
+  // subscribe to the publisher of sent TcpMessages
+  tcp.sentPublisher
+    .receive(on: DispatchQueue.main)
+    // convert to TcpMessage format
+    .map { tcpMessage in .tcpMessageSentOrReceived(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: messageColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
+    .eraseToEffect()
+    .cancellable(id: SentMessagesSubscriptionId())
+}
+
+func subscribeToReceivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
+  // subscribe to the publisher of received TcpMessages
+  tcp.receivedPublisher
+    // eliminate replies unless they have errors or data
+    .filter { allowToPass($0.text) }
+    .receive(on: DispatchQueue.main)
+    // convert to an ApiAction
+    .map { tcpMessage in .tcpMessageSentOrReceived(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: messageColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
+    .eraseToEffect()
+    .cancellable(id: ReceivedMessagesSubscriptionId())
+}
+
+func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
+  // subscribe to the publisher of LogEntries with Warning or Error levels
+  LogProxy.sharedInstance.alertPublisher
+    .receive(on: DispatchQueue.main)
+    // convert to an ApiAction
+    .map { logEntry in .logAlertReceived(logEntry) }
+    .eraseToEffect()
+    .cancellable(id: LogAlertSubscriptionId())
+}
+
+/// Assign each text line a color
+/// - Parameter text:   the text line
+/// - Returns:          a Color
+private func messageColor(_ text: String) -> Color {
+  if text.prefix(1) == "C" { return Color(.systemGreen) }                         // Commands
+  if text.prefix(1) == "R" && text.contains("|0|") { return Color(.systemGray) }  // Replies no error
+  if text.prefix(1) == "R" && !text.contains("|0|") { return Color(.systemRed) }  // Replies w/error
+  if text.prefix(2) == "S0" { return Color(.systemOrange) }                       // S0
+  
+  return Color(.textColor)
+}
+
+/// Received data Filter condition
+/// - Parameter text:    the text of a received command
+/// - Returns:           a boolean
+private func allowToPass(_ text: String) -> Bool {
+  if text.first != "R" { return true }     // pass if not a Reply
+  let parts = text.components(separatedBy: "|")
+  if parts.count < 3 { return true }        // pass if incomplete
+  if parts[1] != kNoError { return true }   // pass if error of some type
+  if parts[2] != "" { return true }         // pass if additional data present
+  return false                              // otherwise, filter out (i.e. don't pass)
+}

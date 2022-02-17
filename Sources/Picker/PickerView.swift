@@ -39,8 +39,6 @@ public struct PickerView: View {
     }
   }
   
-  
-  
   public var body: some View {
     
     WithViewStore(store) { viewStore in

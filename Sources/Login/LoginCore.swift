@@ -7,6 +7,9 @@
 
 import ComposableArchitecture
 
+// ----------------------------------------------------------------------------
+// MARK: - Structs and Enums
+
 public struct LoginResult: Equatable {
   
   public init(_ email: String, pwd: String) {
@@ -16,6 +19,9 @@ public struct LoginResult: Equatable {
   public var email = ""
   public var pwd = ""
 }
+
+// ----------------------------------------------------------------------------
+// MARK: - State, Actions & Environment
 
 public struct LoginState: Equatable {
   
@@ -38,15 +44,10 @@ public enum LoginAction: Equatable {
 public struct LoginEnvironment {
 }
 
+// ----------------------------------------------------------------------------
+// MARK: - Reducer
+
 let loginReducer = Reducer<LoginState, LoginAction, LoginEnvironment>
   { state, action, environment in
-    
-//    switch action {
-//    case .cancelButton:
-//      return .none
-//
-//    case .loginButton(let result):
-//      return .none
-//    }
     return .none
   }

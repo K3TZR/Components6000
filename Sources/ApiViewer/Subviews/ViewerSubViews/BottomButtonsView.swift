@@ -27,7 +27,7 @@ struct BottomButtonsView: View {
                 in: 8...14)
         Text(String(format: "%2.0f", viewStore.fontSize)).frame(alignment: .leading)
         Spacer()
-        Button("Reverse") { viewStore.send(.reverseButton)}
+        Button("Reverse") { viewStore.send(.toggleButton(\.reverseLog))}
         Spacer()
         HStack(spacing: 40) {
           Toggle("Clear on Connect", isOn: viewStore.binding(get: \.clearOnConnect, send: .toggleButton(\.clearOnConnect)))
@@ -46,7 +46,7 @@ struct BottomButtonsView_Previews: PreviewProvider {
   static var previews: some View {
     BottomButtonsView(
       store: Store(
-        initialState: ApiState(domain: "net.k3tzr", appName: "Api6000"),
+        initialState: ApiState(),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )

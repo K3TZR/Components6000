@@ -64,7 +64,7 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        discoveryEffect: mockPacketSubscriptions
+        discoverySubscription: { self.mockSubscribeToDiscoveryPackets() }
       )
     )
     store.send(.onAppear)
@@ -88,7 +88,7 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // Receive the added Packet
-    store.receive( .packetChange( PacketChange(.added, packet: testPacket ))) {
+    store.receive( .packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
       $0.forceUpdate.toggle()
     }
@@ -101,7 +101,7 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        discoveryEffect: mockClientSubscriptions
+        discoverySubscription: { self.mockSubscribeToDiscoveryPackets() }
       )
     )
     store.send(.onAppear)
@@ -113,21 +113,33 @@ class PickerTests: XCTestCase {
     testPacket.status = "Available"
     testPacket.serial = "1234-5678-9012-3456"
     testPacket.publicIp = "10.0.1.200"
+    
+    testScheduler.advance()
+    // PUBLISH a Packet added
+    mockPacketPublisher.send( PacketChange(.added, packet: testPacket ))
+    
+    testScheduler.advance()
+    // Receive the added Packet
+    store.receive( .packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
+      $0.discovery.packets = [testPacket]
+      $0.forceUpdate.toggle()
+    }
+
+    let testGuiClient = GuiClient(handle: 1, station: "Windows", program: "SmartSDR-Windows", clientId: nil, host: "201.0.1.2", ip: "192.168.1.200", isLocalPtt: true, isThisClient: true)
+
     testPacket.guiClientHandles = "1"
     testPacket.guiClientPrograms = "SmartSDR-Windows"
     testPacket.guiClientStations = "Windows"
     testPacket.guiClientHosts = ""
     testPacket.guiClientIps = "192.168.1.200"
-    
-    let testGuiClient = GuiClient(handle: 1, station: "Windows", program: "SmartSDR-Windows", clientId: nil, host: "201.0.1.2", ip: "192.168.1.200", isLocalPtt: true, isThisClient: true)
-    
+
     testScheduler.advance()
-    // PUBLISH a Packet added
+    // PUBLISH a client addition
     mockClientPublisher.send( ClientChange(.added, client: testGuiClient ))
     
     testScheduler.advance()
-    // Receive the added Packet
-    store.receive( .clientChange( ClientChange(.added, client: testGuiClient ))) {
+    // Receive the client update
+    store.receive( .clientChangeReceived( ClientChange(.added, client: testGuiClient ))) {
       $0.discovery.packets = [testPacket]
       $0.discovery.stations = [testPacket]
     }
@@ -143,7 +155,7 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        discoveryEffect: mockPacketSubscriptions
+        discoverySubscription: { self.mockSubscribeToDiscoveryPackets() }
       )
     )
     store.send(.onAppear)
@@ -162,21 +174,21 @@ class PickerTests: XCTestCase {
 
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
       $0.forceUpdate.toggle()
     }
     
     testScheduler.advance()
     // send the same Packet
-    store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
       $0.forceUpdate.toggle()
     }
 
     testScheduler.advance()
     // delete a Packet
-    store.send(.packetChange( PacketChange(.deleted, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketChange(.deleted, packet: testPacket ))) {
       $0.discovery.packets = []
       $0.forceUpdate.toggle()
     }
@@ -192,7 +204,7 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        discoveryEffect: mockPacketSubscriptions
+        discoverySubscription: { self.mockSubscribeToDiscoveryPackets() }
       )
     )
     store.send(.onAppear)
@@ -211,7 +223,7 @@ class PickerTests: XCTestCase {
 
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
       $0.forceUpdate.toggle()
     }
@@ -220,14 +232,14 @@ class PickerTests: XCTestCase {
     // update a Packet
     var updatedTestPacket = testPacket
     updatedTestPacket.nickname = "Petes 6700"
-    store.send(.packetChange( PacketChange(.updated, packet: updatedTestPacket))) {
+    store.send(.packetChangeReceived( PacketChange(.updated, packet: updatedTestPacket))) {
       $0.discovery.packets = [updatedTestPacket]
       $0.forceUpdate.toggle()
     }
     
     testScheduler.advance()
     // delete a Packet
-    store.send(.packetChange( PacketChange(.deleted, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketChange(.deleted, packet: testPacket ))) {
       $0.discovery.packets = []
       $0.forceUpdate.toggle()
     }
@@ -243,7 +255,7 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        discoveryEffect: mockClientSubscriptions
+        discoverySubscription: { self.mockSubscribeToDiscoveryPackets() }
       )
     )
     store.send(.onAppear)
@@ -262,7 +274,7 @@ class PickerTests: XCTestCase {
 
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
       $0.forceUpdate.toggle()
     }
@@ -278,7 +290,7 @@ class PickerTests: XCTestCase {
 
     testScheduler.advance()
     // add a Client
-    store.send(.clientChange( ClientChange(.added, client: testClient1 ))) {
+    store.send(.clientChangeReceived( ClientChange(.added, client: testClient1 ))) {
       var updatedPacket = testPacket
       updatedPacket.guiClientHandles = "1"
       updatedPacket.guiClientPrograms = "SmartSDR-Windows"
@@ -299,7 +311,7 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // add a second Client
-    store.send(.clientChange( ClientChange(.added, client: testClient2 ))) {
+    store.send(.clientChangeReceived( ClientChange(.added, client: testClient2 ))) {
       var updatedPacket = testPacket
       updatedPacket.guiClientHandles = "1,2"
       updatedPacket.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
@@ -311,7 +323,7 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // remove the first Client
-    store.send(.clientChange( ClientChange(.deleted, client: testClient1 ))) {
+    store.send(.clientChangeReceived( ClientChange(.deleted, client: testClient1 ))) {
       var updatedPacket = testPacket
       updatedPacket.guiClientHandles = "2"
       updatedPacket.guiClientPrograms = "SmartSDR-iOS"
@@ -323,7 +335,7 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // delete the Packet
-    store.send(.packetChange( PacketChange(.deleted, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketChange(.deleted, packet: testPacket ))) {
       $0.discovery.packets = []
       $0.forceUpdate.toggle()
     }
@@ -339,7 +351,7 @@ class PickerTests: XCTestCase {
       reducer: pickerReducer,
       environment: PickerEnvironment(
         queue: { self.testScheduler.eraseToAnyScheduler() },
-        discoveryEffect: mockPacketSubscriptions
+        discoverySubscription: { self.mockSubscribeToDiscoveryPackets() }
       )
     )
     // ON APPEAR
@@ -347,7 +359,7 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChange( PacketChange(.added, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
       $0.discovery.packets = [self.testPacket]
       $0.forceUpdate.toggle()
     }
@@ -363,7 +375,7 @@ class PickerTests: XCTestCase {
     store.send(.defaultButton( PickerSelection(testPacket, nil)) ) {
       $0.defaultSelection = nil
     }
-
+    
     store.send(.cancelButton)
   }
 
@@ -373,22 +385,20 @@ class PickerTests: XCTestCase {
   var mockPacketPublisher = PassthroughSubject<PacketChange, Never>()
   var mockClientPublisher = PassthroughSubject<ClientChange, Never>()
 
-  public func mockPacketSubscriptions() -> Effect<PickerAction, Never> {
-    return
+  public func mockSubscribeToDiscoveryPackets() -> Effect<PickerAction, Never> {
+    Effect.merge(
       mockPacketPublisher
         .receive(on: testScheduler)
-        .map { update in .packetChange(update) }
+        .map { change in .packetChangeReceived(change) }
         .eraseToEffect()
-        .cancellable(id: DiscoveryPacketSubscriptionId())
-  }
-  
-  public func mockClientSubscriptions() -> Effect<PickerAction, Never> {
-    return
+        .cancellable(id: DiscoveryPacketSubscriptionId()),
+      
       mockClientPublisher
         .receive(on: testScheduler)
-        .map { update in .clientChange(update) }
+        .map { change in .clientChangeReceived(change) }
         .eraseToEffect()
-        .cancellable(id: ClientEffectId())
+        .cancellable(id: DiscoveryClientSubscriptionId())
+    )
   }
 
 }

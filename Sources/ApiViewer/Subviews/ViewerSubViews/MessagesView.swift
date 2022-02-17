@@ -20,7 +20,7 @@ struct MessagesView: View {
     WithViewStore(self.store) { viewStore in
       ScrollView([.horizontal, .vertical]) {
         VStack(alignment: .leading) {
-          if viewStore.reverse {
+          if viewStore.reverseLog {
             ForEach(viewStore.filteredMessages.reversed(), id: \.id) { message in
               HStack {
                 if viewStore.showTimes { Text("\(message.timeInterval)") }
@@ -52,7 +52,7 @@ struct MessagesView_Previews: PreviewProvider {
   static var previews: some View {
     MessagesView(
       store: Store(
-        initialState: ApiState(domain: "net.k3tzr", appName: "Api6000"),
+        initialState: ApiState(),
         reducer: apiReducer,
         environment: ApiEnvironment()
       )
