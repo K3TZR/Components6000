@@ -17,7 +17,7 @@ import Shared
 ///       tnfs collection on the Radio object.
 ///
 
-public final class Tnf: ObservableObject {
+public final class Tnf: Identifiable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Static properties
 
@@ -88,13 +88,13 @@ extension Tnf: DynamicModel {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if Objects.sharedInstance.tnfs[id] == nil {
+        if Objects.sharedInstance.tnfs[id: id] == nil {
 
           // NO, create a new Tnf & add it to the Tnfs collection
-          Objects.sharedInstance.tnfs[id] = Tnf(id)
+          Objects.sharedInstance.tnfs[id: id] = Tnf(id)
         }
         // pass the remaining key values to the Tnf for parsing
-        Objects.sharedInstance.tnfs[id]!.parseProperties(Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.tnfs[id: id]!.parseProperties(Array(properties.dropFirst(1)) )
       }
     }
   }

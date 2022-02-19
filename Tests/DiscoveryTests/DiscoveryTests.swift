@@ -122,7 +122,7 @@ class DiscoveryTests: XCTestCase {
   func testPackets() {
     let discovery = Discovery.sharedInstance
     var cancellable: AnyCancellable?
-    var updates = [PacketChange]()
+    var updates = [PacketUpdate]()
     
     cancellable = discovery.packetPublisher
       .sink { update in
@@ -178,9 +178,9 @@ class DiscoveryTests: XCTestCase {
     XCTAssert( discovery.packets == [testPacket, testPacket2] )
 
     let result = [
-      PacketChange( .added, packet: testPacket ),
-      PacketChange( .updated, packet: testPacket ),
-      PacketChange( .added, packet: testPacket2 )
+      PacketUpdate( .added, packet: testPacket ),
+      PacketUpdate( .updated, packet: testPacket ),
+      PacketUpdate( .added, packet: testPacket2 )
     ]
 
     XCTAssert( updates == result )
@@ -195,7 +195,7 @@ class DiscoveryTests: XCTestCase {
   func testGuiClients() {
     let discovery = Discovery.sharedInstance
     var cancellable: AnyCancellable?
-    var updates = [ClientChange]()
+    var updates = [ClientUpdate]()
     
     cancellable = discovery.clientPublisher
       .sink { update in
@@ -273,9 +273,9 @@ class DiscoveryTests: XCTestCase {
 
     let result =
     [
-      ClientChange( .added, client: testClient1 ),
-      ClientChange( .added, client: testClient2 ),
-      ClientChange( .deleted, client: testClient1 )
+      ClientUpdate( .added, client: testClient1, source: .local ),
+      ClientUpdate( .added, client: testClient2, source: .local ),
+      ClientUpdate( .deleted, client: testClient1, source: .local )
     ]
 
     XCTAssert( updates == result, "ClientChange not as expected" )

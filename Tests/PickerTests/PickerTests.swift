@@ -84,11 +84,11 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // PUBLISH a Packet added
-    mockPacketPublisher.send( PacketChange(.added, packet: testPacket ))
+    mockPacketPublisher.send( PacketUpdate(.added, packet: testPacket ))
     
     testScheduler.advance()
     // Receive the added Packet
-    store.receive( .packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
+    store.receive( .packetChangeReceived( PacketUpdate(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
       $0.forceUpdate.toggle()
     }
@@ -116,11 +116,11 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // PUBLISH a Packet added
-    mockPacketPublisher.send( PacketChange(.added, packet: testPacket ))
+    mockPacketPublisher.send( PacketUpdate(.added, packet: testPacket ))
     
     testScheduler.advance()
     // Receive the added Packet
-    store.receive( .packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
+    store.receive( .packetChangeReceived( PacketUpdate(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
       $0.forceUpdate.toggle()
     }
@@ -135,11 +135,11 @@ class PickerTests: XCTestCase {
 
     testScheduler.advance()
     // PUBLISH a client addition
-    mockClientPublisher.send( ClientChange(.added, client: testGuiClient ))
+    mockClientPublisher.send( ClientUpdate(.added, client: testGuiClient, source: .local ))
     
     testScheduler.advance()
     // Receive the client update
-    store.receive( .clientChangeReceived( ClientChange(.added, client: testGuiClient ))) {
+    store.receive( .clientChangeReceived( ClientUpdate(.added, client: testGuiClient, source: .local ))) {
       $0.discovery.packets = [testPacket]
       $0.discovery.stations = [testPacket]
     }
@@ -174,21 +174,21 @@ class PickerTests: XCTestCase {
 
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketUpdate(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
       $0.forceUpdate.toggle()
     }
     
     testScheduler.advance()
     // send the same Packet
-    store.send(.packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketUpdate(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
       $0.forceUpdate.toggle()
     }
 
     testScheduler.advance()
     // delete a Packet
-    store.send(.packetChangeReceived( PacketChange(.deleted, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketUpdate(.deleted, packet: testPacket ))) {
       $0.discovery.packets = []
       $0.forceUpdate.toggle()
     }
@@ -223,7 +223,7 @@ class PickerTests: XCTestCase {
 
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketUpdate(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
       $0.forceUpdate.toggle()
     }
@@ -232,14 +232,14 @@ class PickerTests: XCTestCase {
     // update a Packet
     var updatedTestPacket = testPacket
     updatedTestPacket.nickname = "Petes 6700"
-    store.send(.packetChangeReceived( PacketChange(.updated, packet: updatedTestPacket))) {
+    store.send(.packetChangeReceived( PacketUpdate(.updated, packet: updatedTestPacket))) {
       $0.discovery.packets = [updatedTestPacket]
       $0.forceUpdate.toggle()
     }
     
     testScheduler.advance()
     // delete a Packet
-    store.send(.packetChangeReceived( PacketChange(.deleted, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketUpdate(.deleted, packet: testPacket ))) {
       $0.discovery.packets = []
       $0.forceUpdate.toggle()
     }
@@ -274,7 +274,7 @@ class PickerTests: XCTestCase {
 
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketUpdate(.added, packet: testPacket ))) {
       $0.discovery.packets = [testPacket]
       $0.forceUpdate.toggle()
     }
@@ -290,7 +290,7 @@ class PickerTests: XCTestCase {
 
     testScheduler.advance()
     // add a Client
-    store.send(.clientChangeReceived( ClientChange(.added, client: testClient1 ))) {
+    store.send(.clientChangeReceived( ClientUpdate(.added, client: testClient1, source: .local ))) {
       var updatedPacket = testPacket
       updatedPacket.guiClientHandles = "1"
       updatedPacket.guiClientPrograms = "SmartSDR-Windows"
@@ -311,7 +311,7 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // add a second Client
-    store.send(.clientChangeReceived( ClientChange(.added, client: testClient2 ))) {
+    store.send(.clientChangeReceived( ClientUpdate(.added, client: testClient2, source: .local ))) {
       var updatedPacket = testPacket
       updatedPacket.guiClientHandles = "1,2"
       updatedPacket.guiClientPrograms = "SmartSDR-Windows,SmartSDR-iOS"
@@ -323,7 +323,7 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // remove the first Client
-    store.send(.clientChangeReceived( ClientChange(.deleted, client: testClient1 ))) {
+    store.send(.clientChangeReceived( ClientUpdate(.deleted, client: testClient1, source: .local ))) {
       var updatedPacket = testPacket
       updatedPacket.guiClientHandles = "2"
       updatedPacket.guiClientPrograms = "SmartSDR-iOS"
@@ -335,7 +335,7 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // delete the Packet
-    store.send(.packetChangeReceived( PacketChange(.deleted, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketUpdate(.deleted, packet: testPacket ))) {
       $0.discovery.packets = []
       $0.forceUpdate.toggle()
     }
@@ -359,7 +359,7 @@ class PickerTests: XCTestCase {
     
     testScheduler.advance()
     // add a Packet
-    store.send(.packetChangeReceived( PacketChange(.added, packet: testPacket ))) {
+    store.send(.packetChangeReceived( PacketUpdate(.added, packet: testPacket ))) {
       $0.discovery.packets = [self.testPacket]
       $0.forceUpdate.toggle()
     }
@@ -382,8 +382,8 @@ class PickerTests: XCTestCase {
   // ----------------------------------------------------------------------------
   // MARK: - Test related
 
-  var mockPacketPublisher = PassthroughSubject<PacketChange, Never>()
-  var mockClientPublisher = PassthroughSubject<ClientChange, Never>()
+  var mockPacketPublisher = PassthroughSubject<PacketUpdate, Never>()
+  var mockClientPublisher = PassthroughSubject<ClientUpdate, Never>()
 
   public func mockSubscribeToDiscoveryPackets() -> Effect<PickerAction, Never> {
     Effect.merge(

@@ -16,7 +16,7 @@ import Shared
 
 /// A View to display the contents of the app's log
 ///
-public struct LogView: View {
+public struct LogView: View {  
   let store: Store<LogState, LogAction>
   
   public init(store: Store<LogState, LogAction>) {

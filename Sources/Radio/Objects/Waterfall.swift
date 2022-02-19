@@ -211,7 +211,7 @@ extension Waterfall: DynamicModel {
     if _isStreaming == false {
       _isStreaming = true
       // log the start of the stream
-      _log("Waterfall Stream started: \(id.hex)", .info, #function, #file, #line)
+      _log("Waterfall: stream started, \(vita.streamId.hex)", .info, #function, #file, #line)
     }
     // Bins are just beyond the payload
     let byteOffsetToBins = MemoryLayout<PayloadHeader>.size

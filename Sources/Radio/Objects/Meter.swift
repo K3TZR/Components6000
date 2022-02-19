@@ -113,6 +113,8 @@ public final class Meter: ObservableObject, Identifiable {
   private let _log = LogProxy.sharedInstance.log
   private var _voltsAmpsDenom: Float = 256.0  // denominator for voltage/amperage after API version 1.10
   
+  static private var _metersAreStreaming = false
+
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
@@ -229,6 +231,12 @@ extension Meter: DynamicModel {
   class func vitaProcessor(_ vita: Vita, radio: Radio) {
     var meterIds = [UInt16]()
     
+    if _metersAreStreaming == false {
+      _metersAreStreaming = true
+      // log the start of the stream
+      LogProxy.sharedInstance.log("Meter: stream started, \(vita.streamId.hex)", .info, #function, #file, #line)
+    }
+
     // NOTE:  there is a bug in the Radio (as of v2.2.8) that sends
     //        multiple copies of meters, this code ignores the duplicates
     

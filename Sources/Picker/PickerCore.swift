@@ -65,9 +65,9 @@ public enum PickerAction: Equatable {
 
   // effect related
   case checkConnectionStatus(PickerSelection)
-  case clientChangeReceived(ClientChange)
+  case clientChangeReceived(ClientUpdate)
   case openSelection(PickerSelection)
-  case packetChangeReceived(PacketChange)
+  case packetChangeReceived(PacketUpdate)
   case testResultReceived(SmartlinkTestResult)
   case wanStatusReceived(WanStatus)
 }

@@ -9,19 +9,21 @@
 import Foundation
 import Combine
 
-public enum ClientChangeType {
+public enum ActionType: String {
   case added
-  case updated
   case deleted
+  case updated
 }
-public struct ClientChange: Equatable {
-  public var action: ClientChangeType
-  public var client: GuiClient
+public struct ClientUpdate: Equatable {
   
-  public init(_ action: ClientChangeType, client: GuiClient) {
+  public init(_ action: ActionType, client: GuiClient, source: PacketSource) {
     self.action = action
     self.client = client
+    self.source = source
   }
+  public var action: ActionType
+  public var client: GuiClient
+  public var source: PacketSource
 }
 
 public struct GuiClient: Equatable, Identifiable {

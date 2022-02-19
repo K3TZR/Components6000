@@ -15,6 +15,7 @@ import Login
 import LogViewer
 import Picker
 import Radio
+import RemoteViewer
 import Shared
 import TcpCommands
 import UdpStreams
@@ -74,6 +75,7 @@ public enum ConnectionMode: String {
 public enum ViewType: Equatable {
   case api
   case log
+  case remote
 }
 
 public enum ObjectsFilter: String, CaseIterable {
@@ -105,7 +107,7 @@ public enum MessagesFilter: String, CaseIterable {
 // ----------------------------------------------------------------------------
 // MARK: - State, Actions & Environment
 
-public struct ApiState: Equatable {
+public struct ApiState: Equatable {  
 
   public init(
     clearOnConnect: Bool = UserDefaults.standard.bool(forKey: "clearOnConnect"),
@@ -189,7 +191,7 @@ public enum ApiAction: Equatable {
   case messagesPicker(MessagesFilter)
   case messagesFilterTextField(String)
   case objectsPicker(ObjectsFilter)
-//  case reverseButton
+  case remoteViewButton
   case sendButton
   case startStopButton
   case toggleButton(WritableKeyPath<ApiState, Bool>)
@@ -332,6 +334,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .objectsPicker(let filterBy):
       state.objectsFilterBy = filterBy
       return.none
+      
+    case .remoteViewButton:
+      state.viewType = .remote
+      return .none
       
     case .sendButton:
       _ = state.tcp.send(state.commandToSend)

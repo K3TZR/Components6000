@@ -20,8 +20,8 @@ public final class Discovery: Equatable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Publishers
   
-  public var clientPublisher = PassthroughSubject<ClientChange, Never>()
-  public var packetPublisher = PassthroughSubject<PacketChange, Never>()
+  public var clientPublisher = PassthroughSubject<ClientUpdate, Never>()
+  public var packetPublisher = PassthroughSubject<PacketUpdate, Never>()
   public var testPublisher = PassthroughSubject<SmartlinkTestResult, Never>()
   public var wanStatusPublisher = PassthroughSubject<WanStatus, Never>()
   
@@ -168,7 +168,7 @@ public final class Discovery: Equatable, ObservableObject {
         packets[id: knownPacketId] = newPacket
 
         // publish and log the packet
-        packetPublisher.send(PacketChange(.updated, packet: newPacket))
+        packetPublisher.send(PacketUpdate(.updated, packet: newPacket))
         _log("Discovery: \(newPacket.source.rawValue) packet updated, \(newPacket.serial)", .debug, #function, #file, #line)
 
         // find, publish & log client additions / deletions
@@ -188,7 +188,7 @@ public final class Discovery: Equatable, ObservableObject {
     packets.append(newPacket)
 
     // publish & log
-    packetPublisher.send(PacketChange(.added, packet: newPacket))
+    packetPublisher.send(PacketUpdate(.added, packet: newPacket))
     _log("Discovery: \(newPacket.source.rawValue) packet added, \(newPacket.serial)", .debug, #function, #file, #line)
 
     // find, publish & log client additions
@@ -210,7 +210,7 @@ public final class Discovery: Equatable, ObservableObject {
       if oldPacket == nil || oldPacket?.guiClients[id: guiClient.id] == nil {
         
         // publish & log
-        clientPublisher.send(ClientChange(.added, client: guiClient))
+        clientPublisher.send(ClientUpdate(.added, client: guiClient, source: newPacket.source))
         _log("Discovery: \(newPacket.source.rawValue) guiClient added, \(guiClient.station)", .debug, #function, #file, #line)
         
         let newStation = Packet(source: newPacket.source)
@@ -230,7 +230,7 @@ public final class Discovery: Equatable, ObservableObject {
       if newPacket.guiClients[id: guiClient.id] == nil {
         
         // publish & log
-        clientPublisher.send(ClientChange(.deleted, client: guiClient))
+        clientPublisher.send(ClientUpdate(.deleted, client: guiClient, source: newPacket.source))
         _log("Discovery: \(newPacket.source.rawValue) guiClient deleted, \(guiClient.station)", .debug, #function, #file, #line)
         
         for station in stations where station.guiClientStations == guiClient.station {

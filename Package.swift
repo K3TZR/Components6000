@@ -22,6 +22,7 @@ let package = Package(
     .library(name: "Login", targets: ["Login"]),
     .library(name: "Radio", targets: ["Radio"]),
     .library(name: "ClientStatus", targets: ["ClientStatus"]),
+    .library(name: "RemoteViewer", targets: ["RemoteViewer"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
@@ -30,6 +31,12 @@ let package = Package(
     .package(url: "https://github.com/DaveWoodCom/XCGLogger.git", from: "7.0.1"),
   ],
   targets: [
+    .target(
+      name: "RemoteViewer",
+      dependencies: [
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
     .target(
       name: "ClientStatus",
       dependencies: [
@@ -40,6 +47,7 @@ let package = Package(
     .target(
       name: "Radio",
       dependencies: [
+        "Discovery",
         "TcpCommands",
         "UdpStreams",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -73,6 +81,7 @@ let package = Package(
         "Radio",
         "LogViewer",
         "XCGWrapper",
+        "RemoteViewer",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),

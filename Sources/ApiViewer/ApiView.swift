@@ -12,6 +12,7 @@ import Login
 import ClientStatus
 import Picker
 import LogViewer
+import RemoteViewer
 import Shared
 
 // ----------------------------------------------------------------------------
@@ -46,6 +47,7 @@ public struct ApiView: View {
           BottomButtonsView(store: store)
         }
         .toolbar {
+          Button("Remote View") { viewStore.send(.remoteViewButton) }
           Button("Log View") { viewStore.send(.logViewButton) }
         }
         // initialize on first appearance
@@ -87,11 +89,21 @@ public struct ApiView: View {
           }
         )
         
-      } else {
+      } else if viewStore.viewType == .log {
         LogView(store: Store(
-          initialState: LogState(fontSize: viewStore.fontSize),
+          initialState: LogState(),
           reducer: logReducer,
           environment: LogEnvironment() )
+        )
+          .toolbar {
+            Button("Api View") { viewStore.send(.apiViewButton) }
+          }
+      
+      } else {
+        RemoteView(store: Store(
+          initialState: RemoteState(),
+          reducer: remoteReducer,
+          environment: RemoteEnvironment() )
         )
           .toolbar {
             Button("Api View") { viewStore.send(.apiViewButton) }

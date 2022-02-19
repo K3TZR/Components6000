@@ -94,7 +94,7 @@ final class LanListener: NSObject, ObservableObject {
   private func remove(condition: (Packet) -> Bool) {
     for packet in _discovery!.packets where condition(packet) { 
       let removedPacket = _discovery?.packets.remove(id: packet.id)
-      _discovery!.packetPublisher.send(PacketChange(.deleted, packet: removedPacket!))
+      _discovery!.packetPublisher.send(PacketUpdate(.deleted, packet: removedPacket!))
       self._log("Discovery: Lan Listener packet removed, interval = \(abs(removedPacket!.lastSeen.timeIntervalSince(Date())))", .debug, #function, #file, #line)
     }
   }

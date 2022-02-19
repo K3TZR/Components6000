@@ -21,8 +21,8 @@ public final class LanDiscovery: NSObject, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Publishers
   
-  public var clientPublisher = PassthroughSubject<ClientChange, Never>()
-  public var packetPublisher = PassthroughSubject<PacketChange, Never>()
+  public var clientPublisher = PassthroughSubject<ClientUpdate, Never>()
+  public var packetPublisher = PassthroughSubject<PacketUpdate, Never>()
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
@@ -113,7 +113,7 @@ public final class LanDiscovery: NSObject, ObservableObject {
         packets[id: knownPacketId] = newPacket
 
         // publish and log the packet
-        packetPublisher.send(PacketChange(.updated, packet: newPacket))
+        packetPublisher.send(PacketUpdate(.updated, packet: newPacket))
         _log("Discovery: \(newPacket.source.rawValue) packet updated, \(newPacket.serial)", .debug, #function, #file, #line)
 
         // find, publish & log client additions / deletions
@@ -133,7 +133,7 @@ public final class LanDiscovery: NSObject, ObservableObject {
     packets.append(newPacket)
 
     // publish & log
-    packetPublisher.send(PacketChange(.added, packet: newPacket))
+    packetPublisher.send(PacketUpdate(.added, packet: newPacket))
     _log("Discovery: \(newPacket.source.rawValue) packet added, \(newPacket.serial)", .debug, #function, #file, #line)
 
     // find, publish & log client additions
@@ -148,7 +148,7 @@ public final class LanDiscovery: NSObject, ObservableObject {
   private func remove(condition: (Packet) -> Bool) {
     for packet in packets where condition(packet) {
       let removedPacket = packets.remove(id: packet.id)
-      packetPublisher.send(PacketChange(.deleted, packet: removedPacket!))
+      packetPublisher.send(PacketUpdate(.deleted, packet: removedPacket!))
       
       self._log("Discovery: Lan Listener packet removed, interval = \(abs(removedPacket!.lastSeen.timeIntervalSince(Date())))", .debug, #function, #file, #line)
     }
@@ -160,7 +160,7 @@ public final class LanDiscovery: NSObject, ObservableObject {
       if oldPacket == nil || oldPacket?.guiClients[id: guiClient.id] == nil {
         
         // publish & log
-        clientPublisher.send(ClientChange(.added, client: guiClient))
+        clientPublisher.send(ClientUpdate(.added, client: guiClient, source: newPacket.source))
         _log("Discovery: \(newPacket.source.rawValue) guiClient added, \(guiClient.station)", .debug, #function, #file, #line)
         
         let newStation = Packet(source: newPacket.source)
@@ -180,7 +180,7 @@ public final class LanDiscovery: NSObject, ObservableObject {
       if newPacket.guiClients[id: guiClient.id] == nil {
         
         // publish & log
-        clientPublisher.send(ClientChange(.deleted, client: guiClient))
+        clientPublisher.send(ClientUpdate(.deleted, client: guiClient, source: newPacket.source))
         _log("Discovery: \(newPacket.source.rawValue) guiClient deleted, \(guiClient.station)", .debug, #function, #file, #line)
         
         for station in stations where station.guiClientStations == guiClient.station {

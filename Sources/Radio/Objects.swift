@@ -8,6 +8,7 @@
 import Foundation
 
 import Shared
+import IdentifiedCollections
 
 final public class Objects: ObservableObject {
   // ----------------------------------------------------------------------------
@@ -28,7 +29,7 @@ final public class Objects: ObservableObject {
   @Published public var remoteRxAudioStreams = [RemoteRxStreamId: RemoteRxAudioStream]()
   @Published public var remoteTxAudioStreams = [RemoteTxStreamId: RemoteTxAudioStream]()
   @Published public var slices = [SliceId: Slice]()
-  @Published public var tnfs = [TnfId: Tnf]()
+  @Published public var tnfs = IdentifiedArrayOf<Tnf>()
   @Published public var usbCables = [UsbCableId: UsbCable]()
   @Published public var waterfalls = [WaterfallStreamId: Waterfall]()
   @Published public var xvtrs = [XvtrId: Xvtr]()

@@ -7,7 +7,7 @@
 
 import SwiftUI
 import ComposableArchitecture
-import LanDiscovery
+import Discovery
 
 // ----------------------------------------------------------------------------
 // MARK: - View

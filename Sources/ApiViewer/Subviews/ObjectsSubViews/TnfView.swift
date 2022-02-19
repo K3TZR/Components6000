@@ -16,9 +16,9 @@ struct TnfView: View {
   var body: some View {
     WithViewStore(self.store) { viewStore in
       if viewStore.radio != nil {
-        let tnfs = Array(Objects.sharedInstance.tnfs.values)
+        let tnfs = Array(Objects.sharedInstance.tnfs)
 
-        ForEach(tnfs, id: \.id) { tnf in
+        ForEach(tnfs) { tnf in
           HStack(spacing: 20) {
             Text("Tnf").frame(width: 100, alignment: .trailing)
             Text(tnf.id.hex)

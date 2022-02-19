@@ -38,10 +38,10 @@ public enum LogFilter: String, CaseIterable, Identifiable {
 // MARK: - State, Actions & Environment
 
 public struct LogState: Equatable {
-  public init(logLevel: LogLevel = LogLevel(rawValue: UserDefaults.standard.string(forKey: "logLevel") ?? "debug") ?? .debug,
-              filterBy: LogFilter = LogFilter(rawValue: UserDefaults.standard.string(forKey: "filterBy") ?? "none") ?? .none,
-              filterByText: String = UserDefaults.standard.string(forKey: "filterByText") ?? "",
-              showTimestamps: Bool = UserDefaults.standard.bool(forKey: "showTimestamps"),
+  public init(logLevel: LogLevel = .debug,
+              filterBy: LogFilter = .none,
+              filterByText: String = "",
+              showTimestamps: Bool = false,
               fontSize: CGFloat = 12
   )
   {
@@ -63,7 +63,6 @@ public struct LogState: Equatable {
   public var fontSize: CGFloat = 12
   public var logMessages = IdentifiedArrayOf<LogLine>()
   public var forceUpdate = false
-  
 }
 
 public enum LogAction: Equatable {
@@ -106,6 +105,10 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     // MARK: - Initialization
     
   case .onAppear(let logLevel):
+    state.logLevel = LogLevel(rawValue: UserDefaults.standard.string(forKey: "logLevel") ?? "debug") ?? .debug
+    state.filterBy = LogFilter(rawValue: UserDefaults.standard.string(forKey: "filterBy") ?? "none") ?? .none
+    state.filterByText = UserDefaults.standard.string(forKey: "filterByText") ?? ""
+    state.showTimestamps = UserDefaults.standard.bool(forKey: "showTimestamps")
     let info = getBundleInfo()
     state.logUrl = URL.appSupport.appendingPathComponent(info.domain + "." + info.appName + "/Logs/" + info.appName + ".log" )
     state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
@@ -128,6 +131,7 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     return .none
 
   case .filterByText(let text):
+    state.filterByText = text
     state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
     return .none
 

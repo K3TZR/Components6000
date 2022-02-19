@@ -499,7 +499,7 @@ extension Radio {
     send("tnf remove " + " \(id)", replyTo: callback)
     
     // remove it immediately (Tnf does not send status on removal)
-    _objects.tnfs[id] = nil
+    _objects.tnfs[id: id] = nil
     
     _log("Tnf, removed: id = \(id)", .debug, #function, #file, #line)
   }
@@ -509,7 +509,7 @@ extension Radio {
   
   public func findTnf(at freq: Hz, minWidth: Hz) -> Tnf? {
     // return the Tnfs within the specified Frequency / minimum width (if any)
-    let filteredTnfs = _objects.tnfs.values.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
+    let filteredTnfs = _objects.tnfs.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
     guard filteredTnfs.count >= 1 else { return nil }
     
     // return the first one

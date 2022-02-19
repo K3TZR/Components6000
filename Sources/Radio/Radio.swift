@@ -8,6 +8,7 @@
 import Foundation
 import Combine
 
+import Discovery
 import TcpCommands
 import UdpStreams
 import Shared
@@ -179,8 +180,10 @@ public final class Radio: Equatable {
   // MARK: - Internal properties
   
   let _appName: String
+  var _cancellableClientUpdate: AnyCancellable?
   var _cancellableCommandData: AnyCancellable?
   var _cancellableCommandStatus: AnyCancellable?
+  var _cancellablePacketUpdate: AnyCancellable?
   var _cancellableStreamData: AnyCancellable?
   var _cancellableStreamStatus: AnyCancellable?
   var _clientId: String?
@@ -191,7 +194,6 @@ public final class Radio: Equatable {
   let _log = LogProxy.sharedInstance.log
   var _lowBandwidthConnect = false
   var _lowBandwidthDax = false
-  var _metersAreStreaming = false
   var _objects = Objects.sharedInstance
   var _params: ConnectionParams!
   let _parseQ = DispatchQueue(label: "Radio.parseQ", qos: .userInteractive)
@@ -262,7 +264,33 @@ public final class Radio: Equatable {
       .sink { [weak self] status in
         self?.udpStatus(status)
       }
+    
+    _cancellablePacketUpdate = Discovery.sharedInstance.packetPublisher
+      .sink { [weak self] update in
+        self?.packetUpdate(update)
+      }
+
+    _cancellableClientUpdate = Discovery.sharedInstance.clientPublisher
+      .sink { [weak self] update in
+        self?.clientUpdate(update)
+      }
   }
+  
+  
+  func packetUpdate(_ update: PacketUpdate) {
+    _log("Radio: \(update.packet.source.rawValue) packet \(update.packet.nickname) \(update.action.rawValue)", .info, #function, #file, #line)
+  }
+  
+  func clientUpdate(_ update: ClientUpdate) {
+    _log("Radio: \(update.source.rawValue) client \(update.client.station) \(update.action.rawValue)", .info, #function, #file, #line)
+  }
+
+  
+  
+  
+  
+  
+  
   
   /// Connect to this Radio
   ///
@@ -374,11 +402,6 @@ public final class Radio: Equatable {
       // unlike other streams, the Meter stream contains multiple Meters
       // and is processed by a class method on the Meter object
       Meter.vitaProcessor(vitaPacket, radio: self)
-      if _metersAreStreaming == false {
-        _metersAreStreaming = true
-        // log the start of the stream
-        _log("Radio, Meter Stream started", .info, #function, #file, #line)
-      }
       
     case .panadapter:
       if let object = _objects.panadapters[vitaPacket.streamId]          { object.vitaProcessor(vitaPacket) }
@@ -590,7 +613,6 @@ public final class Radio: Equatable {
     }
     _objects.equalizers.removeAll()
     _objects.memories.removeAll()
-    _metersAreStreaming = false
     _objects.meters.removeAll()
     replyHandlers.removeAll()
     _objects.usbCables.removeAll()
