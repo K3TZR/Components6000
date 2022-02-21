@@ -76,7 +76,7 @@ public enum LogAction: Equatable {
   case loadButton
   case logLevel(LogLevel)
   case onAppear(LogLevel)
-  case refreshButton(URL, LogLevel)
+  case refreshButton
   case saveButton
   case timestampsButton
 }
@@ -111,7 +111,7 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     state.showTimestamps = UserDefaults.standard.bool(forKey: "showTimestamps")
     let info = getBundleInfo()
     state.logUrl = URL.appSupport.appendingPathComponent(info.domain + "." + info.appName + "/Logs/" + info.appName + ".log" )
-    state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
+    state.logMessages = refreshLog(state, environment)
     return .none
 
     // ----------------------------------------------------------------------------
@@ -127,12 +127,12 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     
   case .filterBy(let filter):
     state.filterBy = filter
-    state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
+    state.logMessages = refreshLog(state, environment)
     return .none
 
   case .filterByText(let text):
     state.filterByText = text
-    state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
+    state.logMessages = refreshLog(state, environment)
     return .none
 
   case let .fontSize(value):
@@ -141,18 +141,19 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
 
   case .loadButton:
     if let url = showOpenPanel() {
+      state.logUrl = url
       state.logMessages.removeAll()
-      state.logMessages = refreshLog(state, environment, url, state.logLevel)
+      state.logMessages = refreshLog(state, environment)
     }
     return .none
     
   case .logLevel(let level):
     state.logLevel = level
-    state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
+    state.logMessages = refreshLog(state, environment)
     return .none
 
-  case .refreshButton(let logUrl, let level):
-    state.logMessages = refreshLog(state, environment, logUrl, level)
+  case .refreshButton:
+    state.logMessages = refreshLog(state, environment)
     return .none
     
   case .saveButton:
@@ -165,9 +166,7 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     
   case .timestampsButton:
     state.showTimestamps.toggle()
-    if state.logUrl != nil {
-      state.logMessages = refreshLog(state, environment, state.logUrl!, state.logLevel)
-    }
+    state.logMessages = refreshLog(state, environment)
     return .none
     
     // ----------------------------------------------------------------------------
@@ -183,9 +182,13 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
 // ----------------------------------------------------------------------------
 // MARK: - Helper functions
 
-func refreshLog(_ state: LogState, _ environment: LogEnvironment, _ logUrl: URL, _ level: LogLevel) -> IdentifiedArrayOf<LogLine> {
-  if let messages = readLogFile(at: logUrl, environment: environment ) {
-    return filterLog(messages, level: level, filter: state.filterBy, filterText: state.filterByText, showTimes: state.showTimestamps)
+func refreshLog(_ state: LogState, _ environment: LogEnvironment) -> IdentifiedArrayOf<LogLine> {
+  if state.logUrl == nil {
+    fatalError("logUrl is nil")
+  }
+  
+  if let messages = readLogFile(at: state.logUrl!, environment: environment ) {
+    return filterLog(messages, level: state.logLevel, filter: state.filterBy, filterText: state.filterByText, showTimeStamps: state.showTimestamps)
   }
   return IdentifiedArrayOf<LogLine>()
 }
@@ -219,7 +222,7 @@ func readLogFile(at url: URL, environment: LogEnvironment) -> IdentifiedArrayOf<
 ///   - filterText:     the filter text
 ///   - showTimes:      whether to show timestamps
 /// - Returns:          the filtered array of Log entries
-func filterLog(_ messages: IdentifiedArrayOf<LogLine>, level: LogLevel, filter: LogFilter, filterText: String = "", showTimes: Bool = true) -> IdentifiedArrayOf<LogLine> {
+func filterLog(_ messages: IdentifiedArrayOf<LogLine>, level: LogLevel, filter: LogFilter, filterText: String = "", showTimeStamps: Bool = true) -> IdentifiedArrayOf<LogLine> {
   var lines = IdentifiedArrayOf<LogLine>()
   var limitedLines = IdentifiedArrayOf<LogLine>()
 
@@ -238,10 +241,12 @@ func filterLog(_ messages: IdentifiedArrayOf<LogLine>, level: LogLevel, filter: 
   case .excludes:   limitedLines = lines.filter { !$0.text.contains(filterText) }
   }
 
-  if !showTimes {
+  if !showTimeStamps {
     for line in limitedLines {
-      let startIndex = line.text.firstIndex(of: "[") ?? line.text.startIndex
-      limitedLines[id: line.id]?.text = String(line.text[startIndex..<line.text.endIndex])
+//      let startIndex = line.text.firstIndex(of: "[") ?? line.text.startIndex
+//      limitedLines[id: line.id]?.text = String(line.text[startIndex..<line.text.endIndex])
+      
+      limitedLines[id: line.id]?.text = String(line.text.suffix(from: line.text.firstIndex(of: "[") ?? line.text.startIndex))
     }
   }
   return limitedLines

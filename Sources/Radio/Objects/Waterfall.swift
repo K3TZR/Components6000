@@ -39,9 +39,10 @@ public final class Waterfall: ObservableObject, Identifiable {
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
-  
-  @Atomic(-1) var packetFrame: Int
-  //    @Atomic(0, q: Api.objectQ) var droppedPackets: Int
+  static var q = DispatchQueue(label: "WaterfallSequenceQ", attributes: [.concurrent])
+  private var _expectedFrameNumber = -1
+  private var _droppedPackets = 0
+  private var _accumulatedBins = 0
   
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
@@ -80,19 +81,19 @@ public final class Waterfall: ObservableObject, Identifiable {
     var firstBinFreq: UInt64    // 8 bytes
     var binBandwidth: UInt64    // 8 bytes
     var lineDuration : UInt32   // 4 bytes
-    var numberOfBins: UInt16    // 2 bytes
+    var segmentBinCount: UInt16    // 2 bytes
     var height: UInt16          // 2 bytes
-    var receivedFrame: UInt32   // 4 bytes
+    var frameNumber: UInt32   // 4 bytes
     var autoBlackLevel: UInt32  // 4 bytes
-    var totalBins: UInt16       // 2 bytes
-    var firstBin: UInt16        // 2 bytes
+    var frameBinCount: UInt16       // 2 bytes
+    var startingBinNumber: UInt16        // 2 bytes
   }
   
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
   private var _frames = [WaterfallFrame]()
-  @Atomic(0) var index: Int
+  @Atomic(0, q) private var index: Int
   private var _initialized = false
   private let _log = LogProxy.sharedInstance.log
   private let _numberOfFrames = 10
@@ -113,7 +114,8 @@ public final class Waterfall: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Waterfall: DynamicModel {
+//extension Waterfall: DynamicModelWithStream {
+extension Waterfall {
   /// Parse a Waterfall status message
   ///   StatusParser protocol method, executes on the parseQ
   ///
@@ -145,14 +147,14 @@ extension Waterfall: DynamicModel {
             Objects.sharedInstance.panadapters[panId] = nil
             
             LogProxy.sharedInstance.log("Panadapter, removed: id = \(panId.hex)", .debug, #function, #file, #line)
-//            NC.post(.panadapterHasBeenRemoved, object: id as Any?)
+            //            NC.post(.panadapterHasBeenRemoved, object: id as Any?)
             
-//            NC.post(.waterfallWillBeRemoved, object: radio.waterfalls[id] as Any?)
+            //            NC.post(.waterfallWillBeRemoved, object: radio.waterfalls[id] as Any?)
             
             Objects.sharedInstance.waterfalls[id] = nil
             
             LogProxy.sharedInstance.log("Waterfall, removed: id = \(id.hex)", .debug, #function, #file, #line)
-//            NC.post(.waterfallHasBeenRemoved, object: id as Any?)
+            //            NC.post(.waterfallHasBeenRemoved, object: id as Any?)
           }
         }
       }
@@ -195,7 +197,7 @@ extension Waterfall: DynamicModel {
       
       // notify all observers
       _log("Waterfall, added: id = \(id.hex), handle = \(clientHandle.hex)", .debug, #function, #file, #line)
-//      NC.post(.waterfallHasBeenAdded, object: self as Any?)
+      //      NC.post(.waterfallHasBeenAdded, object: self as Any?)
     }
   }
   
@@ -207,70 +209,86 @@ extension Waterfall: DynamicModel {
   ///
   /// - Parameters:
   ///   - vita:       a Vita struct
-  func vitaProcessor(_ vita: Vita) {
+  func vitaProcessor(_ vita: Vita, _ testMode: Bool = false) {
     if _isStreaming == false {
       _isStreaming = true
       // log the start of the stream
       _log("Waterfall: stream started, \(vita.streamId.hex)", .info, #function, #file, #line)
     }
+    
     // Bins are just beyond the payload
     let byteOffsetToBins = MemoryLayout<PayloadHeader>.size
     
     vita.payloadData.withUnsafeBytes { ptr in
-      // map the payload to the New Payload struct
+      
+      // map the payload to the Payload struct
       let hdr = ptr.bindMemory(to: PayloadHeader.self)
       
-      // byte swap and convert each payload component
-      _frames[index].firstBinFreq = CGFloat(CFSwapInt64BigToHost(hdr[0].firstBinFreq)) / 1.048576E6
-      _frames[index].binBandwidth = CGFloat(CFSwapInt64BigToHost(hdr[0].binBandwidth)) / 1.048576E6
-      _frames[index].lineDuration = Int( CFSwapInt32BigToHost(hdr[0].lineDuration) )
-      _frames[index].binsInThisFrame = Int( CFSwapInt16BigToHost(hdr[0].numberOfBins) )
-      _frames[index].height = Int( CFSwapInt16BigToHost(hdr[0].height) )
-      _frames[index].receivedFrame = Int( CFSwapInt32BigToHost(hdr[0].receivedFrame) )
-      _frames[index].autoBlackLevel = CFSwapInt32BigToHost(hdr[0].autoBlackLevel)
-      _frames[index].totalBins = Int( CFSwapInt16BigToHost(hdr[0].totalBins) )
-      _frames[index].startingBin = Int( CFSwapInt16BigToHost(hdr[0].firstBin) )
-    }
-    // validate the packet (could be incomplete at startup)
-    if _frames[index].totalBins == 0 { return }
-    if _frames[index].startingBin + _frames[index].binsInThisFrame > _frames[index].totalBins { return }
-    
-    // initial frame?
-    if packetFrame == -1 { packetFrame = _frames[index].receivedFrame }
-    
-    switch (packetFrame, _frames[index].receivedFrame) {
+      let startingBinNumber = Int(CFSwapInt16BigToHost(hdr[0].startingBinNumber))
+      let segmentBinCount = Int(CFSwapInt16BigToHost(hdr[0].segmentBinCount))
+      let frameBinCount = Int(CFSwapInt16BigToHost(hdr[0].frameBinCount))
+      let frameNumber = Int(CFSwapInt32BigToHost(hdr[0].frameNumber))
       
-    case (let expected, let received) where received < expected:
-      // from a previous group, ignore it
-      _log("Waterfall delayed frame(s) ignored: expected = \(expected), received = \(received)", .warning, #function, #file, #line)
-      return
+      // validate the packet (could be incomplete at startup)
+      if frameBinCount == 0 { return }
+      if startingBinNumber + segmentBinCount > frameBinCount { return }
+   
+      // is it the start of a frame?
+      if _expectedFrameNumber == -1 && startingBinNumber == 0 { _expectedFrameNumber = frameNumber }
       
-    case (let expected, let received) where received > expected:
-      // from a later group, jump forward
-      _log("Waterfall missing frame(s) skipped: expected = \(expected), received = \(received)", .warning, #function, #file, #line)
-      packetFrame = received
-      fallthrough
+      if _expectedFrameNumber == -1 {
+        // NO, ignore any partial frame
+        _log("Waterfall: incomplete frame = \(frameNumber), startingBin = \(startingBinNumber)", .debug, #function, #file, #line)
+        return
+      }
       
-    default:
-      // received == expected
-      vita.payloadData.withUnsafeBytes { ptr in
-        // Swap the byte ordering of the data & place it in the bins
-        for i in 0..<_frames[index].binsInThisFrame {
-          _frames[index].bins[i+_frames[index].startingBin] = CFSwapInt16BigToHost( ptr.load(fromByteOffset: byteOffsetToBins + (2 * i), as: UInt16.self) )
+      // are we in the ApiTester?
+      if testMode {
+        // APITESTER MODE
+        if _expectedFrameNumber != frameNumber {
+          _log("Waterfall: missing frame(s), expected = \(_expectedFrameNumber), received = \(frameNumber), total drops = \(_droppedPackets)", .warning, #function, #file, #line)
+          _droppedPackets += (frameNumber - _expectedFrameNumber)
+        }
+        _accumulatedBins += segmentBinCount
+        
+        // increment the expected frame number if the entire frame has been accumulated
+        if _accumulatedBins == frameBinCount { _expectedFrameNumber += 1 ; _accumulatedBins = 0 }
+        
+      } else {
+        // NORMAL MODE
+        // populate frame values
+        _frames[index].firstBinFreq = CGFloat(CFSwapInt64BigToHost(hdr[0].firstBinFreq)) / 1.048576E6
+        _frames[index].binBandwidth = CGFloat(CFSwapInt64BigToHost(hdr[0].binBandwidth)) / 1.048576E6
+        _frames[index].lineDuration = Int( CFSwapInt32BigToHost(hdr[0].lineDuration) )
+        _frames[index].height = Int( CFSwapInt16BigToHost(hdr[0].height) )
+        _frames[index].autoBlackLevel = CFSwapInt32BigToHost(hdr[0].autoBlackLevel)
+             
+        if _expectedFrameNumber != frameNumber {
+          _droppedPackets += (frameNumber - _expectedFrameNumber)
+          _log("Waterfall: missing frame(s), expected = \(_expectedFrameNumber), received = \(frameNumber), drop count = \(_droppedPackets)", .warning, #function, #file, #line)
+          _expectedFrameNumber = frameNumber
+        }
+        
+        vita.payloadData.withUnsafeBytes { ptr in
+          // Swap the byte ordering of the data & place it in the bins
+          for i in 0..<segmentBinCount {
+            _frames[index].bins[i+startingBinNumber] = CFSwapInt16BigToHost( ptr.load(fromByteOffset: byteOffsetToBins + (2 * i), as: UInt16.self) )
+          }
+        }
+        _accumulatedBins += segmentBinCount
+
+        // is it a complete Frame?
+        if _accumulatedBins == frameBinCount {
+          _frames[index].frameBinCount = _accumulatedBins
+          // YES, pass it to the delegate
+          delegate?.streamHandler(_frames[index])
+          
+          // update the expected frame number & dataframe index
+          _expectedFrameNumber += 1
+          _accumulatedBins = 0
+          $index.mutate { $0 += 1 ; $0 = $0 % _numberOfFrames }
         }
       }
-      _frames[index].binsInThisFrame += _frames[index].startingBin
-    }
-    // increment the frame count if the entire frame has been accumulated
-    if _frames[index].binsInThisFrame == _frames[index].totalBins { $packetFrame.mutate { $0 += 1 } }
-    
-    // is it a complete Frame?
-    if _frames[index].binsInThisFrame == _frames[index].totalBins {
-      // YES, pass it to the delegate
-      delegate?.streamHandler(_frames[index])
-      
-      // use the next dataframe
-      $index.mutate { $0 += 1 ; $0 = $0 % _numberOfFrames }
     }
   }
 }
@@ -285,12 +303,12 @@ public struct WaterfallFrame {
   public var firstBinFreq: CGFloat = 0.0  // Frequency of first Bin (Hz)
   public var binBandwidth: CGFloat = 0.0  // Bandwidth of a single bin (Hz)
   public var lineDuration  = 0            // Duration of this line (ms)
-  public var binsInThisFrame = 0          // Number of bins
+  //  public var segmentBinCount = 0          // Number of bins
   public var height = 0                   // Height of frame (pixels)
-  public var receivedFrame = 0            // Time code
+  //  public var frameNumber = 0              // Time code
   public var autoBlackLevel: UInt32 = 0   // Auto black level
-  public var totalBins = 0                //
-  public var startingBin = 0              //
+  public var frameBinCount = 0            //
+  //  public var startingBinNumber = 0        //
   public var bins = [UInt16]()            // Array of bin values
   
   // ----------------------------------------------------------------------------

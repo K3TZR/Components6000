@@ -74,9 +74,11 @@ final public class Tcp: NSObject {
   var _socket: GCDAsyncSocket!
   var _startTime: Date?
   var _timeout = 0.0   // seconds
-  
-  @Atomic(0) var sequenceNumber: Int
-  
+
+  static var q = DispatchQueue(label: "TcpSequenceQ")
+
+  @Atomic(0, q) var sequenceNumber: Int
+
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
@@ -193,6 +195,9 @@ extension Tcp: GCDAsyncSocketDelegate {
     // Connected
     interfaceIpAddress = host
     
+    // mark the beginning
+    _startTime = Date()
+
     // is this a Wan connection?
     if _packetSource == .smartlink {
       // YES, secure the connection using TLS
@@ -206,9 +211,6 @@ extension Tcp: GCDAsyncSocketDelegate {
                                       host: host,
                                       port: port,
                                       error: nil))
-      // mark the beginning
-      _startTime = Date()
-
       // trigger the next read
       readNext()
     }

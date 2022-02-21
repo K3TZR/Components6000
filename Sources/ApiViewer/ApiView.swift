@@ -53,6 +53,12 @@ public struct ApiView: View {
         // initialize on first appearance
         .onAppear() { viewStore.send(.onAppear) }
         
+        .onReceive(NotificationCenter.default.publisher(
+          for: NSNotification.Name("WindowWillCLose")
+        )) { _ in
+            print("-----> CLOSING")
+        }
+
         // alert dialogs
         .alert(
           self.store.scope(state: \.alert),

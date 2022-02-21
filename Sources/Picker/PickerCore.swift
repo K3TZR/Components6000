@@ -157,7 +157,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     case .testButton(let selection):
       state.testResult = nil
       // try to send a Test
-      if state.discovery.smartlinkTest(selection.packet.serial) {
+      if state.discovery.sendSmartlinkTest(selection.packet.serial) {
         // reply will generate a testResultReceived action
         return subscribeToTestResult()
 
@@ -202,6 +202,15 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       
     case .testResultReceived(let result):
       state.testResult = result
+      if !result.success {
+        state.alert = .init(
+          title: TextState(
+                    """
+                    Smartlink test FAILED:
+                    """
+          )
+        )
+      }
       return .cancel(ids: TestResultSubscriptionId())
       
     case .wanStatusReceived(let status):
@@ -226,7 +235,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
         // NO, proceed to opening
         return Effect(value: .openSelection(selection))
       }
-
+      
     case .openSelection(_):
       // stop subscriptions
       // additional processing upstream

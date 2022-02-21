@@ -203,6 +203,7 @@ public enum ApiAction: Equatable {
 
   // Effects related
   case logAlertReceived(LogEntry)
+  case openSelection(PickerSelection)
   case tcpMessageSentOrReceived(TcpMessage)
   case finishInitialization
   case cancelEffects
@@ -350,7 +351,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         // is there a default?
         if let defaultSelection = hasDefault(state) {
           // YES, open it
-          return Effect(value: .pickerAction(.openSelection(defaultSelection)))
+          return Effect(value: .openSelection(defaultSelection))
         } else {
           // NO, or failed to find a match, open the Picker
           state.pickerState = PickerState(connectionType: state.isGui ? .gui : .nonGui)
@@ -384,27 +385,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .pickerAction(.openSelection(let selection)):
       // close the Picker sheet
       state.pickerState = nil
-      // instantiate a Radio object
-      state.radio = Radio(selection.packet,
-                          connectionType: state.isGui ? .gui : .nonGui,
-                          command: state.tcp,
-                          stream: Udp(),
-                          stationName: "Api6000",
-                          programName: "Api6000",
-                          disconnectHandle: selection.disconnectHandle,
-                          testerModeEnabled: true)
-      // try to connect
-      if state.radio!.connect(selection.packet) {
-        // connected
-        if state.clearOnConnect {
-          state.messages.removeAll()
-          state.filteredMessages.removeAll()
-        }
-      } else {
-        // failed
-        state.alert = AlertState(title: TextState("Failed to connect to Radio \(selection.packet.nickname)"))
-      }
-      return .none
+      return Effect(value: .openSelection(selection))
       
     case .pickerAction(.defaultButton(let selection)):
       // set / reset the default connection
@@ -447,7 +428,13 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // MARK: - Actions sent by long-running effects
                   
     case .logAlertReceived(let logEntry):
-      // a Warning or Error has been logged. alert the user
+      // a Warning or Error has been logged.
+      // exit any sheet states
+      state.pickerState = nil
+      state.loginState = nil
+      // return to the primary view
+      state.viewType = .api
+      // alert the user
       state.alert = .init(title: TextState(
                               """
                               \(logEntry.level == .warning ? "A Warning" : "An Error") was logged:
@@ -470,6 +457,34 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
 
     case .cancelEffects:
       return .cancel(ids: LogAlertSubscriptionId(), SentMessagesSubscriptionId(), ReceivedMessagesSubscriptionId())
+      
+      // ----------------------------------------------------------------------------
+      // MARK: - Actions sent by other actions
+      
+    case .openSelection(let selection):
+      // instantiate a Radio object
+      state.radio = Radio(selection.packet,
+                          connectionType: state.isGui ? .gui : .nonGui,
+                          command: state.tcp,
+                          stream: Udp(),
+                          stationName: "Api6000",
+                          programName: "Api6000",
+                          disconnectHandle: selection.disconnectHandle,
+                          testerModeEnabled: true)
+      // try to connect
+      if state.radio!.connect(selection.packet) {
+        // connected
+        if state.clearOnConnect {
+          state.messages.removeAll()
+          state.filteredMessages.removeAll()
+        }
+      } else {
+        // failed
+        state.alert = AlertState(title: TextState("Failed to connect to Radio \(selection.packet.nickname)"))
+      }
+      return .none
+
+                  
     }
   }
 )
@@ -569,6 +584,7 @@ func subscribeToReceivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
 }
 
 func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
+//  #if DEBUG
   // subscribe to the publisher of LogEntries with Warning or Error levels
   LogProxy.sharedInstance.alertPublisher
     .receive(on: DispatchQueue.main)
@@ -576,6 +592,9 @@ func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
     .map { logEntry in .logAlertReceived(logEntry) }
     .eraseToEffect()
     .cancellable(id: LogAlertSubscriptionId())
+//  #else
+//    .empty
+//  #endif
 }
 
 /// Assign each text line a color

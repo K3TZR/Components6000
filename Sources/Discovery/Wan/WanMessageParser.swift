@@ -60,17 +60,16 @@ extension WanListener {
     
     // Check for unknown Message Types
     guard let token = MessageTokens(rawValue: properties[0].key)  else {
-      // log it and ignore the message
-      _log("Discovery: unknown Message - \(msg)", .warning, #function, #file, #line)
+      // log it
+      _log("Discovery: \(msg)", .warning, #function, #file, #line)
       return
     }
     // which primary message type?
     switch token {
       
-    case .application:        parseApplication(Array(properties.dropFirst()))
-    case .radio:
-      parseRadio(Array(properties.dropFirst()), msg: msg)
-    case .Received:           break   // ignore message on Test connection
+    case .application:    parseApplication(Array(properties.dropFirst()))
+    case .radio:          parseRadio(Array(properties.dropFirst()), msg: msg)
+    case .Received:       break   // ignore message on Test connection
     }
   }
 
@@ -272,7 +271,7 @@ extension WanListener {
       case .upnpUdpPortWorking:         result.upnpUdpPortWorking = property.value.tValue
       }
     }
-    _log("Discovery: WanParser TestConnectionResults received, \(result.success ? "success" : "failure")", result.success ? .debug : .warning, #function, #file, #line)
+    _log("Discovery: smartlink test result received, \(result.success ? "SUCCESS" : "FAILURE")", result.success ? .debug : .warning, #function, #file, #line)
     // publish the result
     _discovery?.testPublisher.send(result)
   }

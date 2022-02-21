@@ -29,7 +29,7 @@ struct LogFooter: View {
 
         Spacer()
         HStack (spacing: 20) {
-          Button("Refresh") { viewStore.send(.refreshButton(viewStore.logUrl!, viewStore.logLevel)) }.disabled(viewStore.logUrl == nil)
+          Button("Refresh") { viewStore.send(.refreshButton) }.disabled(viewStore.logUrl == nil)
           Button("Load") { viewStore.send(.loadButton) }
           Button("Save") { viewStore.send(.saveButton) }
         }

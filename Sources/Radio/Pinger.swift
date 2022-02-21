@@ -7,36 +7,40 @@
 //
 
 import Foundation
+import Combine
 
 import TcpCommands
 import Shared
 
+public enum PingStatus {
+  case started
+  case stopped(String?)
+}
+
 ///  Pinger Actor implementation
 ///
-///      generates "ping" messages every kPingInterval second(s)
-///      if no reply is received after kTimeoutInterval
-///      sends a .tcpPingTimeout Notification
+///      generates "ping" messages every pingInterval second(s)
+///      sends a PingStatus when stopped with an optional reason code
 ///
 final public class Pinger {
+  // ----------------------------------------------------------------------------
+  // MARK: - Publishers
+  
+  public var pingPublisher = PassthroughSubject<PingStatus, Never>()
+
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
 
   private var _lastPingRxTime: Date!
-  private let _log = LogProxy.sharedInstance.log
   private let _pingQ = DispatchQueue(label: "Radio.pingQ")
   private var _pingTimer: DispatchSourceTimer!
   private let _radio: Radio
-  private var _command: Tcp
-
-  private let kPingInterval = 1
-  private let kTimeoutInterval = 10.0
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
 
-  public init(radio: Radio, command: Tcp, pingInterval: Int = 1, pingTimeout: Double = 10) {
+  public init(radio: Radio, pingInterval: Int = 1, pingTimeout: Double = 10) {
     _radio = radio
-    _command = command
     _lastPingRxTime = Date(timeIntervalSinceNow: 0)
     startPinging(interval: pingInterval, timeout: pingTimeout)
   }
@@ -44,9 +48,9 @@ final public class Pinger {
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
 
-  public func stopPinging() {
+  public func stopPinging(reason: String? = nil) {
     _pingTimer?.cancel()
-    _log("Pinger: stopped", .debug, #function, #file, #line)
+    pingPublisher.send(.stopped(reason))
   }
 
   public func pingReply(_ command: String, seqNum: UInt, responseValue: String, reply: String) {
@@ -57,8 +61,6 @@ final public class Pinger {
   // MARK: - Private methods
 
   private func startPinging(interval: Int, timeout: Double) {
-    _log("Pinger: started pinging", .debug, #function, #file, #line)
-
     // tell the Radio to expect pings
     _radio.send("keepalive enable")
 
@@ -77,10 +79,10 @@ final public class Pinger {
 
   private func timerHandler(timeout: Double) {
     // has it been too long since the last response?
-    if Date().timeIntervalSince(_lastPingRxTime) > timeout {
+    let interval = Date().timeIntervalSince(_lastPingRxTime)
+    if interval > timeout {
       // YES, stop the Pinger
-      _log("Pinger: timeout", .debug, #function, #file, #line)
-      stopPinging()
+      stopPinging(reason: "timeout")
 
     } else {
       // NO, ping again

@@ -440,22 +440,22 @@ public func setupLogFolder(_ info: (domain: String, appName: String)) -> URL? {
 // MARK: - Property Wrappers
 
 @propertyWrapper
-final public class Atomic {
-  static let q = DispatchQueue(label: "AtomicQ", attributes: [.concurrent])
-  
+public class Atomic<Value> {  
   public var projectedValue: Atomic { return self }
   
-  private var value : Int
+  private var value: Value
+  private var queue: DispatchQueue
   
-  public init(_ wrappedValue: Int) {
+  public init(_ wrappedValue: Value, _ queue: DispatchQueue) {
     self.value = wrappedValue
+    self.queue = queue
   }
   
-  public var wrappedValue: Int {
-    get { Atomic.q.sync { value }}
-    set { Atomic.q.sync(flags: .barrier) { value = newValue }} }
+  public var wrappedValue: Value {
+    get { queue.sync { value }}
+    set { queue.sync { value = newValue }} }
   
-  public func mutate(_ mutation: (inout Int) -> Void) {
-    return Atomic.q.sync(flags: .barrier) { mutation(&value) }
+  public func mutate(_ mutation: (inout Value) -> Void) {
+    return queue.sync { mutation(&value) }
   }
 }

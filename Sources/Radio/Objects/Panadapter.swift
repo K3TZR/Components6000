@@ -81,8 +81,10 @@ public final class Panadapter: ObservableObject, Identifiable {
   // MARK: - Public properties
   
   public let daxIqChoices = Radio.kDaxIqChannels
-  public private(set) var droppedPackets = 0
-  public private(set) var packetFrame = -1
+  static var q = DispatchQueue(label: "PanadapterSequenceQ")
+  private var _expectedFrameNumber = -1
+  private var _droppedPackets = 0
+  private var _accumulatedBins = 0
   
   public struct LegendValue: Identifiable {
     public var id: CGFloat         // relative position 0...1
@@ -136,20 +138,21 @@ public final class Panadapter: ObservableObject, Identifiable {
     case n1mmRadio                  = "n1mm_radio"
   }
   private struct PayloadHeader {      // struct to mimic payload layout
-    var startingBin: UInt16
-    var numberOfBins: UInt16
+    var startingBinNumber: UInt16
+    var segmentBinCount: UInt16
     var binSize: UInt16
-    var totalBins: UInt16
-    var frameIndex: UInt32
+    var frameBinCount: UInt16
+    var frameNumber: UInt32
   }
   
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
-  private var _index = 0
+  @Atomic(0, q) private var index: Int
+  //  private var _index = 0
   private var _initialized = false
   private let _log = LogProxy.sharedInstance.log
-  private let _numberOfPanadapterFrames = 6
+  private let _numberOfFrames = 16
   private var _frames = [PanadapterFrame]()
   private var _suppress = false
   
@@ -165,7 +168,7 @@ public final class Panadapter: ObservableObject, Identifiable {
     self.id = id
     
     // allocate dataframes
-    for _ in 0..<_numberOfPanadapterFrames {
+    for _ in 0..<_numberOfFrames {
       _frames.append(PanadapterFrame(frameSize: Panadapter.kMaxBins))
     }
   }
@@ -189,74 +192,76 @@ public final class Panadapter: ObservableObject, Identifiable {
     let rfGainInfo = reply.valuesArray( delimiter: "," )
     rfGainLow = rfGainInfo[0].iValue
     rfGainHigh = rfGainInfo[1].iValue
-    rfGainStep = rfGainInfo[2].iValue    
+    rfGainStep = rfGainInfo[2].iValue
   }
-
-
-func calcDbmValues() -> [LegendValue] {
-  var dbmValues = [LegendValue]()
   
-  var value = maxDbm
-  let lineCount = (maxDbm - minDbm) / _dbmStep
   
-  dbmValues.append( LegendValue(id: 0, label: String(format: _dbmFormat, value), value: value, lineCount: lineCount) )
-  repeat {
-    let next = value - _dbmStep
-    value = next < minDbm ? minDbm : next
-    let position = (maxDbm - value) / (maxDbm - minDbm)
-    dbmValues.append( LegendValue(id: position, label: String(format: _dbmFormat, value), value: value, lineCount: lineCount) )
-  } while value != minDbm
-  return dbmValues
-}
-
-func calcFreqValues() -> [LegendValue] {
-  var freqValues = [LegendValue]()
+  func calcDbmValues() -> [LegendValue] {
+    var dbmValues = [LegendValue]()
+    
+    var value = maxDbm
+    let lineCount = (maxDbm - minDbm) / _dbmStep
+    
+    dbmValues.append( LegendValue(id: 0, label: String(format: _dbmFormat, value), value: value, lineCount: lineCount) )
+    repeat {
+      let next = value - _dbmStep
+      value = next < minDbm ? minDbm : next
+      let position = (maxDbm - value) / (maxDbm - minDbm)
+      dbmValues.append( LegendValue(id: position, label: String(format: _dbmFormat, value), value: value, lineCount: lineCount) )
+    } while value != minDbm
+    return dbmValues
+  }
   
-  let maxFreq = CGFloat(center + (bandwidth/2))
-  let minFreq = CGFloat(center - (bandwidth/2))
-  var value = maxFreq
-  let lineCount = (maxFreq - minFreq) / _freqStep
+  func calcFreqValues() -> [LegendValue] {
+    var freqValues = [LegendValue]()
+    
+    let maxFreq = CGFloat(center + (bandwidth/2))
+    let minFreq = CGFloat(center - (bandwidth/2))
+    var value = maxFreq
+    let lineCount = (maxFreq - minFreq) / _freqStep
+    
+    freqValues.append( LegendValue(id: 0, label: String(format: _freqFormat, value), value: value, lineCount: lineCount) )
+    repeat {
+      let next = value - _freqStep
+      value = next < minFreq ? minFreq : next
+      let position = (maxFreq - value) / (maxFreq - minFreq)
+      freqValues.append( LegendValue(id: position, label: String(format: _freqFormat, value), value: value, lineCount: lineCount) )
+    } while value != minFreq
+    return freqValues
+  }
   
-  freqValues.append( LegendValue(id: 0, label: String(format: _freqFormat, value), value: value, lineCount: lineCount) )
-  repeat {
-    let next = value - _freqStep
-    value = next < minFreq ? minFreq : next
-    let position = (maxFreq - value) / (maxFreq - minFreq)
-    freqValues.append( LegendValue(id: position, label: String(format: _freqFormat, value), value: value, lineCount: lineCount) )
-  } while value != minFreq
-  return freqValues
-}
-
-// ----------------------------------------------------------------------------
-// MARK: - Public Command methods
-
-//    public func remove(callback: ReplyHandler? = nil) {
-//        _api.send("display panafall remove \(id.hex)", replyTo: callback)
-//    }
-//    public func clickTune(_ frequency: Hz, callback: ReplyHandler? = nil) {
-//        // FIXME: ???
-//        _api.send("slice " + "m " + "\(frequency.hzToMhz)" + " pan=\(id.hex)", replyTo: callback)
-//    }
-//    public func requestRfGainInfo() {
-//        _api.send("display pan " + "rf_gain_info " + "\(id.hex)", replyTo: rfGainReplyHandler)
-//    }
-
-// ----------------------------------------------------------------------------
-// MARK: - Private Command methods
-
-//    private func panadapterSet(_ token: PanadapterTokens, _ value: Any) {
-//        _api.send("display panafall set " + "\(id.hex) " + token.rawValue + "=\(value)")
-//    }
-//    // alternate forms for commands that do not use the Token raw value in outgoing messages
-//    private func panadapterSet(_ tokenString: String, _ value: Any) {
-//        _api.send("display panafall set " + "\(id.hex) " + tokenString + "=\(value)")
-//    }
+  // ----------------------------------------------------------------------------
+  // MARK: - Public Command methods
+  
+  //    public func remove(callback: ReplyHandler? = nil) {
+  //        _api.send("display panafall remove \(id.hex)", replyTo: callback)
+  //    }
+  //    public func clickTune(_ frequency: Hz, callback: ReplyHandler? = nil) {
+  //        // FIXME: ???
+  //        _api.send("slice " + "m " + "\(frequency.hzToMhz)" + " pan=\(id.hex)", replyTo: callback)
+  //    }
+  //    public func requestRfGainInfo() {
+  //        _api.send("display pan " + "rf_gain_info " + "\(id.hex)", replyTo: rfGainReplyHandler)
+  //    }
+  
+  // ----------------------------------------------------------------------------
+  // MARK: - Private Command methods
+  
+  //    private func panadapterSet(_ token: PanadapterTokens, _ value: Any) {
+  //        _api.send("display panafall set " + "\(id.hex) " + token.rawValue + "=\(value)")
+  //    }
+  //    // alternate forms for commands that do not use the Token raw value in outgoing messages
+  //    private func panadapterSet(_ tokenString: String, _ value: Any) {
+  //        _api.send("display panafall set " + "\(id.hex) " + tokenString + "=\(value)")
+  //    }
 }
 
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModelWithStream extension
 
-extension Panadapter: DynamicModelWithStream {
+//extension Panadapter: DynamicModelWithStream {
+extension Panadapter {
+  
   /// Parse a Panadapter status message
   ///   executes on the parseQ
   ///
@@ -282,7 +287,7 @@ extension Panadapter: DynamicModelWithStream {
         // does it exist?
         if Objects.sharedInstance.panadapters[id] != nil {
           // YES, notify all observers
-//          NC.post(.panadapterWillBeRemoved, object: self as Any?)
+          //          NC.post(.panadapterWillBeRemoved, object: self as Any?)
         }
       }
     }
@@ -348,75 +353,90 @@ extension Panadapter: DynamicModelWithStream {
       
       // notify all observers
       _log("Panadapter: added, id = \(id.hex) center = \(center.hzToMhz), bandwidth = \(bandwidth.hzToMhz)", .debug, #function, #file, #line)
-//      NC.post(.panadapterHasBeenAdded, object: self as Any?)
+      //      NC.post(.panadapterHasBeenAdded, object: self as Any?)
     }
     _suppress = false
   }
   
   /// Process the Panadapter Vita struct
-  ///   VitaProcessor protocol method, executes on the streamQ
   ///      The payload of the incoming Vita struct is converted to a PanadapterFrame and
   ///      passed to the Panadapter Stream Handler
   ///
   /// - Parameters:
   ///   - vita:        a Vita struct
-  func vitaProcessor(_ vita: Vita) {
+  func vitaProcessor(_ vita: Vita, _ testMode: Bool = false) {
     if _isStreaming == false {
       _isStreaming = true
       // log the start of the stream
       _log("Panadapter: stream started, \(vita.streamId.hex)", .info, #function, #file, #line)
     }
-    // Bins are just beyond the payload
+    // NO, Bins are just beyond the payload
     let byteOffsetToBins = MemoryLayout<PayloadHeader>.size
     
     vita.payloadData.withUnsafeBytes { ptr in
+      
       // map the payload to the Payload struct
       let hdr = ptr.bindMemory(to: PayloadHeader.self)
       
-      _frames[_index].startingBin = Int(CFSwapInt16BigToHost(hdr[0].startingBin))
-      _frames[_index].binsInThisFrame = Int(CFSwapInt16BigToHost(hdr[0].numberOfBins))
-      _frames[_index].binSize = Int(CFSwapInt16BigToHost(hdr[0].binSize))
-      _frames[_index].totalBins = Int(CFSwapInt16BigToHost(hdr[0].totalBins))
-      _frames[_index].receivedFrame = Int(CFSwapInt32BigToHost(hdr[0].frameIndex))
-    }
-    // validate the packet (could be incomplete at startup)
-    if _frames[_index].totalBins == 0 { return }
-    if _frames[_index].startingBin + _frames[_index].binsInThisFrame > _frames[_index].totalBins { return }
-    
-    // initial frame?
-    if packetFrame == -1 { packetFrame = _frames[_index].receivedFrame }
-    
-    switch (packetFrame, _frames[_index].receivedFrame) {
+      let startingBinNumber = Int(CFSwapInt16BigToHost(hdr[0].startingBinNumber))
+      let segmentBinCount = Int(CFSwapInt16BigToHost(hdr[0].segmentBinCount))
+      let frameBinCount = Int(CFSwapInt16BigToHost(hdr[0].frameBinCount))
+      let frameNumber = Int(CFSwapInt32BigToHost(hdr[0].frameNumber))
       
-    case (let expected, let received) where received < expected:
-      // from a previous group, ignore it
-      _log("Panadapter: delayed frame(s) ignored, expected = \(expected), received = \(received)", .warning, #function, #file, #line)
-      return
-    case (let expected, let received) where received > expected:
-      // from a later group, jump forward
-      _log("Panadapter: missing frame(s) skipped, expected = \(expected), received = \(received)", .warning, #function, #file, #line)
-      packetFrame = received
-      fallthrough
-    default:
-      // received == expected
-      vita.payloadData.withUnsafeBytes { ptr in
-        // Swap the byte ordering of the data & place it in the bins
-        for i in 0..<_frames[_index].binsInThisFrame {
-          _frames[_index].bins[i+_frames[_index].startingBin] = CFSwapInt16BigToHost( ptr.load(fromByteOffset: byteOffsetToBins + (2 * i), as: UInt16.self) )
+      // validate the packet (could be incomplete at startup)
+      if frameBinCount == 0 { return }
+      if startingBinNumber + segmentBinCount > frameBinCount { return }
+   
+      // is it the start of a frame?
+      if _expectedFrameNumber == -1 && startingBinNumber == 0 { _expectedFrameNumber = frameNumber }
+      
+      if _expectedFrameNumber == -1 {
+        // NO, ignore any partial frame
+        _log("Waterfall: incomplete frame = \(frameNumber), startingBin = \(startingBinNumber)", .debug, #function, #file, #line)
+        return
+      }
+      
+      // are we in the ApiTester?
+      if testMode {
+        // YES, just check the stream values
+        if _expectedFrameNumber != frameNumber {
+          _log("Panadapter: missing frame(s), expected = \(_expectedFrameNumber), received = \(frameNumber), total drops = \(_droppedPackets)", .warning, #function, #file, #line)
+          _droppedPackets += (frameNumber - _expectedFrameNumber)
+        }
+        _accumulatedBins += segmentBinCount
+        
+        // increment the expected frame number if the entire frame has been accumulated
+        if _accumulatedBins == frameBinCount { _expectedFrameNumber += 1 ; _accumulatedBins = 0 }
+        
+        
+      } else {
+        
+        if _expectedFrameNumber != frameNumber {
+          _droppedPackets += (frameNumber - _expectedFrameNumber)
+          _log("Panadapter: missing frame(s), expected = \(_expectedFrameNumber), received = \(frameNumber), drop count = \(_droppedPackets)", .warning, #function, #file, #line)
+          _expectedFrameNumber = frameNumber
+        }
+        
+        vita.payloadData.withUnsafeBytes { ptr in
+          // Swap the byte ordering of the data & place it in the bins
+          for i in 0..<segmentBinCount {
+            _frames[index].bins[i+startingBinNumber] = CFSwapInt16BigToHost( ptr.load(fromByteOffset: byteOffsetToBins + (2 * i), as: UInt16.self) )
+          }
+        }
+        _accumulatedBins += segmentBinCount
+
+        // is it a complete Frame?
+        if _accumulatedBins == frameBinCount {
+          _frames[index].frameBinCount = _accumulatedBins
+          // YES, pass it to the delegate
+          delegate?.streamHandler(_frames[index])
+          
+          // update the expected frame number & dataframe index
+          _expectedFrameNumber += 1
+          _accumulatedBins = 0
+          $index.mutate { $0 += 1 ; $0 = $0 % _numberOfFrames }
         }
       }
-      _frames[_index].binsInThisFrame += _frames[_index].startingBin
-    }
-    // increment the frame count if the entire frame has been accumulated
-    if _frames[_index].binsInThisFrame == _frames[_index].totalBins { packetFrame += 1 }
-    
-    // is it a complete Panadapter Frame?
-    if _frames[_index].binsInThisFrame == _frames[_index].totalBins {
-      // YES, pass it to the delegate
-      delegate?.streamHandler(_frames[_index])
-      
-      // use the next dataframe
-      _index = (_index + 1) % _numberOfPanadapterFrames
     }
   }
 }
@@ -427,12 +447,12 @@ public struct PanadapterFrame {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  public var startingBin       = 0           // Index of first bin
-  public var binsInThisFrame   = 0           // Number of bins
-  public var binSize           = 0           // Bin size in bytes
-  public var totalBins         = 0           // number of bins in the complete frame
-  public var receivedFrame     = 0           // Frame number
-  public var bins              = [UInt16]()  // Array of bin values
+  //  public var startingBinNumber = 0     // Index of first bin
+  //  public var segmentBinCount = 0       // Number of bins
+  //  public var binSize = 0               // Bin size in bytes
+  public var frameBinCount = 0         // number of bins in the complete frame
+  //  public var frameNumber = 0           // Frame number
+  public var bins = [UInt16]()         // Array of bin values
   
   // ----------------------------------------------------------------------------
   // MARK: - Initialization

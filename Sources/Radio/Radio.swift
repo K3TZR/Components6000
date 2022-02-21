@@ -395,6 +395,9 @@ public final class Radio: Equatable {
   ///
   /// - Parameter vitaPacket:       a Vita packet
   public func vitaParser(_ vitaPacket: Vita) {
+    
+    let _testMode = false
+    
     // Pass the stream to the appropriate object
     switch (vitaPacket.classCode) {
       
@@ -404,10 +407,10 @@ public final class Radio: Equatable {
       Meter.vitaProcessor(vitaPacket, radio: self)
       
     case .panadapter:
-      if let object = _objects.panadapters[vitaPacket.streamId]          { object.vitaProcessor(vitaPacket) }
+      if let object = _objects.panadapters[vitaPacket.streamId]          { object.vitaProcessor(vitaPacket, _testMode) }
       
     case .waterfall:
-      if let object = _objects.waterfalls[vitaPacket.streamId]           { object.vitaProcessor(vitaPacket) }
+      if let object = _objects.waterfalls[vitaPacket.streamId]           { object.vitaProcessor(vitaPacket, _testMode) }
       
     case .daxAudio:
       if let object = _objects.daxRxAudioStreams[vitaPacket.streamId]    { object.vitaProcessor(vitaPacket)}
@@ -550,7 +553,10 @@ public final class Radio: Equatable {
       if packet.source == .local { send("client udpport " + "\(_udp.sendPort)") }
       
       // start pinging the Radio
-      if pingerEnabled { _pinger = Pinger(radio: self, command: _tcp) }
+      if pingerEnabled {
+        _pinger = Pinger(radio: self)
+        _log("Radio: pinger started", .info, #function, #file, #line)
+      }
       
     } else {
       // NO, pending disconnect

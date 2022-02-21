@@ -100,7 +100,7 @@ public final class Discovery: Equatable, ObservableObject {
       // send a command to SmartLink to request a connection to the specified Radio
       _wanListener!.sendTlsCommand("application connect serial=\(serial) hole_punch_port=\(holePunchPort))")
     } else {
-      _log("Discovery: NOT connected, unable to send Wan Connect Message", .warning, #function, #file, #line)
+      _log("Discovery: wan listener inactive, Connect Message not sent", .warning, #function, #file, #line)
     }
   }
   
@@ -112,7 +112,7 @@ public final class Discovery: Equatable, ObservableObject {
       // send a command to SmartLink to request disconnection from the specified Radio
       _wanListener!.sendTlsCommand("application disconnect_users serial=\(serial)")
     } else {
-      _log("Discovery:  NOT connected, unable to send Wan Disconnect Message", .warning, #function, #file, #line)
+      _log("Discovery: wan listener inactive, Disconnect Message not sent", .warning, #function, #file, #line)
     }
   }
   
@@ -126,21 +126,21 @@ public final class Discovery: Equatable, ObservableObject {
       // send a command to SmartLink to request disconnection from the specified Radio
       _wanListener!.sendTlsCommand("application disconnect_users serial=\(serial) handle=\(handle.hex)")
     } else {
-      _log("Discovery: SmartLink not active, unable to send Disconnect Message", .warning, #function, #file, #line)
+      _log("Discovery: wan listener inactive, Disconnect Client Message not sent", .warning, #function, #file, #line)
     }
   }
   
   /// Send a Test message
   /// - Parameter serial:     radio serial number
   /// - Returns:              success / failure
-  public func smartlinkTest(_ serial: String) -> Bool {
+  public func sendSmartlinkTest(_ serial: String) -> Bool {
     if _wanListener != nil {
-      _log("Discovery: smartLink test initiated to serial number: \(serial)", .debug, #function, #file, #line)
+      _log("Discovery: smartLink test initiated to serial number, \(serial)", .debug, #function, #file, #line)
       // send a command to SmartLink to test the connection for the specified Radio
       _wanListener!.sendTlsCommand("application test_connection serial=\(serial)")
       return true
     } else {
-      _log("Discovery: SmartLink not active, Test message not sent", .warning, #function, #file, #line)
+      _log("Discovery: wan listener inactive, test message not sent", .warning, #function, #file, #line)
       return false
     }
   }
