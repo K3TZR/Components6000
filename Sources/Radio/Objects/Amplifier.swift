@@ -144,20 +144,20 @@ extension Amplifier {
       // is the object in use
       if inUse {
         // YES, does it exist?
-        if Objects.sharedInstance.amplifiers[id] == nil {
+        if Objects.sharedInstance.amplifiers[id: id] == nil {
           // NO, create a new Amplifier & add it to the Amplifiers collection
-          Objects.sharedInstance.amplifiers[id] = Amplifier(id)
+          Objects.sharedInstance.amplifiers[id: id] = Amplifier(id)
         }
         // pass the remaining key values to the Amplifier for parsing
-        Objects.sharedInstance.amplifiers[id]!.parseProperties(Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.amplifiers[id: id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       } else {
         // does it exist?
-        if Objects.sharedInstance.amplifiers[id] != nil {
+        if Objects.sharedInstance.amplifiers[id: id] != nil {
           // YES, remove it, notify observers
 //          NC.post(.amplifierWillBeRemoved, object: radio.amplifiers[id] as Any?)
           
-          Objects.sharedInstance.amplifiers[id] = nil
+          Objects.sharedInstance.amplifiers[id: id] = nil
           LogProxy.sharedInstance.log("Amplifier removed: id = \(id.hex)", .debug, #function, #file, #line)
 //          NC.post(.amplifierHasBeenRemoved, object: id as Any?)
         }

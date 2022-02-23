@@ -131,18 +131,18 @@ extension RemoteTxAudioStream: DynamicModel {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if Objects.sharedInstance.remoteTxAudioStreams[id] == nil {
+        if Objects.sharedInstance.remoteTxAudioStreams[id: id] == nil {
           // create a new object & add it to the collection
-          Objects.sharedInstance.remoteTxAudioStreams[id] = RemoteTxAudioStream(id)
+          Objects.sharedInstance.remoteTxAudioStreams[id: id] = RemoteTxAudioStream(id)
         }
         // pass the remaining key values for parsing (dropping the Id)
-        Objects.sharedInstance.remoteTxAudioStreams[id]!.parseProperties(Array(properties.dropFirst(2)) )
+        Objects.sharedInstance.remoteTxAudioStreams[id: id]!.parseProperties(Array(properties.dropFirst(2)) )
         
       } else {
         // NO, does it exist?
-        if Objects.sharedInstance.remoteTxAudioStreams[id] != nil {
+        if Objects.sharedInstance.remoteTxAudioStreams[id: id] != nil {
           // YES, remove it
-          Objects.sharedInstance.remoteTxAudioStreams[id] = nil
+          Objects.sharedInstance.remoteTxAudioStreams[id: id] = nil
           
           LogProxy.sharedInstance.log("RemoteTxAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line)
           //                        NC.post(.remoteTxAudioStreamHasBeenRemoved, object: id as Any?)

@@ -116,13 +116,13 @@ extension Radio {
     switch token {
       
     case .amplifier:      Amplifier.parseStatus(remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
-    case .atu:            _objects.atu.parseProperties(remainder.keyValuesArray() )
+    case .atu:            objects.atu.parseProperties(remainder.keyValuesArray() )
     case .client:         parseClient(remainder.keyValuesArray(), !remainder.contains(Shared.kDisconnected))
-    case .cwx:            _objects.cwx.parseProperties(remainder.fix().keyValuesArray() )
+    case .cwx:            objects.cwx.parseProperties(remainder.fix().keyValuesArray() )
     case .display:        parseDisplay(remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
     case .eq:             Equalizer.parseStatus(remainder.keyValuesArray())
     case .file:           _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
-    case .gps:            _objects.gps.parseProperties(remainder.keyValuesArray(delimiter: "#") )
+    case .gps:            objects.gps.parseProperties(remainder.keyValuesArray(delimiter: "#") )
     case .interlock:      parseInterlock(remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
     case .memory:         Memory.parseStatus(remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
     case .meter:          Meter.parseStatus(remainder.keyValuesArray(delimiter: "#"), !remainder.contains(Shared.kRemoved))
@@ -135,8 +135,8 @@ extension Radio {
     case .transmit:       parseTransmit(remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
     case .turf:           _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
     case .usbCable:       UsbCable.parseStatus(remainder.keyValuesArray())
-    case .wan:            _objects.wan.parseProperties(remainder.keyValuesArray())
-    case .waveform:       _objects.waveform.parseProperties(remainder.keyValuesArray())
+    case .wan:            objects.wan.parseProperties(remainder.keyValuesArray())
+    case .waveform:       objects.waveform.parseProperties(remainder.keyValuesArray())
     case .xvtr:           Xvtr.parseStatus(remainder.keyValuesArray(), !remainder.contains(Shared.kNotInUse))
     }
     // is this status message the first for our handle?
@@ -278,8 +278,8 @@ extension Radio {
       
     } else {
       // NO, pass it to Interlock
-      _objects.interlock.parseProperties(properties)
-      interlockStateChange(_objects.interlock.state)
+      objects.interlock.parseProperties(properties)
+      interlockStateChange(objects.interlock.state)
     }
   }
   
@@ -335,7 +335,7 @@ extension Radio {
       
     } else {
       // NO, pass it to Transmit
-      _objects.transmit.parseProperties(properties)
+      objects.transmit.parseProperties(properties)
     }
   }
   
@@ -478,12 +478,12 @@ extension Radio {
         if remainder.contains(Shared.kRemoved) {
           
           // removal, find the stream & remove it
-          if _objects.daxIqStreams[id] != nil          { DaxIqStream.parseStatus(properties, false)           ; return }
-          if _objects.daxMicAudioStreams[id] != nil    { DaxMicAudioStream.parseStatus(properties, false)     ; return }
-          if _objects.daxRxAudioStreams[id] != nil     { DaxRxAudioStream.parseStatus(properties, false)      ; return }
-          if _objects.daxTxAudioStreams[id] != nil     { DaxTxAudioStream.parseStatus(properties, false)      ; return }
-          if _objects.remoteRxAudioStreams[id] != nil  { RemoteRxAudioStream.parseStatus(properties, false)   ; return }
-          if _objects.remoteTxAudioStreams[id] != nil  { RemoteTxAudioStream.parseStatus(properties, false)   ; return }
+          if objects.daxIqStreams[id: id] != nil          { DaxIqStream.parseStatus(properties, false)           ; return }
+          if objects.daxMicAudioStreams[id: id] != nil    { DaxMicAudioStream.parseStatus(properties, false)     ; return }
+          if objects.daxRxAudioStreams[id: id] != nil     { DaxRxAudioStream.parseStatus(properties, false)      ; return }
+          if objects.daxTxAudioStreams[id: id] != nil     { DaxTxAudioStream.parseStatus(properties, false)      ; return }
+          if objects.remoteRxAudioStreams[id: id] != nil  { RemoteRxAudioStream.parseStatus(properties, false)   ; return }
+          if objects.remoteTxAudioStreams[id: id] != nil  { RemoteTxAudioStream.parseStatus(properties, false)   ; return }
           return
           
         } else {

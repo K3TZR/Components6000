@@ -10,29 +10,35 @@ import Foundation
 import Shared
 import IdentifiedCollections
 
-final public class Objects: ObservableObject {
+final public class Objects: ObservableObject, Equatable {
+  
+  public static func == (lhs: Objects, rhs: Objects) -> Bool {
+    // object equality since it is a "sharedInstance"
+    lhs === rhs
+  }
+  
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
   // Dynamic Model Collections
-  @Published public var amplifiers = [AmplifierId: Amplifier]()
-  @Published public var bandSettings = [BandId: BandSetting]()
-  @Published public var daxIqStreams = [DaxIqStreamId: DaxIqStream]()
-  @Published public var daxMicAudioStreams = [DaxMicStreamId: DaxMicAudioStream]()
-  @Published public var daxRxAudioStreams = [DaxRxStreamId: DaxRxAudioStream]()
-  @Published public var daxTxAudioStreams = [DaxTxStreamId: DaxTxAudioStream]()
-  @Published public var equalizers = [Equalizer.EqType: Equalizer]()
-  @Published public var memories = [MemoryId: Memory]()
-  @Published public var meters = [MeterId: Meter]()
-  @Published public var panadapters = [PanadapterStreamId: Panadapter]()
-  @Published public var profiles = [ProfileId: Profile]()
-  @Published public var remoteRxAudioStreams = [RemoteRxStreamId: RemoteRxAudioStream]()
-  @Published public var remoteTxAudioStreams = [RemoteTxStreamId: RemoteTxAudioStream]()
-  @Published public var slices = [SliceId: Slice]()
+  @Published public var amplifiers = IdentifiedArrayOf<Amplifier>()
+  @Published public var bandSettings = IdentifiedArrayOf<BandSetting>()
+  @Published public var daxIqStreams = IdentifiedArrayOf<DaxIqStream>()
+  @Published public var daxMicAudioStreams = IdentifiedArrayOf<DaxMicAudioStream>()
+  @Published public var daxRxAudioStreams = IdentifiedArrayOf<DaxRxAudioStream>()
+  @Published public var daxTxAudioStreams = IdentifiedArrayOf<DaxTxAudioStream>()
+  @Published public var equalizers = IdentifiedArrayOf<Equalizer>()
+  @Published public var memories = IdentifiedArrayOf<Memory>()
+  @Published public var meters = IdentifiedArrayOf<Meter>()
+  @Published public var panadapters = IdentifiedArrayOf<Panadapter>()
+  @Published public var profiles = IdentifiedArrayOf<Profile>()
+  @Published public var remoteRxAudioStreams = IdentifiedArrayOf<RemoteRxAudioStream>()
+  @Published public var remoteTxAudioStreams = IdentifiedArrayOf<RemoteTxAudioStream>()
+  @Published public var slices = IdentifiedArrayOf<Slice>()
   @Published public var tnfs = IdentifiedArrayOf<Tnf>()
-  @Published public var usbCables = [UsbCableId: UsbCable]()
-  @Published public var waterfalls = [WaterfallStreamId: Waterfall]()
-  @Published public var xvtrs = [XvtrId: Xvtr]()
+  @Published public var usbCables = IdentifiedArrayOf<UsbCable>()
+  @Published public var waterfalls = IdentifiedArrayOf<Waterfall>()
+  @Published public var xvtrs = IdentifiedArrayOf<Xvtr>()
   
   // Static Models
   @Published public internal(set) var atu: Atu!

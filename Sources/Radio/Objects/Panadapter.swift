@@ -276,16 +276,16 @@ extension Panadapter {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if Objects.sharedInstance.panadapters[id] == nil {
+        if Objects.sharedInstance.panadapters[id: id] == nil {
           // create a new object & add it to the collection
-          Objects.sharedInstance.panadapters[id] = Panadapter(id)
+          Objects.sharedInstance.panadapters[id: id] = Panadapter(id)
         }
         // pass the remaining key values for parsing
-        Objects.sharedInstance.panadapters[id]!.parseProperties(Array(properties.dropFirst(2)) )
+        Objects.sharedInstance.panadapters[id: id]!.parseProperties(Array(properties.dropFirst(2)) )
         
       } else {
         // does it exist?
-        if Objects.sharedInstance.panadapters[id] != nil {
+        if Objects.sharedInstance.panadapters[id: id] != nil {
           // YES, notify all observers
           //          NC.post(.panadapterWillBeRemoved, object: self as Any?)
         }

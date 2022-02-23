@@ -17,11 +17,8 @@ struct WaterfallView: View {
   
   var body: some View {
     WithViewStore(self.store) { viewStore in
-      if viewStore.radio != nil {
-        
-        let waterfalls = Array(Objects.sharedInstance.waterfalls.values)
 
-        ForEach(waterfalls) { waterfall in
+      ForEach(viewStore.objects.waterfalls) { waterfall in
           if waterfall.panadapterId == panadapterId {
             HStack(spacing: 20) {
               Text("Waterfall").frame(width: 100, alignment: .trailing)
@@ -33,7 +30,6 @@ struct WaterfallView: View {
             }
           }
         }
-      }
     }
   }
 }

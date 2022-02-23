@@ -18,11 +18,7 @@ struct SliceView: View {
   
   var body: some View {
     WithViewStore(self.store) { viewStore in
-      if viewStore.radio != nil {
-        
-        let slices = Array(Objects.sharedInstance.slices.values)
-
-          ForEach(slices) { slice in
+      ForEach(viewStore.objects.slices) { slice in
             if slice.panadapterId == panadapterId {
               HStack(spacing: 20) {
                 Text("Slice").frame(width: 100, alignment: .trailing)
@@ -39,7 +35,6 @@ struct SliceView: View {
               if showMeters { MeterView(store: store, sliceId: slice.id) }
             }
           }
-        }
       }
     }
   }

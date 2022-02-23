@@ -17,10 +17,14 @@ struct ObjectsView: View {
   var body: some View {
     WithViewStore(self.store) { viewStore in
       ScrollView([.horizontal, .vertical]) {
-        LazyVStack {
-          RadioView(store: store)
-          if viewStore.isGui == true { GuiClientsView(store: store) }
-          if viewStore.isGui == false { NonGuiClientView(store: store) }
+        VStack(alignment: .leading) {
+          if viewStore.radio == nil {
+            EmptyView()
+          } else {
+            RadioView(store: store)
+            if viewStore.isGui == true { GuiClientsView(store: store) }
+            //          if viewStore.isGui == false { NonGuiClientView(store: store) }
+          }
         }
         .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
         .frame(minWidth: 4000, maxWidth: .infinity, alignment: .leading)

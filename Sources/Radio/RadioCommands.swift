@@ -6,7 +6,9 @@
 //
 
 import Foundation
+import ComposableArchitecture
 import CoreGraphics
+
 import Shared
 
 extension Radio {    
@@ -398,9 +400,9 @@ extension Radio {
   //        }
   //    }
   //
-  public func findAllSlices(on id: PanadapterStreamId) -> [Slice]? {
+  public func findAllSlices(on id: PanadapterStreamId) -> IdentifiedArrayOf<Slice>? {
     // find the Slices on the Panadapter (if any)
-    let filteredSlices = _objects.slices.values.filter { $0.panadapterId == id }
+    let filteredSlices = objects.slices.filter { $0.panadapterId == id }
     guard filteredSlices.count >= 1 else { return nil }
     
     return filteredSlices
@@ -450,7 +452,7 @@ extension Radio {
   //
   public func findSlice(using channel: Int) -> Slice? {
     // find the Slices with the specified Channel (if any)
-    let filteredSlices = _objects.slices.values.filter { $0.daxChannel == channel }
+    let filteredSlices = objects.slices.filter { $0.daxChannel == channel }
     guard filteredSlices.count >= 1 else { return nil }
     
     // return the first one
@@ -459,7 +461,7 @@ extension Radio {
   
   public func findSlice(letter: String, guiClientHandle: Handle) -> Slice? {
     // find the Slices with the specified Channel (if any)
-    let filteredSlices = _objects.slices.values.filter { $0.sliceLetter == letter && $0.clientHandle == guiClientHandle }
+    let filteredSlices = objects.slices.filter { $0.sliceLetter == letter && $0.clientHandle == guiClientHandle }
     guard filteredSlices.count >= 1 else { return nil }
     
     // return the first one
@@ -499,7 +501,7 @@ extension Radio {
     send("tnf remove " + " \(id)", replyTo: callback)
     
     // remove it immediately (Tnf does not send status on removal)
-    _objects.tnfs[id: id] = nil
+    objects.tnfs[id: id] = nil
     
     _log("Tnf, removed: id = \(id)", .debug, #function, #file, #line)
   }
@@ -509,7 +511,7 @@ extension Radio {
   
   public func findTnf(at freq: Hz, minWidth: Hz) -> Tnf? {
     // return the Tnfs within the specified Frequency / minimum width (if any)
-    let filteredTnfs = _objects.tnfs.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
+    let filteredTnfs = objects.tnfs.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
     guard filteredTnfs.count >= 1 else { return nil }
     
     // return the first one

@@ -16,30 +16,26 @@ struct RadioView: View {
   
   var body: some View {
     WithViewStore(self.store) { viewStore in
-      if viewStore.radio == nil {
-          Text("- - - - - - - - - - Not Connected - - - - - - - - - -")
-      } else {
-        VStack(alignment: .leading) {
-          HStack(spacing: 20) {
-            Text(viewStore.radio!.packet.nickname).frame(width: 120, alignment: .leading)
-            Text(viewStore.radio!.packet.model)
-            Text(viewStore.radio!.packet.status)
-            Text(viewStore.radio!.packet.source.rawValue)
-            Text(viewStore.radio!.packet.publicIp)
-            Text(viewStore.radio!.packet.serial)
-            Text(viewStore.radio!.packet.version)
-            Group {
-              Text("Atu \(viewStore.radio!.atuPresent ? "Y" : "N")")
-              Text("Gps \(viewStore.radio!.gpsPresent ? "Y" : "N")")
-              Text("Scu \(viewStore.radio!.numberOfScus)")
-            }
+      VStack(alignment: .leading) {
+        HStack(spacing: 20) {
+          Text(viewStore.radio!.packet.nickname).frame(width: 120, alignment: .leading)
+          Text(viewStore.radio!.packet.model)
+          Text(viewStore.radio!.packet.status)
+          Text(viewStore.radio!.packet.source.rawValue)
+          Text(viewStore.radio!.packet.publicIp)
+          Text(viewStore.radio!.packet.serial)
+          Text(viewStore.radio!.packet.version)
+          Group {
+            Text("Atu \(viewStore.radio!.atuPresent ? "Y" : "N")")
+            Text("Gps \(viewStore.radio!.gpsPresent ? "Y" : "N")")
+            Text("Scu \(viewStore.radio!.numberOfScus)")
           }
-          if viewStore.radio!.atuPresent {  AtuView(store: store) }
-          if viewStore.radio!.gpsPresent {  GpsView(store: store) }
         }
-        .foregroundColor(Color(.systemGreen))
-        .frame(alignment: .leading)
+        if viewStore.radio!.atuPresent {  AtuView(store: store) }
+        if viewStore.radio!.gpsPresent {  GpsView(store: store) }
       }
+      .foregroundColor(Color(.systemGreen))
+      .frame(alignment: .leading)
     }
   }
 }

@@ -102,18 +102,18 @@ extension RemoteRxAudioStream: DynamicModelWithStream {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if Objects.sharedInstance.remoteRxAudioStreams[id] == nil {
+        if Objects.sharedInstance.remoteRxAudioStreams[id: id] == nil {
           // create a new object & add it to the collection
-          Objects.sharedInstance.remoteRxAudioStreams[id] = RemoteRxAudioStream(id)
+          Objects.sharedInstance.remoteRxAudioStreams[id: id] = RemoteRxAudioStream(id)
         }
         // pass the remaining key values for parsing (dropping the Id)
-        Objects.sharedInstance.remoteRxAudioStreams[id]!.parseProperties(Array(properties.dropFirst(2)) )
+        Objects.sharedInstance.remoteRxAudioStreams[id: id]!.parseProperties(Array(properties.dropFirst(2)) )
         
       } else {
         // NO, does it exist?
-        if Objects.sharedInstance.remoteRxAudioStreams[id] != nil {
+        if Objects.sharedInstance.remoteRxAudioStreams[id: id] != nil {
           // YES, remove it
-          Objects.sharedInstance.remoteRxAudioStreams[id] = nil
+          Objects.sharedInstance.remoteRxAudioStreams[id: id] = nil
           
           LogProxy.sharedInstance.log("RemoteRxAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line)
 //          NC.post(.remoteRxAudioStreamHasBeenRemoved, object: id as Any?)

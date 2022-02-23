@@ -15,18 +15,15 @@ struct AmplifierView: View {
   
   var body: some View {
     WithViewStore(self.store) { viewStore in
-      if viewStore.radio != nil {
-        let amplifiers = Array(Objects.sharedInstance.amplifiers.values)
-
-        ForEach(amplifiers, id: \.id) { amplifier in
-          HStack(spacing: 20) {
-            Text("Amplifier").frame(width: 100, alignment: .trailing)
-            Text(amplifier.id.hex)
-            Text(amplifier.model)
-            Text(amplifier.ip)
-            Text("Port \(amplifier.port)")
-            Text(amplifier.state)
-          }
+      
+      ForEach(viewStore.objects.amplifiers) { amplifier in
+        HStack(spacing: 20) {
+          Text("Amplifier").frame(width: 100, alignment: .trailing)
+          Text(amplifier.id.hex)
+          Text(amplifier.model)
+          Text(amplifier.ip)
+          Text("Port \(amplifier.port)")
+          Text(amplifier.state)
         }
       }
     }

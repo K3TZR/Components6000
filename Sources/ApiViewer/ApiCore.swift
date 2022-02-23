@@ -20,6 +20,7 @@ import Shared
 import TcpCommands
 import UdpStreams
 import XCGWrapper
+import simd
 
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums
@@ -104,6 +105,12 @@ public enum MessagesFilter: String, CaseIterable {
   case S0
 }
 
+public struct MeterState: Equatable {
+  public var value: Float
+  public var id: MeterId
+  public var forceUpdate = false
+}
+
 // ----------------------------------------------------------------------------
 // MARK: - State, Actions & Environment
 
@@ -173,6 +180,10 @@ public struct ApiState: Equatable {
   public var viewType: ViewType = .api
   
   public var cancellables = Set<AnyCancellable>()
+  public var forceUpdate = false
+  
+  public var meterState: Float?
+  public var objects = Objects.sharedInstance
 }
 
 public enum ApiAction: Equatable {
@@ -207,6 +218,12 @@ public enum ApiAction: Equatable {
   case tcpMessageSentOrReceived(TcpMessage)
   case finishInitialization
   case cancelEffects
+  
+  case meter(id: MeterId, action: MeterAction)
+}
+
+public enum MeterAction {
+  case anything
 }
 
 public struct ApiEnvironment {
@@ -337,7 +354,8 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return.none
       
     case .remoteViewButton:
-      state.viewType = .remote
+//      state.viewType = .remote
+      state.forceUpdate.toggle()
       return .none
       
     case .sendButton:
@@ -485,6 +503,8 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
 
                   
+    case .meter(let id, let action):
+      return .none
     }
   }
 )

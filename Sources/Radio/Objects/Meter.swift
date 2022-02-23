@@ -18,7 +18,11 @@ import Shared
 ///      stream containing multiple Meters. They are collected in the
 ///      meters collection on the Radio object.
 ///
-public final class Meter: ObservableObject, Identifiable {
+public final class Meter: ObservableObject, Identifiable, Equatable {
+  public static func == (lhs: Meter, rhs: Meter) -> Bool {
+    lhs.id == rhs.id
+  }
+  
   // ----------------------------------------------------------------------------
   // MARK: - Static properties
   
@@ -141,12 +145,12 @@ extension Meter: DynamicModel {
       // the Meter Number is the 0th item
       if let id = components[0].objectId {
         // does the meter exist?
-        if Objects.sharedInstance.meters[id] == nil {
+        if Objects.sharedInstance.meters[id: id] == nil {
           // NO, create a new Meter & add it to the Meters collection
-          Objects.sharedInstance.meters[id] = Meter(id)
+          Objects.sharedInstance.meters[id: id] = Meter(id)
         }
         // pass the key values to the Meter for parsing
-        Objects.sharedInstance.meters[id]!.parseProperties( properties )
+        Objects.sharedInstance.meters[id: id]!.parseProperties( properties )
       }
       
     } else {
@@ -154,9 +158,9 @@ extension Meter: DynamicModel {
       // NO, extract the Id
       if let id = properties[0].key.components(separatedBy: " ")[0].objectId {
         // does it exist?
-        if Objects.sharedInstance.meters[id] != nil {
-          let name = Objects.sharedInstance.meters[id]!.name
-          Objects.sharedInstance.meters[id] = nil
+        if Objects.sharedInstance.meters[id: id] != nil {
+          let name = Objects.sharedInstance.meters[id: id]!.name
+          Objects.sharedInstance.meters[id: id] = nil
           
           // notify appropriate observers
           LogProxy.sharedInstance.log("Meter removed: id = \(id)", .debug, #function, #file, #line)
@@ -260,7 +264,7 @@ extension Meter: DynamicModel {
           
           // find the meter (if present) & update it
           //        if let meter = Api.sharedInstance.radio?.meters[String(format: "%i", number)] {
-          if let meter = Objects.sharedInstance.meters[id] {
+          if let meter = Objects.sharedInstance.meters[id: id] {
             //          meter.streamHandler( value)
             let newValue = Int16(bitPattern: value)
             let previousValue = meter.value

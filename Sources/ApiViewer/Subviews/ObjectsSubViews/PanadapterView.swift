@@ -18,21 +18,16 @@ struct PanadapterView: View {
   
   var body: some View {
     WithViewStore(self.store) { viewStore in
-      if viewStore.radio != nil {
-        
-        let panadapters = Array(Objects.sharedInstance.panadapters.values)
-
-        ForEach(panadapters) { panadapter in
-          if panadapter.clientHandle == handle {
-            HStack(spacing: 20) {
-              Text("Panadapter").frame(width: 100, alignment: .trailing)
-              Text(panadapter.id.hex)
-              Text("Center \(panadapter.center)")
-              Text("Bandwidth \(panadapter.bandwidth)")
-            }
-            WaterfallView(store: store, panadapterId: panadapter.id)
-            SliceView(store: store, panadapterId: panadapter.id, showMeters: showMeters)
+      ForEach(viewStore.objects.panadapters) { panadapter in
+        if panadapter.clientHandle == handle {
+          HStack(spacing: 20) {
+            Text("Panadapter").frame(width: 100, alignment: .trailing)
+            Text(panadapter.id.hex)
+            Text("Center \(panadapter.center)")
+            Text("Bandwidth \(panadapter.bandwidth)")
           }
+          WaterfallView(store: store, panadapterId: panadapter.id)
+          SliceView(store: store, panadapterId: panadapter.id, showMeters: showMeters)
         }
       }
     }

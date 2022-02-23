@@ -95,8 +95,8 @@ extension Equalizer: DynamicModel {
     // determine the type of Equalizer
     switch type {
 
-    case EqType.txsc.rawValue:  equalizer = Objects.sharedInstance.equalizers[.txsc]
-    case EqType.rxsc.rawValue:  equalizer = Objects.sharedInstance.equalizers[.rxsc]
+    case EqType.txsc.rawValue:  equalizer = Objects.sharedInstance.equalizers[id: Equalizer.EqType.txsc.rawValue]
+    case EqType.rxsc.rawValue:  equalizer = Objects.sharedInstance.equalizers[id: Equalizer.EqType.rxsc.rawValue]
     case EqType.rx.rawValue, EqType.tx.rawValue:  break // obslete types, ignore
     default: LogProxy.sharedInstance.log("Radio: Unknown Equalizer type: \(type)", .warning, #function, #file, #line)
     }

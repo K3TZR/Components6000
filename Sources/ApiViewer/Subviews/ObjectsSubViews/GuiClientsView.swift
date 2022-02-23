@@ -16,21 +16,19 @@ struct GuiClientsView: View {
   var body: some View {
     WithViewStore(self.store) { viewStore in
       
-      if viewStore.radio != nil {
-        ForEach(viewStore.radio!.packet.guiClients, id: \.id) { guiClient in
-          Divider().background(Color(.red))
-          HStack(spacing: 20) {
-            Text("GUI CLIENT -> ").frame(width: 140, alignment: .leading)
-            Text(guiClient.station).frame(width: 120, alignment: .leading)
-            Text("Handle \(guiClient.handle.hex)")
-            Text("ClientId \(guiClient.clientId ?? "Unknown")")
-            Text("LocalPtt \(guiClient.isLocalPtt ? "Y" : "N")")
-            Text("Program \(guiClient.program)")
-          }
-          GuiClientSubView(store: store, handle: guiClient.handle)
+      ForEach(viewStore.radio!.packet.guiClients, id: \.id) { guiClient in
+        Divider().background(Color(.red))
+        HStack(spacing: 20) {
+          Text("GUI CLIENT -> ").frame(width: 140, alignment: .leading)
+          Text(guiClient.station).frame(width: 120, alignment: .leading)
+          Text("Handle \(guiClient.handle.hex)")
+          Text("ClientId \(guiClient.clientId ?? "Unknown")")
+          Text("LocalPtt \(guiClient.isLocalPtt ? "Y" : "N")")
+          Text("Program \(guiClient.program)")
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        GuiClientSubView(store: store, handle: guiClient.handle)
       }
+      .frame(maxWidth: .infinity, alignment: .leading)
     }
   }
 }
@@ -43,15 +41,15 @@ struct GuiClientSubView: View {
     WithViewStore(self.store) { viewStore in
       
       switch viewStore.objectsFilterBy {
-
+        
       case .core:
         StreamView(store: store)
         PanadapterView(store: store, handle: handle, showMeters: true)
-
+        
       case .coreNoMeters:
         StreamView(store: store)
         PanadapterView(store: store, handle: handle, showMeters: false)
-
+        
       case .amplifiers:       AmplifierView(store: store)
       case .bandSettings:     BandSettingsView(store: store)
       case .interlock:        InterlockView(store: store)

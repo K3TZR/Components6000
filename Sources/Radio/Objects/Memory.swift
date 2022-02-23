@@ -197,20 +197,20 @@ extension Memory: DynamicModel {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if Objects.sharedInstance.memories[id] == nil {
+        if Objects.sharedInstance.memories[id: id] == nil {
           // NO, create a new object & add it to the collection
-          Objects.sharedInstance.memories[id] = Memory(id)
+          Objects.sharedInstance.memories[id: id] = Memory(id)
         }
         // pass the key values to the Memory for parsing
-        Objects.sharedInstance.memories[id]!.parseProperties(Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.memories[id: id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       } else {
         // does it exist?
-        if Objects.sharedInstance.memories[id] != nil {
+        if Objects.sharedInstance.memories[id: id] != nil {
           // YES, remove it, notify observers
 //          NC.post(.memoryWillBeRemoved, object: radio.memories[id] as Any?)
           
-          Objects.sharedInstance.memories[id] = nil
+          Objects.sharedInstance.memories[id: id] = nil
           
           LogProxy.sharedInstance.log("Memory removed: id = \(id)", .debug, #function, #file, #line)
 //          NC.post(.memoryHasBeenRemoved, object: id as Any?)

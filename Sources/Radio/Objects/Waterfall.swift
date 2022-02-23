@@ -131,27 +131,27 @@ extension Waterfall {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if Objects.sharedInstance.waterfalls[id] == nil {
+        if Objects.sharedInstance.waterfalls[id: id] == nil {
           // Create a Waterfall & add it to the Waterfalls collection
-          Objects.sharedInstance.waterfalls[id] = Waterfall(id)
+          Objects.sharedInstance.waterfalls[id: id] = Waterfall(id)
         }
         // pass the key values to the Waterfall for parsing (dropping the Type and Id)
-        Objects.sharedInstance.waterfalls[id]!.parseProperties(Array(properties.dropFirst(2)))
+        Objects.sharedInstance.waterfalls[id: id]!.parseProperties(Array(properties.dropFirst(2)))
         
       } else {
         // does it exist?
-        if Objects.sharedInstance.waterfalls[id] != nil {
+        if Objects.sharedInstance.waterfalls[id: id] != nil {
           // YES, remove the Panadapter & Waterfall, notify all observers
-          if let panId = Objects.sharedInstance.waterfalls[id]!.panadapterId {
+          if let panId = Objects.sharedInstance.waterfalls[id: id]!.panadapterId {
             
-            Objects.sharedInstance.panadapters[panId] = nil
+            Objects.sharedInstance.panadapters[id: panId] = nil
             
             LogProxy.sharedInstance.log("Panadapter, removed: id = \(panId.hex)", .debug, #function, #file, #line)
             //            NC.post(.panadapterHasBeenRemoved, object: id as Any?)
             
             //            NC.post(.waterfallWillBeRemoved, object: radio.waterfalls[id] as Any?)
             
-            Objects.sharedInstance.waterfalls[id] = nil
+            Objects.sharedInstance.waterfalls[id: id] = nil
             
             LogProxy.sharedInstance.log("Waterfall, removed: id = \(id.hex)", .debug, #function, #file, #line)
             //            NC.post(.waterfallHasBeenRemoved, object: id as Any?)

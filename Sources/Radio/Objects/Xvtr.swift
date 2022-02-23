@@ -99,20 +99,20 @@ extension Xvtr: DynamicModel {
       // isthe Xvtr in use?
       if inUse {
         // YES, does the object exist?
-        if Objects.sharedInstance.xvtrs[id] == nil {
+        if Objects.sharedInstance.xvtrs[id: id] == nil {
           // NO, create a new Xvtr & add it to the Xvtrs collection
-          Objects.sharedInstance.xvtrs[id] = Xvtr(id)
+          Objects.sharedInstance.xvtrs[id: id] = Xvtr(id)
         }
         // pass the remaining key values to the Xvtr for parsing
-        Objects.sharedInstance.xvtrs[id]!.parseProperties(Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.xvtrs[id: id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       } else {
         // does it exist?
-        if Objects.sharedInstance.xvtrs[id] != nil {
+        if Objects.sharedInstance.xvtrs[id: id] != nil {
           // YES, remove it, notify all observers
 //          NC.post(.xvtrWillBeRemoved, object: radio.xvtrs[id] as Any?)
           
-          Objects.sharedInstance.xvtrs[id] = nil
+          Objects.sharedInstance.xvtrs[id: id] = nil
           
           LogProxy.sharedInstance.log("Xvtr, removed: id = \(id)", .debug, #function, #file, #line)
 //          NC.post(.xvtrHasBeenRemoved, object: id as Any?)

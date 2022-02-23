@@ -413,20 +413,20 @@ extension Slice: DynamicModel {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if Objects.sharedInstance.slices[id] == nil {
+        if Objects.sharedInstance.slices[id: id] == nil {
           // create a new Slice & add it to the Slices collection
-          Objects.sharedInstance.slices[id] = Slice(id)
+          Objects.sharedInstance.slices[id: id] = Slice(id)
         }
         // pass the remaining key values to the Slice for parsing
-        Objects.sharedInstance.slices[id]!.parseProperties(Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.slices[id: id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       } else {
         // does it exist?
-        if Objects.sharedInstance.slices[id] != nil {
+        if Objects.sharedInstance.slices[id: id] != nil {
           // YES, remove it, notify observers
 //          NC.post(.sliceWillBeRemoved, object: radio.slices[id] as Any?)
           
-          Objects.sharedInstance.slices[id] = nil
+          Objects.sharedInstance.slices[id: id] = nil
           
           LogProxy.sharedInstance.log("Slice: removed, id = \(id)", .debug, #function, #file, #line)
 //          NC.post(.sliceHasBeenRemoved, object: id as Any?)

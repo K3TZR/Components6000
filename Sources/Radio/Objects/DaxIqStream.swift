@@ -102,18 +102,18 @@ extension DaxIqStream: DynamicModelWithStream {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if Objects.sharedInstance.daxIqStreams[id] == nil {
+        if Objects.sharedInstance.daxIqStreams[id: id] == nil {
           // create a new object & add it to the collection
-          Objects.sharedInstance.daxIqStreams[id] = DaxIqStream(id)
+          Objects.sharedInstance.daxIqStreams[id: id] = DaxIqStream(id)
         }
         // pass the remaining key values for parsing
-        Objects.sharedInstance.daxIqStreams[id]!.parseProperties(Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.daxIqStreams[id: id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       } else {
         // NO, does it exist?
-        if Objects.sharedInstance.daxIqStreams[id] != nil {
+        if Objects.sharedInstance.daxIqStreams[id: id] != nil {
           // YES, remove it
-          Objects.sharedInstance.daxIqStreams[id] = nil
+          Objects.sharedInstance.daxIqStreams[id: id] = nil
           
           LogProxy.sharedInstance.log("DaxIqStream removed: id = \(id.hex)", .debug, #function, #file, #line)
 //          NC.post(.daxIqStreamHasBeenRemoved, object: id as Any?)

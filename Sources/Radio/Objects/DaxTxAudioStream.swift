@@ -203,18 +203,18 @@ extension DaxTxAudioStream: DynamicModel {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if Objects.sharedInstance.daxTxAudioStreams[id] == nil {
+        if Objects.sharedInstance.daxTxAudioStreams[id: id] == nil {
           // NO, create a new object & add it to the collection
-          Objects.sharedInstance.daxTxAudioStreams[id] = DaxTxAudioStream(id)
+          Objects.sharedInstance.daxTxAudioStreams[id: id] = DaxTxAudioStream(id)
         }
         // pass the remaining key values for parsing
-        Objects.sharedInstance.daxTxAudioStreams[id]!.parseProperties(Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.daxTxAudioStreams[id: id]!.parseProperties(Array(properties.dropFirst(1)) )
         
       }  else {
         // NO, does it exist?
-        if Objects.sharedInstance.daxTxAudioStreams[id] != nil {
+        if Objects.sharedInstance.daxTxAudioStreams[id: id] != nil {
           // YES, remove it
-          Objects.sharedInstance.daxTxAudioStreams[id] = nil
+          Objects.sharedInstance.daxTxAudioStreams[id: id] = nil
           
           LogProxy.sharedInstance.log("DaxTxAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line)
           //                        NC.post(.daxTxAudioStreamHasBeenRemoved, object: id as Any?)

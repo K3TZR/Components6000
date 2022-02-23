@@ -16,7 +16,7 @@ import Shared
 ///      updated by the incoming TCP messages. They are collected in the bandSettings
 ///      collection on the Radio object.
 ///
-public final class BandSetting: ObservableObject {
+public final class BandSetting: ObservableObject, Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Published properties
 
@@ -82,20 +82,20 @@ extension BandSetting: DynamicModel {
       // is the object in use?
       if inUse {
         // YES, does it exist?
-        if Objects.sharedInstance.bandSettings[id] == nil {
+        if Objects.sharedInstance.bandSettings[id: id] == nil {
           // NO, create a new BandSetting & add it to the BandSettings collection
-          Objects.sharedInstance.bandSettings[id] = BandSetting(id)
+          Objects.sharedInstance.bandSettings[id: id] = BandSetting(id)
         }
         // pass the remaining key values to the BandSetting for parsing
-        Objects.sharedInstance.bandSettings[id]!.parseProperties(Array(properties.dropFirst(1)) )
+        Objects.sharedInstance.bandSettings[id: id]!.parseProperties(Array(properties.dropFirst(1)) )
 
       } else {
         // does it exist?
-        if Objects.sharedInstance.bandSettings[id] != nil {
+        if Objects.sharedInstance.bandSettings[id: id] != nil {
           // YES, remove it, notify observers
 //          NC.post(.bandSettingWillBeRemoved, object: radio.bandSettings[id] as Any?)
 
-          Objects.sharedInstance.bandSettings[id] = nil
+          Objects.sharedInstance.bandSettings[id: id] = nil
 
           LogProxy.sharedInstance.log("BandSetting removed: id = \(id)", .debug, #function, #file, #line)
 //          NC.post(.bandSettingHasBeenRemoved, object: id as Any?)

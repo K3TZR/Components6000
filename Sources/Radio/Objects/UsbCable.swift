@@ -136,11 +136,11 @@ extension UsbCable: DynamicModel {
     // is the object in use?
     if inUse {
       // YES, does it exist?
-      if Objects.sharedInstance.usbCables[id] == nil {
+      if Objects.sharedInstance.usbCables[id: id] == nil {
         // NO, is it a valid cable type?
         if let cableType = UsbCable.UsbCableType(rawValue: properties[1].value) {
           // YES, create a new UsbCable & add it to the UsbCables collection
-          Objects.sharedInstance.usbCables[id] = UsbCable(id, cableType: cableType)
+          Objects.sharedInstance.usbCables[id: id] = UsbCable(id, cableType: cableType)
           
         } else {
           // NO, log the error and ignore it
@@ -149,15 +149,15 @@ extension UsbCable: DynamicModel {
         }
       }
       // pass the remaining key values to the Usb Cable for parsing
-      Objects.sharedInstance.usbCables[id]!.parseProperties(Array(properties.dropFirst(1)) )
+      Objects.sharedInstance.usbCables[id: id]!.parseProperties(Array(properties.dropFirst(1)) )
       
     } else {
       // does the object exist?
-      if Objects.sharedInstance.usbCables[id] != nil {
+      if Objects.sharedInstance.usbCables[id: id] != nil {
         // YES, remove it, notify observers
 //        NC.post(.usbCableWillBeRemoved, object: radio.usbCables[id] as Any?)
         
-        Objects.sharedInstance.usbCables[id] = nil
+        Objects.sharedInstance.usbCables[id: id] = nil
         
         LogProxy.sharedInstance.log("USBCable removed: id = \(id)", .debug, #function, #file, #line)
 //        NC.post(.usbCableHasBeenRemoved, object: id as Any?)

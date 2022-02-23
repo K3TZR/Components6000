@@ -107,12 +107,12 @@ extension Profile: DynamicModel {
     adjustedProperties[0].key = String(components[1])
     
     // does the object exist?
-    if  Objects.sharedInstance.profiles[id] == nil {
+    if  Objects.sharedInstance.profiles[id: id] == nil {
       // NO, create a new Profile & add it to the Profiles collection
-      Objects.sharedInstance.profiles[id] = Profile(id)
+      Objects.sharedInstance.profiles[id: id] = Profile(id)
     }
     // pass the remaining values to Profile for parsing
-    Objects.sharedInstance.profiles[id]!.parseProperties(adjustedProperties )
+    Objects.sharedInstance.profiles[id: id]!.parseProperties(adjustedProperties )
   }
   
   /// Parse a Profile status message
