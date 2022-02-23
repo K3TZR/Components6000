@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Combine
 
 import Shared
 
@@ -29,6 +30,8 @@ public final class Meter: ObservableObject, Identifiable, Equatable {
   static let kDbDbmDbfsSwrDenom: Float = 128.0  // denominator for Db, Dbm, Dbfs, Swr
   static let kDegDenom: Float = 64.0   // denominator for Degc, Degf
   
+  public static var meterPublisher = PassthroughSubject<Meter, Never>()
+
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
@@ -214,6 +217,13 @@ extension Meter: DynamicModel {
       
       // notify appropriate observers
       _log("Meter, added: id = \(id), \(name), source = \(source), group = \(group)", .debug, #function, #file, #line)
+
+
+
+
+
+
+
       //            switch name {
       //            // specific cases
       //            //      case Meter.ShortName.signalPassband.rawValue:
@@ -289,7 +299,11 @@ extension Meter: DynamicModel {
             }
             // did it change?
             if adjNewValue != previousValue {
-              DispatchQueue.main.async { meter.value = adjNewValue }
+              DispatchQueue.main.async {
+                meter.value = adjNewValue
+                
+                meterPublisher.send(meter)
+              }
               // notify appropriate observers
 //              switch meter.name {
 //                // specific cases

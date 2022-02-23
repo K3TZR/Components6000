@@ -14,7 +14,7 @@ struct GuiClientsView: View {
   let store: Store<ApiState, ApiAction>
   
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store.actionless) { viewStore in
       
       ForEach(viewStore.radio!.packet.guiClients, id: \.id) { guiClient in
         Divider().background(Color(.red))
@@ -38,7 +38,7 @@ struct GuiClientSubView: View {
   let handle: Handle
   
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store.actionless) { viewStore in
       
       switch viewStore.objectsFilterBy {
         

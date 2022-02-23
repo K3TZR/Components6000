@@ -14,7 +14,7 @@ struct AmplifierView: View {
   let store: Store<ApiState, ApiAction>
   
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store.actionless) { viewStore in
       
       ForEach(viewStore.objects.amplifiers) { amplifier in
         HStack(spacing: 20) {

@@ -10,7 +10,7 @@ import Foundation
 import Shared
 import IdentifiedCollections
 
-final public class Objects: ObservableObject, Equatable {
+final public class Objects: Equatable {
   
   public static func == (lhs: Objects, rhs: Objects) -> Bool {
     // object equality since it is a "sharedInstance"
@@ -21,35 +21,35 @@ final public class Objects: ObservableObject, Equatable {
   // MARK: - Published properties
   
   // Dynamic Model Collections
-  @Published public var amplifiers = IdentifiedArrayOf<Amplifier>()
-  @Published public var bandSettings = IdentifiedArrayOf<BandSetting>()
-  @Published public var daxIqStreams = IdentifiedArrayOf<DaxIqStream>()
-  @Published public var daxMicAudioStreams = IdentifiedArrayOf<DaxMicAudioStream>()
-  @Published public var daxRxAudioStreams = IdentifiedArrayOf<DaxRxAudioStream>()
-  @Published public var daxTxAudioStreams = IdentifiedArrayOf<DaxTxAudioStream>()
-  @Published public var equalizers = IdentifiedArrayOf<Equalizer>()
-  @Published public var memories = IdentifiedArrayOf<Memory>()
-  @Published public var meters = IdentifiedArrayOf<Meter>()
-  @Published public var panadapters = IdentifiedArrayOf<Panadapter>()
-  @Published public var profiles = IdentifiedArrayOf<Profile>()
-  @Published public var remoteRxAudioStreams = IdentifiedArrayOf<RemoteRxAudioStream>()
-  @Published public var remoteTxAudioStreams = IdentifiedArrayOf<RemoteTxAudioStream>()
-  @Published public var slices = IdentifiedArrayOf<Slice>()
-  @Published public var tnfs = IdentifiedArrayOf<Tnf>()
-  @Published public var usbCables = IdentifiedArrayOf<UsbCable>()
-  @Published public var waterfalls = IdentifiedArrayOf<Waterfall>()
-  @Published public var xvtrs = IdentifiedArrayOf<Xvtr>()
+  public var amplifiers = IdentifiedArrayOf<Amplifier>()
+  public var bandSettings = IdentifiedArrayOf<BandSetting>()
+  public var daxIqStreams = IdentifiedArrayOf<DaxIqStream>()
+  public var daxMicAudioStreams = IdentifiedArrayOf<DaxMicAudioStream>()
+  public var daxRxAudioStreams = IdentifiedArrayOf<DaxRxAudioStream>()
+  public var daxTxAudioStreams = IdentifiedArrayOf<DaxTxAudioStream>()
+  public var equalizers = IdentifiedArrayOf<Equalizer>()
+  public var memories = IdentifiedArrayOf<Memory>()
+  public var meters = IdentifiedArrayOf<Meter>()
+  public var panadapters = IdentifiedArrayOf<Panadapter>()
+  public var profiles = IdentifiedArrayOf<Profile>()
+  public var remoteRxAudioStreams = IdentifiedArrayOf<RemoteRxAudioStream>()
+  public var remoteTxAudioStreams = IdentifiedArrayOf<RemoteTxAudioStream>()
+  public var slices = IdentifiedArrayOf<Slice>()
+  public var tnfs = IdentifiedArrayOf<Tnf>()
+  public var usbCables = IdentifiedArrayOf<UsbCable>()
+  public var waterfalls = IdentifiedArrayOf<Waterfall>()
+  public var xvtrs = IdentifiedArrayOf<Xvtr>()
   
   // Static Models
-  @Published public internal(set) var atu: Atu!
-  @Published public internal(set) var cwx: Cwx!
-  @Published public internal(set) var gps: Gps!
-  @Published public internal(set) var interlock: Interlock!
-  //  @Published public internal(set) var netCwStream: NetCwStream!
-  @Published public internal(set) var transmit: Transmit!
-  @Published public internal(set) var wan: Wan!
-  @Published public internal(set) var waveform: Waveform!
-  //  @Published public internal(set) var wanServer: WanServer!
+  public internal(set) var atu: Atu!
+  public internal(set) var cwx: Cwx!
+  public internal(set) var gps: Gps!
+  public internal(set) var interlock: Interlock!
+  //  public internal(set) var netCwStream: NetCwStream!
+  public internal(set) var transmit: Transmit!
+  public internal(set) var wan: Wan!
+  public internal(set) var waveform: Waveform!
+  //  public internal(set) var wanServer: WanServer!
 
   // ----------------------------------------------------------------------------
   // MARK: - Singleton

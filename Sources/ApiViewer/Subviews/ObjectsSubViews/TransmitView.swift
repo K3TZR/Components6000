@@ -14,7 +14,7 @@ struct TransmitView: View {
   let store: Store<ApiState, ApiAction>
   
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store.actionless) { viewStore in
       if viewStore.radio != nil {
         let transmit = Objects.sharedInstance.transmit!
         let width: CGFloat = 80

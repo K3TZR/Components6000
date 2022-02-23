@@ -31,6 +31,7 @@ public typealias Logger = (PassthroughSubject<LogEntry, Never>, LogLevel) -> Voi
 struct ReceivedMessagesSubscriptionId: Hashable {}
 struct SentMessagesSubscriptionId: Hashable {}
 struct LogAlertSubscriptionId: Hashable {}
+struct MeterSubscriptionId: Hashable {}
 struct WanStatusSubscriptionId: Hashable {}
 struct ReceivedPacketSubscriptionId: Hashable {}
 
@@ -182,7 +183,6 @@ public struct ApiState: Equatable {
   public var cancellables = Set<AnyCancellable>()
   public var forceUpdate = false
   
-  public var meterState: Float?
   public var objects = Objects.sharedInstance
 }
 
@@ -213,11 +213,14 @@ public enum ApiAction: Equatable {
   case pickerAction(PickerAction)
 
   // Effects related
-  case logAlertReceived(LogEntry)
-  case openSelection(PickerSelection)
-  case tcpMessageSentOrReceived(TcpMessage)
-  case finishInitialization
   case cancelEffects
+  case finishInitialization
+  case logAlertReceived(LogEntry)
+  case meterReceived(Meter)
+  case openSelection(PickerSelection)
+  case startMetersSubscription
+  case stopMetersSubscription
+  case tcpMessageSentOrReceived(TcpMessage)
   
   case meter(id: MeterId, action: MeterAction)
 }
@@ -445,6 +448,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // ----------------------------------------------------------------------------
       // MARK: - Actions sent by long-running effects
                   
+    case .cancelEffects:
+      return .cancel(ids: LogAlertSubscriptionId(), SentMessagesSubscriptionId(), ReceivedMessagesSubscriptionId())
+      
     case .logAlertReceived(let logEntry):
       // a Warning or Error has been logged.
       // exit any sheet states
@@ -473,9 +479,16 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.filteredMessages = filterMessages(state, state.messagesFilterBy, state.messagesFilterByText)
       return .none
 
-    case .cancelEffects:
-      return .cancel(ids: LogAlertSubscriptionId(), SentMessagesSubscriptionId(), ReceivedMessagesSubscriptionId())
+    case .meterReceived(let meter):
+      state.forceUpdate.toggle()
+      return .none
+
+    case .startMetersSubscription:
+      return subscribeToMeters()
       
+    case .stopMetersSubscription:
+      return .cancel(id: MeterSubscriptionId())
+
       // ----------------------------------------------------------------------------
       // MARK: - Actions sent by other actions
       
@@ -501,7 +514,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         state.alert = AlertState(title: TextState("Failed to connect to Radio \(selection.packet.nickname)"))
       }
       return .none
-
                   
     case .meter(let id, let action):
       return .none
@@ -615,6 +627,15 @@ func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
 //  #else
 //    .empty
 //  #endif
+}
+
+func subscribeToMeters() -> Effect<ApiAction, Never> {
+  // subscribe to the publisher of received TcpMessages
+  Meter.meterPublisher
+    // convert to an ApiAction
+    .map { meter in .meterReceived(meter) }
+    .eraseToEffect()
+    .cancellable(id: MeterSubscriptionId())
 }
 
 /// Assign each text line a color

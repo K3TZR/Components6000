@@ -17,7 +17,7 @@ struct SliceView: View {
   let showMeters: Bool
   
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store.actionless) { viewStore in
       ForEach(viewStore.objects.slices) { slice in
             if slice.panadapterId == panadapterId {
               HStack(spacing: 20) {

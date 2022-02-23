@@ -15,7 +15,7 @@ struct RadioView: View {
   let store: Store<ApiState, ApiAction>
   
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store.actionless) { viewStore in
       VStack(alignment: .leading) {
         HStack(spacing: 20) {
           Text(viewStore.radio!.packet.nickname).frame(width: 120, alignment: .leading)

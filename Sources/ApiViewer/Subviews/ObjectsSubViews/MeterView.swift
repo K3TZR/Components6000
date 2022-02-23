@@ -17,23 +17,25 @@ struct MeterView: View {
   
   var body: some View {
     
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store) { viewStore in
       VStack(alignment: .leading) {
         ForEachStore(
           store.scope(
             state: \.objects.meters,
             action: ApiAction.meter(id:action:)
           ),
-          content: { MeterRowView(store: $0, sliceId: sliceId) }
+          content: { MeterRowView(store: $0.actionless, sliceId: sliceId) }
         )
       }
       .foregroundColor(.secondary)
+      .onAppear() { viewStore.send(.startMetersSubscription) }
+      .onDisappear() { viewStore.send(.stopMetersSubscription) }
     }
   }
 }
 
 struct MeterRowView: View {
-  let store: Store<Meter, MeterAction>
+  let store: Store<Meter, Never>
   let sliceId: SliceId?
   
   func valueColor(_ value: Float, _ low: Float, _ high: Float) -> Color {
@@ -43,7 +45,7 @@ struct MeterRowView: View {
   }
   
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store) { viewStore in
       if sliceId == nil && viewStore.source != "slc" || sliceId != nil && viewStore.source == "slc" && UInt16(viewStore.group) == sliceId {
         HStack(spacing: 0) {
           Text("Meter").padding(.leading, sliceId == nil ? 20: 40)

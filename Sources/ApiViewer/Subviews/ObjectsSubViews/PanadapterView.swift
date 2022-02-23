@@ -17,7 +17,7 @@ struct PanadapterView: View {
   let showMeters: Bool
   
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store.actionless) { viewStore in
       ForEach(viewStore.objects.panadapters) { panadapter in
         if panadapter.clientHandle == handle {
           HStack(spacing: 20) {

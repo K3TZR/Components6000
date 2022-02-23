@@ -15,7 +15,7 @@ struct AtuView: View {
   let store: Store<ApiState, ApiAction>
   
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store.actionless) { viewStore in
       if viewStore.radio != nil {
         let atu = Objects.sharedInstance.atu!
         HStack(spacing: 20) {

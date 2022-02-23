@@ -16,7 +16,7 @@ struct WaterfallView: View {
   let panadapterId: PanadapterStreamId
   
   var body: some View {
-    WithViewStore(self.store) { viewStore in
+    WithViewStore(store.actionless) { viewStore in
 
       ForEach(viewStore.objects.waterfalls) { waterfall in
           if waterfall.panadapterId == panadapterId {
