@@ -24,18 +24,18 @@ public final class Waterfall: ObservableObject, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: WaterfallStreamId
+  public internal(set) var id: WaterfallStreamId
   
-  @Published public internal(set) var autoBlackEnabled = false
-  @Published public internal(set) var autoBlackLevel: UInt32 = 0
-  @Published public internal(set) var blackLevel = 0
-  @Published public internal(set) var clientHandle: Handle = 0
-  @Published public internal(set) var colorGain = 0
-  @Published public internal(set) var delegate: StreamHandler?
-  @Published public internal(set) var gradientIndex = 0
+  public internal(set) var autoBlackEnabled = false
+  public internal(set) var autoBlackLevel: UInt32 = 0
+  public internal(set) var blackLevel = 0
+  public internal(set) var clientHandle: Handle = 0
+  public internal(set) var colorGain = 0
+  public internal(set) var delegate: StreamHandler?
+  public internal(set) var gradientIndex = 0
   var _isStreaming = false
-  @Published public internal(set) var lineDuration = 0
-  @Published public internal(set) var panadapterId: PanadapterStreamId?
+  public internal(set) var lineDuration = 0
+  public internal(set) var panadapterId: PanadapterStreamId?
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties

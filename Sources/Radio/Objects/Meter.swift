@@ -31,22 +31,22 @@ public final class Meter: ObservableObject, Identifiable, Equatable {
   static let kDegDenom: Float = 64.0   // denominator for Degc, Degf
   
   public static var meterPublisher = PassthroughSubject<Meter, Never>()
-
+  
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: MeterId
+  public internal(set) var id: MeterId
   
-  @Published public internal(set) var desc = ""
-  @Published public internal(set) var fps = 0
-  @Published public internal(set) var high: Float = 0
-  @Published public internal(set) var low: Float = 0
-  @Published public internal(set) var group = ""
-  @Published public internal(set) var name = ""
-  @Published public internal(set) var peak: Float = 0
-  @Published public internal(set) var source = ""
-  @Published public internal(set) var units = ""
-  @Published public internal(set) var value: Float = 0
+  public internal(set) var desc = ""
+  public internal(set) var fps = 0
+  public internal(set) var high: Float = 0
+  public internal(set) var low: Float = 0
+  public internal(set) var group = ""
+  public internal(set) var name = ""
+  public internal(set) var peak: Float = 0
+  public internal(set) var source = ""
+  public internal(set) var units = ""
+  public internal(set) var value: Float = 0
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
@@ -121,7 +121,7 @@ public final class Meter: ObservableObject, Identifiable, Equatable {
   private var _voltsAmpsDenom: Float = 256.0  // denominator for voltage/amperage after API version 1.10
   
   static private var _metersAreStreaming = false
-
+  
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
@@ -160,23 +160,7 @@ extension Meter: DynamicModel {
       
       // NO, extract the Id
       if let id = properties[0].key.components(separatedBy: " ")[0].objectId {
-        // does it exist?
-        if Objects.sharedInstance.meters[id: id] != nil {
-          let name = Objects.sharedInstance.meters[id: id]!.name
-          Objects.sharedInstance.meters[id: id] = nil
-          
-          // notify appropriate observers
-          LogProxy.sharedInstance.log("Meter removed: id = \(id)", .debug, #function, #file, #line)
-//          switch name {
-//            // specific cases
-//          case Meter.ShortName.signalPassband.rawValue:   NC.post(.sliceMeterRemoved, object: id as Any?)
-//          case Meter.ShortName.powerForward.rawValue, Meter.ShortName.swr.rawValue:   NC.post(.txMeterRemoved, object: id as Any?)
-//          case Meter.ShortName.temperaturePa.rawValue, Meter.ShortName.voltageAfterFuse.rawValue:   NC.post(.paramMeterRemoved, object: id as Any?)
-//          case Meter.ShortName.microphoneAverage.rawValue, Meter.ShortName.microphonePeak.rawValue, Meter.ShortName.postClipper.rawValue:   NC.post(.pcwMeterRemoved, object: id as Any?)
-//          case Meter.ShortName.voltageHwAlc.rawValue:   NC.post(.cwMeterRemoved, object: id as Any?)
-//          default:    NC.post(.meterRemoved, object: id as Any?)
-//          }
-        }
+        Objects.sharedInstance.meters[id: id] = nil
       }
     }
   }
@@ -214,29 +198,8 @@ extension Meter: DynamicModel {
     if !_initialized && group != "" && units != "" {
       // the Radio (hardware) has acknowledged this Meter
       _initialized = true
-      
-      // notify appropriate observers
       _log("Meter, added: id = \(id), \(name), source = \(source), group = \(group)", .debug, #function, #file, #line)
-
-
-
-
-
-
-
-      //            switch name {
-      //            // specific cases
-      //            //      case Meter.ShortName.signalPassband.rawValue:
-      //            //        NC.post(.sliceMeterAdded, object: self as Any?)
-      //
-      //            case Meter.ShortName.powerForward.rawValue, Meter.ShortName.swr.rawValue:   NC.post(.txMeterAdded, object: self as Any?)
-      //            case Meter.ShortName.temperaturePa.rawValue, Meter.ShortName.voltageAfterFuse.rawValue:   NC.post(.paramMeterAdded, object: self as Any?)
-      //            case Meter.ShortName.microphoneAverage.rawValue, Meter.ShortName.microphonePeak.rawValue, Meter.ShortName.postClipper.rawValue:   NC.post(.pcwMeterAdded, object: self as Any?)
-      //            case Meter.ShortName.voltageHwAlc.rawValue:   NC.post(.cwMeterAdded, object: self as Any?)
-      //            default:    NC.post(.meterAdded, object: self as Any?)
-      //            }
     }
-    
   }
   
   /// Process the Meter Vita struct
@@ -250,7 +213,7 @@ extension Meter: DynamicModel {
       // log the start of the stream
       LogProxy.sharedInstance.log("Meter: stream started, \(vita.streamId.hex)", .info, #function, #file, #line)
     }
-
+    
     // NOTE:  there is a bug in the Radio (as of v2.2.8) that sends
     //        multiple copies of meters, this code ignores the duplicates
     
@@ -299,21 +262,8 @@ extension Meter: DynamicModel {
             }
             // did it change?
             if adjNewValue != previousValue {
-              DispatchQueue.main.async {
-                meter.value = adjNewValue
-                
-                meterPublisher.send(meter)
-              }
-              // notify appropriate observers
-//              switch meter.name {
-//                // specific cases
-//              case Meter.ShortName.signalPassband.rawValue:   NC.post(.sliceMeterUpdated, object: meter as Any?)
-//              case Meter.ShortName.powerForward.rawValue, Meter.ShortName.swr.rawValue:   NC.post(.txMeterUpdated, object: meter as Any?)
-//              case Meter.ShortName.temperaturePa.rawValue, Meter.ShortName.voltageAfterFuse.rawValue:   NC.post(.paramMeterUpdated, object: meter as Any?)
-//              case Meter.ShortName.microphoneAverage.rawValue, Meter.ShortName.microphonePeak.rawValue, Meter.ShortName.postClipper.rawValue:   NC.post(.pcwMeterUpdated, object: meter as Any?)
-//              case Meter.ShortName.voltageHwAlc.rawValue:   NC.post(.cwMeterUpdated, object: meter as Any?)
-//              default:  NC.post(.meterUpdated, object: meter as Any?)
-//              }
+              meter.value = adjNewValue
+              meterPublisher.send(meter)
             }
           }
         }

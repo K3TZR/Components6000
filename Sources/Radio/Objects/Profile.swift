@@ -28,10 +28,10 @@ public final class Profile: ObservableObject, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: ProfileId
+  public internal(set) var id: ProfileId
   
-  @Published public internal(set) var selection: ProfileName = ""
-  @Published public internal(set) var list = [ProfileName]()
+  public internal(set) var selection: ProfileName = ""
+  public internal(set) var list = [ProfileName]()
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties

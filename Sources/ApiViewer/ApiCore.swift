@@ -218,15 +218,9 @@ public enum ApiAction: Equatable {
   case logAlertReceived(LogEntry)
   case meterReceived(Meter)
   case openSelection(PickerSelection)
-  case startMetersSubscription
-  case stopMetersSubscription
+//  case startMetersSubscription
+//  case stopMetersSubscription
   case tcpMessageSentOrReceived(TcpMessage)
-  
-  case meter(id: MeterId, action: MeterAction)
-}
-
-public enum MeterAction {
-  case anything
 }
 
 public struct ApiEnvironment {
@@ -298,6 +292,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       case .none:
         break
       }
+      if state.objectsFilterBy == .core || state.objectsFilterBy == .meters {
+        return subscribeToMeters()
+      }
       return .none
 
       // ----------------------------------------------------------------------------
@@ -323,7 +320,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .connectionModePicker(let mode):
       state.connectionMode = mode
       return Effect(value: .finishInitialization)
-      
+
     case .fontSizeStepper(let size):
       state.fontSize = size
       return .none
@@ -352,13 +349,19 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.filteredMessages = filterMessages(state, state.messagesFilterBy, state.messagesFilterByText)
       return .none
 
-    case .objectsPicker(let filterBy):
-      state.objectsFilterBy = filterBy
-      return.none
+    case .objectsPicker(let newFilterBy):
+      let prevObjectsFilterBy = state.objectsFilterBy
+      state.objectsFilterBy = newFilterBy
+      
+      switch (prevObjectsFilterBy, newFilterBy) {
+      case (.core, .meters), (.meters, .core):  return .none
+      case (.core, _), (.meters, _):            return .cancel(id: MeterSubscriptionId())
+      case (_, .core), (_, .meters):            return subscribeToMeters()
+      default:                                  return .none
+      }
       
     case .remoteViewButton:
-//      state.viewType = .remote
-      state.forceUpdate.toggle()
+      state.viewType = .remote
       return .none
       
     case .sendButton:
@@ -483,12 +486,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.forceUpdate.toggle()
       return .none
 
-    case .startMetersSubscription:
-      return subscribeToMeters()
-      
-    case .stopMetersSubscription:
-      return .cancel(id: MeterSubscriptionId())
-
       // ----------------------------------------------------------------------------
       // MARK: - Actions sent by other actions
       
@@ -513,9 +510,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         // failed
         state.alert = AlertState(title: TextState("Failed to connect to Radio \(selection.packet.nickname)"))
       }
-      return .none
-                  
-    case .meter(let id, let action):
       return .none
     }
   }
@@ -632,6 +626,9 @@ func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
 func subscribeToMeters() -> Effect<ApiAction, Never> {
   // subscribe to the publisher of received TcpMessages
   Meter.meterPublisher
+    .receive(on: DispatchQueue.main)
+    // limit updates to 1 per second
+//    .throttle(for: 1.0, scheduler: RunLoop.main, latest: true)
     // convert to an ApiAction
     .map { meter in .meterReceived(meter) }
     .eraseToEffect()

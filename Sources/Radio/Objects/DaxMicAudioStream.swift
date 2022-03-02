@@ -22,12 +22,12 @@ public final class DaxMicAudioStream: ObservableObject, Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: DaxMicStreamId
+  public internal(set) var id: DaxMicStreamId
   
-  @Published public internal(set) var clientHandle: Handle = 0
-  @Published public internal(set) var ip = ""
+  public internal(set) var clientHandle: Handle = 0
+  public internal(set) var ip = ""
   var _isStreaming = false
-  @Published public internal(set) var micGain = 0 {
+  public internal(set) var micGain = 0 {
     didSet { if micGain != oldValue {
       var newGain = micGain
       // check limits
@@ -45,7 +45,7 @@ public final class DaxMicAudioStream: ObservableObject, Identifiable {
         micGainScalar = pow(10.0, db / 20.0);
       }
     }}}
-  @Published public internal(set) var micGainScalar: Float = 0
+  public internal(set) var micGainScalar: Float = 0
   
   // ------------------------------------------------------------------------------
   // MARK: - Public properties

@@ -20,9 +20,9 @@ public final class Cwx: ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var breakInDelay = 0
-  @Published public internal(set) var qskEnabled = false
-  @Published public internal(set) var wpm = 0
+  public internal(set) var breakInDelay = 0
+  public internal(set) var qskEnabled = false
+  public internal(set) var wpm = 0
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties

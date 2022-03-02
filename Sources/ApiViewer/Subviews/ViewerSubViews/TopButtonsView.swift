@@ -28,6 +28,7 @@ struct TopButtonsView: View {
 
         HStack(spacing: 20) {
           Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .toggleButton(\.isGui)))
+            .disabled(viewStore.radio != nil)
           Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .toggleButton(\.showTimes)))
           Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .toggleButton(\.showPings)))
         }

@@ -23,15 +23,15 @@ public final class DaxIqStream: ObservableObject, Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: DaxIqStreamId
+  public internal(set) var id: DaxIqStreamId
   
-  @Published public internal(set) var channel = 0
-  @Published public internal(set) var clientHandle: Handle = 0
-  @Published public internal(set) var ip = ""
-  @Published public internal(set) var isActive = false
+  public internal(set) var channel = 0
+  public internal(set) var clientHandle: Handle = 0
+  public internal(set) var ip = ""
+  public internal(set) var isActive = false
   var _isStreaming = false
-  @Published public internal(set) var pan: PanadapterStreamId = 0
-  @Published public internal(set) var rate = 0
+  public internal(set) var pan: PanadapterStreamId = 0
+  public internal(set) var rate = 0
   
   // ------------------------------------------------------------------------------
   // MARK: - Public properties

@@ -21,8 +21,8 @@ public final class Wan : StaticModel {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  @Published public internal(set) var radioAuthenticated: Bool = false
-  @Published public internal(set) var serverConnected: Bool = false
+  public internal(set) var radioAuthenticated: Bool = false
+  public internal(set) var serverConnected: Bool = false
 
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties

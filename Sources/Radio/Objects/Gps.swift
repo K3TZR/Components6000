@@ -25,17 +25,17 @@ public final class Gps: ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var altitude = ""
-  @Published public internal(set) var frequencyError: Double = 0
-  @Published public internal(set) var grid = ""
-  @Published public internal(set) var latitude = ""
-  @Published public internal(set) var longitude = ""
-  @Published public internal(set) var speed = ""
-  @Published public internal(set) var status = false
-  @Published public internal(set) var time = ""
-  @Published public internal(set) var track: Double = 0
-  @Published public internal(set) var tracked = false
-  @Published public internal(set) var visible = false
+  public internal(set) var altitude = ""
+  public internal(set) var frequencyError: Double = 0
+  public internal(set) var grid = ""
+  public internal(set) var latitude = ""
+  public internal(set) var longitude = ""
+  public internal(set) var speed = ""
+  public internal(set) var status = false
+  public internal(set) var time = ""
+  public internal(set) var track: Double = 0
+  public internal(set) var tracked = false
+  public internal(set) var visible = false
   
   // ----------------------------------------------------------------------------
   // MARK: - Internal types

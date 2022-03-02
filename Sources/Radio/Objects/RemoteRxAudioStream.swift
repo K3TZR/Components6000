@@ -38,11 +38,11 @@ public final class RemoteRxAudioStream: ObservableObject, Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: RemoteRxStreamId
+  public internal(set) var id: RemoteRxStreamId
   
-  @Published public internal(set) var clientHandle: Handle = 0
-  @Published public internal(set) var compression = ""
-  @Published public internal(set) var ip = ""
+  public internal(set) var clientHandle: Handle = 0
+  public internal(set) var compression = ""
+  public internal(set) var ip = ""
   var _isStreaming = false
   
   // ------------------------------------------------------------------------------

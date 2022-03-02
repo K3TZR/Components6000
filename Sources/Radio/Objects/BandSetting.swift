@@ -20,19 +20,19 @@ public final class BandSetting: ObservableObject, Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Published properties
 
-  @Published public internal(set) var id: BandId
+  public internal(set) var id: BandId
 
-  @Published public var accTxEnabled = false
-  @Published public var accTxReqEnabled = false
-  @Published public var bandName = ""
-  @Published public var hwAlcEnabled = false
-  @Published public var inhibit = false
-  @Published public var rcaTxReqEnabled = false
-  @Published public var rfPower = 0
-  @Published public var tunePower = 0
-  @Published public var tx1Enabled = false
-  @Published public var tx2Enabled = false
-  @Published public var tx3Enabled = false
+  public var accTxEnabled = false
+  public var accTxReqEnabled = false
+  public var bandName = ""
+  public var hwAlcEnabled = false
+  public var inhibit = false
+  public var rcaTxReqEnabled = false
+  public var rfPower = 0
+  public var tunePower = 0
+  public var tx1Enabled = false
+  public var tx2Enabled = false
+  public var tx3Enabled = false
 
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties

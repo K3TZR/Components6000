@@ -17,19 +17,19 @@ struct WaterfallView: View {
   
   var body: some View {
     WithViewStore(store.actionless) { viewStore in
-
+      
       ForEach(viewStore.objects.waterfalls) { waterfall in
-          if waterfall.panadapterId == panadapterId {
-            HStack(spacing: 20) {
-              Text("Waterfall").frame(width: 100, alignment: .trailing)
-              Text(waterfall.id.hex)
-              Text("AutoBlack \(waterfall.autoBlackEnabled ? "Y" : "N")")
-              Text("ColorGain \(waterfall.colorGain)")
-              Text("BlackLevel \(waterfall.blackLevel)")
-              Text("Duration \(waterfall.lineDuration)")
-            }
+        if waterfall.panadapterId == panadapterId {
+          HStack(spacing: 20) {
+            Text("Waterfall").frame(width: 100, alignment: .trailing)
+            Text(waterfall.id.hex)
+            Text("AutoBlack \(waterfall.autoBlackEnabled ? "Y" : "N")")
+            Text("ColorGain \(waterfall.colorGain)")
+            Text("BlackLevel \(waterfall.blackLevel)")
+            Text("Duration \(waterfall.lineDuration)")
           }
         }
+      }
     }
   }
 }

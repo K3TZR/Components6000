@@ -22,15 +22,15 @@ public final class Amplifier: ObservableObject, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: AmplifierId
+  public internal(set) var id: AmplifierId
   
-  @Published public internal(set) var ant: String = ""
-  @Published public internal(set) var handle: Handle = 0
-  @Published public internal(set) var ip: String = ""
-  @Published public internal(set) var model: String = ""
-  @Published public internal(set) var port: Int = 0
-  @Published public internal(set) var serialNumber: String = ""
-  @Published public internal(set) var state: String = ""
+  public internal(set) var ant: String = ""
+  public internal(set) var handle: Handle = 0
+  public internal(set) var ip: String = ""
+  public internal(set) var model: String = ""
+  public internal(set) var port: Int = 0
+  public internal(set) var serialNumber: String = ""
+  public internal(set) var state: String = ""
   
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties

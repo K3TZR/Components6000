@@ -22,15 +22,15 @@ public final class DaxRxAudioStream: ObservableObject, Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: DaxRxStreamId
+  public internal(set) var id: DaxRxStreamId
   
-  @Published public internal(set) var clientHandle: Handle = 0
-  @Published public internal(set) var ip = ""
+  public internal(set) var clientHandle: Handle = 0
+  public internal(set) var ip = ""
   var _isStreaming = false
-  @Published public internal(set) var slice: Slice?
+  public internal(set) var slice: Slice?
   
-  @Published public internal(set) var daxChannel = 0
-  @Published public internal(set) var rxGain = 0
+  public internal(set) var daxChannel = 0
+  public internal(set) var rxGain = 0
   
   // ------------------------------------------------------------------------------
   // MARK: - Public properties

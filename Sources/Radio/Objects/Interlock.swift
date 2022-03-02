@@ -19,26 +19,26 @@ public final class Interlock: ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
 
-  @Published public var accTxEnabled = false
-  @Published public var accTxDelay = 0
-  @Published public var accTxReqEnabled = false
-  @Published public var accTxReqPolarity = false
-  @Published public var amplifier = ""
-  @Published public var rcaTxReqEnabled = false
-  @Published public var rcaTxReqPolarity = false
-  @Published public var reason = ""
-  @Published public var source = ""
-  @Published public var state = ""
-  @Published public var timeout = 0
-  @Published public var txAllowed = false
-  @Published public var txClientHandle: Handle = 0
-  @Published public var txDelay = 0
-  @Published public var tx1Enabled = false
-  @Published public var tx1Delay = 0
-  @Published public var tx2Enabled = false
-  @Published public var tx2Delay = 0
-  @Published public var tx3Enabled = false
-  @Published public var tx3Delay = 0
+  public var accTxEnabled = false
+  public var accTxDelay = 0
+  public var accTxReqEnabled = false
+  public var accTxReqPolarity = false
+  public var amplifier = ""
+  public var rcaTxReqEnabled = false
+  public var rcaTxReqPolarity = false
+  public var reason = ""
+  public var source = ""
+  public var state = ""
+  public var timeout = 0
+  public var txAllowed = false
+  public var txClientHandle: Handle = 0
+  public var txDelay = 0
+  public var tx1Enabled = false
+  public var tx1Delay = 0
+  public var tx2Enabled = false
+  public var tx2Delay = 0
+  public var tx3Enabled = false
+  public var tx3Delay = 0
 
   // ----------------------------------------------------------------------------
   // MARK: - Internal types

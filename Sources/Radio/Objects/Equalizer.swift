@@ -24,17 +24,17 @@ public final class Equalizer: ObservableObject, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
 
-  @Published public internal(set) var id: EqualizerId
+  public internal(set) var id: EqualizerId
 
-  @Published public var eqEnabled = false
-  @Published public var level63Hz = 0
-  @Published public var level125Hz = 0
-  @Published public var level250Hz = 0
-  @Published public var level500Hz = 0
-  @Published public var level1000Hz = 0
-  @Published public var level2000Hz = 0
-  @Published public var level4000Hz = 0
-  @Published public var level8000Hz = 0
+  public var eqEnabled = false
+  public var level63Hz = 0
+  public var level125Hz = 0
+  public var level250Hz = 0
+  public var level500Hz = 0
+  public var level1000Hz = 0
+  public var level2000Hz = 0
+  public var level4000Hz = 0
+  public var level8000Hz = 0
 
   // ----------------------------------------------------------------------------
   // MARK: - Public properties

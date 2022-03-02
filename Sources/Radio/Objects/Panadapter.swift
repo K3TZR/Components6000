@@ -31,51 +31,51 @@ public final class Panadapter: ObservableObject, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: PanadapterStreamId
+  public internal(set) var id: PanadapterStreamId
   
-  @Published public internal(set) var antList = [String]()
-  @Published public internal(set) var clientHandle: Handle = 0
-  @Published public internal(set) var dbmValues = [LegendValue]()
-  @Published public internal(set) var delegate: StreamHandler?
-  @Published public internal(set) var fillLevel: Int = 0
-  @Published public internal(set) var freqValues = [LegendValue]()
+  public internal(set) var antList = [String]()
+  public internal(set) var clientHandle: Handle = 0
+  public internal(set) var dbmValues = [LegendValue]()
+  public internal(set) var delegate: StreamHandler?
+  public internal(set) var fillLevel: Int = 0
+  public internal(set) var freqValues = [LegendValue]()
   var _isStreaming = false
-  @Published public internal(set) var maxBw: Hz = 0
-  @Published public internal(set) var minBw: Hz = 0
-  @Published public internal(set) var preamp = ""
-  @Published public internal(set) var rfGainHigh = 0
-  @Published public internal(set) var rfGainLow = 0
-  @Published public internal(set) var rfGainStep = 0
-  @Published public internal(set) var rfGainValues = ""
-  @Published public internal(set) var waterfallId: UInt32 = 0
-  @Published public internal(set) var wide = false
-  @Published public internal(set) var wnbUpdating = false
-  @Published public internal(set) var xvtrLabel = ""
+  public internal(set) var maxBw: Hz = 0
+  public internal(set) var minBw: Hz = 0
+  public internal(set) var preamp = ""
+  public internal(set) var rfGainHigh = 0
+  public internal(set) var rfGainLow = 0
+  public internal(set) var rfGainStep = 0
+  public internal(set) var rfGainValues = ""
+  public internal(set) var waterfallId: UInt32 = 0
+  public internal(set) var wide = false
+  public internal(set) var wnbUpdating = false
+  public internal(set) var xvtrLabel = ""
   
-  @Published public var average: Int = 0
-  @Published public var band: String = ""
+  public var average: Int = 0
+  public var band: String = ""
   // FIXME: Where does autoCenter come from?
-  @Published public var bandwidth: Hz = 0
-  @Published public var bandZoomEnabled: Bool  = false
-  @Published public var center: Hz = 0
-  @Published public var daxIqChannel: Int = 0
-  @Published public var fps: Int = 0
-  @Published public var loggerDisplayEnabled: Bool = false
-  @Published public var loggerDisplayIpAddress: String = ""
-  @Published public var loggerDisplayPort: Int = 0
-  @Published public var loggerDisplayRadioNumber: Int = 0
-  @Published public var loopAEnabled: Bool = false
-  @Published public var loopBEnabled: Bool = false
-  @Published public var maxDbm: CGFloat = 0
-  @Published public var minDbm: CGFloat = 0
-  @Published public var rfGain: Int = 0
-  @Published public var rxAnt: String = ""
-  @Published public var segmentZoomEnabled: Bool = false
-  @Published public var weightedAverageEnabled: Bool = false
-  @Published public var wnbEnabled: Bool = false
-  @Published public var wnbLevel: Int = 0
-  @Published public var xPixels: CGFloat = 0
-  @Published public var yPixels: CGFloat = 0
+  public var bandwidth: Hz = 0
+  public var bandZoomEnabled: Bool  = false
+  public var center: Hz = 0
+  public var daxIqChannel: Int = 0
+  public var fps: Int = 0
+  public var loggerDisplayEnabled: Bool = false
+  public var loggerDisplayIpAddress: String = ""
+  public var loggerDisplayPort: Int = 0
+  public var loggerDisplayRadioNumber: Int = 0
+  public var loopAEnabled: Bool = false
+  public var loopBEnabled: Bool = false
+  public var maxDbm: CGFloat = 0
+  public var minDbm: CGFloat = 0
+  public var rfGain: Int = 0
+  public var rxAnt: String = ""
+  public var segmentZoomEnabled: Bool = false
+  public var weightedAverageEnabled: Bool = false
+  public var wnbEnabled: Bool = false
+  public var wnbLevel: Int = 0
+  public var xPixels: CGFloat = 0
+  public var yPixels: CGFloat = 0
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties

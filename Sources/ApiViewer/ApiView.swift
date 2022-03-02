@@ -107,7 +107,7 @@ public struct ApiView: View {
       
       } else {
         RemoteView(store: Store(
-          initialState: RemoteState(),
+          initialState: RemoteState( "Din 4 Relays" ),
           reducer: remoteReducer,
           environment: RemoteEnvironment() )
         )
@@ -135,3 +135,14 @@ struct ApiView_Previews: PreviewProvider {
       .padding()
   }
 }
+
+public var din4Relays: [Relay] = [
+  Relay(name: "Main power"),
+  Relay(name: "---"),
+  Relay(name: "---"),
+  Relay(name: "---"),
+  Relay(name: "Astron power"),
+  Relay(name: "Rotator power"),
+  Relay(name: "Linear power"),
+  Relay(name: "Remote power on")
+]

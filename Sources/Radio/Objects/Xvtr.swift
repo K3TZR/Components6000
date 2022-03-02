@@ -21,19 +21,19 @@ public final class Xvtr: ObservableObject, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: XvtrId
+  public internal(set) var id: XvtrId
   
-  @Published public internal(set) var isValid = false
-  @Published public internal(set) var preferred = false
-  @Published public internal(set) var twoMeterInt = 0
-  @Published public internal(set) var ifFrequency: Hz = 0
-  @Published public internal(set) var loError = 0
-  @Published public internal(set) var name = ""
-  @Published public internal(set) var maxPower = 0
-  @Published public internal(set) var order = 0
-  @Published public internal(set) var rfFrequency: Hz = 0
-  @Published public internal(set) var rxGain = 0
-  @Published public internal(set) var rxOnly = false
+  public internal(set) var isValid = false
+  public internal(set) var preferred = false
+  public internal(set) var twoMeterInt = 0
+  public internal(set) var ifFrequency: Hz = 0
+  public internal(set) var loError = 0
+  public internal(set) var name = ""
+  public internal(set) var maxPower = 0
+  public internal(set) var order = 0
+  public internal(set) var rfFrequency: Hz = 0
+  public internal(set) var rxGain = 0
+  public internal(set) var rxOnly = false
   
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties

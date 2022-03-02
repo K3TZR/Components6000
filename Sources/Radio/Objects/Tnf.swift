@@ -28,12 +28,12 @@ public final class Tnf: Identifiable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
 
-  @Published public internal(set) var id: TnfId
+  public internal(set) var id: TnfId
 
-  @Published public internal(set) var depth: UInt = 0
-  @Published public internal(set) var frequency: Hz = 0
-  @Published public internal(set) var permanent = false
-  @Published public internal(set) var width: Hz = 0
+  public internal(set) var depth: UInt = 0
+  public internal(set) var frequency: Hz = 0
+  public internal(set) var permanent = false
+  public internal(set) var width: Hz = 0
 
   // ----------------------------------------------------------------------------
   // MARK: - Public types

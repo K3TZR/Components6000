@@ -20,7 +20,7 @@ public final class Waveform: ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var waveformList = ""
+  public internal(set) var waveformList = ""
   
   // ----------------------------------------------------------------------------
   // MARK: - Internal types

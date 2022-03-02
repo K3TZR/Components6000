@@ -20,10 +20,10 @@ public final class Atu: ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var memoriesEnabled = false
-  @Published public internal(set) var status = ""       // FIXME: ?????
-  @Published public internal(set) var enabled = false
-  @Published public internal(set) var usingMemory = false
+  public internal(set) var memoriesEnabled = false
+  public internal(set) var status = ""       // FIXME: ?????
+  public internal(set) var enabled = false
+  public internal(set) var usingMemory = false
   
   // ----------------------------------------------------------------------------
   // MARK: - Public types

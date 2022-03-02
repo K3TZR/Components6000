@@ -22,13 +22,13 @@ public final class DaxTxAudioStream: ObservableObject, Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: DaxTxStreamId
+  public internal(set) var id: DaxTxStreamId
   
-  @Published public internal(set) var clientHandle: Handle = 0
-  @Published public internal(set) var ip = ""
-  @Published public internal(set) var isStreaming = false
-  @Published public internal(set) var isTransmitChannel = false
-  @Published public internal(set) var txGain = 0 {
+  public internal(set) var clientHandle: Handle = 0
+  public internal(set) var ip = ""
+  public internal(set) var isStreaming = false
+  public internal(set) var isTransmitChannel = false
+  public internal(set) var txGain = 0 {
     didSet { if txGain != oldValue {
       if txGain == 0 {
         txGainScalar = 0.0
@@ -39,7 +39,7 @@ public final class DaxTxAudioStream: ObservableObject, Identifiable {
       let db:Float = db_min + (Float(txGain) / 100.0) * (db_max - db_min)
       txGainScalar = pow(10.0, db / 20.0)
     }}}
-  @Published public internal(set) var txGainScalar: Float = 0
+  public internal(set) var txGainScalar: Float = 0
   
   // ------------------------------------------------------------------------------
   // MARK: - Public properties

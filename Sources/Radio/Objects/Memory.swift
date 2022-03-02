@@ -22,27 +22,27 @@ public final class Memory: ObservableObject, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
-  @Published public internal(set) var id: MemoryId
+  public internal(set) var id: MemoryId
   
-  @Published public internal(set) var digitalLowerOffset = 0
-  @Published public internal(set) var digitalUpperOffset = 0
-  @Published public internal(set) var filterHigh = 0
-  @Published public internal(set) var filterLow = 0
-  @Published public internal(set) var frequency: Hz = 0
-  @Published public internal(set) var group = ""
-  @Published public internal(set) var mode = ""
-  @Published public internal(set) var name = ""
-  @Published public internal(set) var offset = 0
-  @Published public internal(set) var offsetDirection = ""
-  @Published public internal(set) var owner = ""
-  @Published public internal(set) var rfPower = 0
-  @Published public internal(set) var rttyMark = 0
-  @Published public internal(set) var rttyShift = 0
-  @Published public internal(set) var squelchEnabled = false
-  @Published public internal(set) var squelchLevel = 0
-  @Published public internal(set) var step = 0
-  @Published public internal(set) var toneMode = ""
-  @Published public internal(set) var toneValue: Float = 0
+  public internal(set) var digitalLowerOffset = 0
+  public internal(set) var digitalUpperOffset = 0
+  public internal(set) var filterHigh = 0
+  public internal(set) var filterLow = 0
+  public internal(set) var frequency: Hz = 0
+  public internal(set) var group = ""
+  public internal(set) var mode = ""
+  public internal(set) var name = ""
+  public internal(set) var offset = 0
+  public internal(set) var offsetDirection = ""
+  public internal(set) var owner = ""
+  public internal(set) var rfPower = 0
+  public internal(set) var rttyMark = 0
+  public internal(set) var rttyShift = 0
+  public internal(set) var squelchEnabled = false
+  public internal(set) var squelchLevel = 0
+  public internal(set) var step = 0
+  public internal(set) var toneMode = ""
+  public internal(set) var toneValue: Float = 0
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties

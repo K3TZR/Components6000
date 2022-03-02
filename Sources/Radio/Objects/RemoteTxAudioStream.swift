@@ -32,12 +32,12 @@ public final class RemoteTxAudioStream: ObservableObject, Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id : RemoteTxStreamId
+  public internal(set) var id : RemoteTxStreamId
   
-  @Published public internal(set) var clientHandle: Handle = 0
-  @Published public internal(set) var compression = ""
-  @Published public internal(set) var ip = ""
-  @Published public internal(set) var isStreaming = false
+  public internal(set) var clientHandle: Handle = 0
+  public internal(set) var compression = ""
+  public internal(set) var ip = ""
+  public internal(set) var isStreaming = false
   
   // ------------------------------------------------------------------------------
   // MARK: - Public properties

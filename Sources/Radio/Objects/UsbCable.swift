@@ -21,25 +21,25 @@ public final class UsbCable: ObservableObject, Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  @Published public internal(set) var id: UsbCableId
+  public internal(set) var id: UsbCableId
   
-  @Published public internal(set) var autoReport = false
-  @Published public internal(set) var band = ""
-  @Published public internal(set) var dataBits = 0
-  @Published public internal(set) var enable = false
-  @Published public internal(set) var flowControl = ""
-  @Published public internal(set) var name = ""
-  @Published public internal(set) var parity = ""
-  @Published public internal(set) var pluggedIn = false
-  @Published public internal(set) var polarity = ""
-  @Published public internal(set) var preamp = ""
-  @Published public internal(set) var source = ""
-  @Published public internal(set) var sourceRxAnt = ""
-  @Published public internal(set) var sourceSlice = 0
-  @Published public internal(set) var sourceTxAnt = ""
-  @Published public internal(set) var speed = 0
-  @Published public internal(set) var stopBits = 0
-  @Published public internal(set) var usbLog = false
+  public internal(set) var autoReport = false
+  public internal(set) var band = ""
+  public internal(set) var dataBits = 0
+  public internal(set) var enable = false
+  public internal(set) var flowControl = ""
+  public internal(set) var name = ""
+  public internal(set) var parity = ""
+  public internal(set) var pluggedIn = false
+  public internal(set) var polarity = ""
+  public internal(set) var preamp = ""
+  public internal(set) var source = ""
+  public internal(set) var sourceRxAnt = ""
+  public internal(set) var sourceSlice = 0
+  public internal(set) var sourceTxAnt = ""
+  public internal(set) var speed = 0
+  public internal(set) var stopBits = 0
+  public internal(set) var usbLog = false
   //    @Published public var usbLogLine = false {
   //        didSet { if usbLogLine != oldValue { usbCableCmd( .usbLogLine, usbLogLine.as1or0)  }}}
   
