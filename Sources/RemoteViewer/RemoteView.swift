@@ -59,11 +59,11 @@ public struct RemoteView: View {
         Spacer()
         Divider().background(Color(.red))
         HStack(spacing: 60) {
-          Button("Refresh") { viewStore.send(.refresh) }
-          Button("All Off") { viewStore.send(.allOff) }
+          Button("Refresh") { viewStore.send(.refresh) }.disabled(viewStore.scriptInFlight)
+          Button("All Off") { viewStore.send(.allOff) }.disabled(viewStore.scriptInFlight)
           Spacer()
-          Button("Start") { viewStore.send(.start) }
-          Button("Stop") { viewStore.send(.stop) }
+          Button("Start") { viewStore.send(.start) }.disabled(viewStore.scriptInFlight)
+          Button("Stop") { viewStore.send(.stop) }.disabled(viewStore.scriptInFlight)
         }
         .onAppear() { viewStore.send(.onAppear) }
       }

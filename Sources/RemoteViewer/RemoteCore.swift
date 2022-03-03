@@ -53,6 +53,7 @@ public struct RemoteState: Equatable {
   public var heading: String
   public var relays = initialRelays
   public var forceUpdate = false
+  public var scriptInFlight = false
 }
 
 public enum RemoteAction: Equatable {
@@ -61,6 +62,7 @@ public enum RemoteAction: Equatable {
   case refresh
   case relayLoadFailed
   case relaysReceived([Relay])
+  case scriptSent(Bool)
   case start
   case stop
   case toggleState(Int)
@@ -82,20 +84,19 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
       // MARK: - Initialization
       
     case .onAppear:
-      return getRelays( relayRequest("admin", "ruwn1viwn_RUF_zolt") )
+      return getRelays( relayRequest("https://192.168.1.220/restapi/relay/outlets/", "admin", "ruwn1viwn_RUF_zolt") )
 
       // ----------------------------------------------------------------------------
       // MARK: - RelayView UI actions
       
     case .allOff:
-      print("-----> All Off")
       for (i, relay) in state.relays.enumerated() {
         state.relays[i].state = false
       }
       return .none
       
     case .refresh:
-      return getRelays( relayRequest("admin", "ruwn1viwn_RUF_zolt") )
+      return getRelays( relayRequest("https://192.168.1.220/restapi/relay/outlets/", "admin", "ruwn1viwn_RUF_zolt") )
     
     case .toggleLocked(let index):
       state.relays[index].locked.toggle()
@@ -114,9 +115,16 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
       return .none
     
     case .start:
-      return .none
+      state.scriptInFlight = true
+      return sendScript( scriptRequest("cycle_on", "https://192.168.1.220/restapi/script/start/", "admin", "ruwn1viwn_RUF_zolt"))
     
     case .stop:
+      state.scriptInFlight = true
+      return sendScript( scriptRequest("cycle_off", "https://192.168.1.220/restapi/script/start/", "admin", "ruwn1viwn_RUF_zolt"))
+
+    case .scriptSent(let result):
+      state.scriptInFlight = false
+      print("-----> Script send, \(result ? "success" : "failure")")
       return .none
     }
   }
@@ -142,14 +150,21 @@ extension URLRequest {
       .data(using: String.Encoding.utf8)!
       .base64EncodedString()
     addValue("Basic \(encodedAuthInfo)", forHTTPHeaderField: "Authorization")
-    addValue("x", forHTTPHeaderField: "X-CSRF")
   }
 }
 
-func relayRequest(_ user: String, _ pwd: String) -> URLRequest {
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/")!)
+func relayRequest(_ url: String, _ user: String, _ pwd: String) -> URLRequest {
+  let headers = [
+    "Connection": "close",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-CSRF": "x"
+  ]
+  var request = URLRequest(url: URL(string: url)!)
   request.setBasicAuth(username: user, password: pwd)
+
   request.httpMethod = "GET"
+  request.allHTTPHeaderFields = headers
   return request
 }
 
@@ -170,3 +185,41 @@ func getRelays(_ request: URLRequest) -> Effect<RemoteAction, Never> {
     }
     .eraseToEffect()
 }
+
+public func scriptRequest(_ script: String, _ url: String, _ user: String, _ pwd: String) -> URLRequest {
+  
+  let headers = [
+    "Connection": "close",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-CSRF": "x"
+  ]
+  let parameters = [["user_function": script as Any]]
+  let postData = try! JSONSerialization.data(withJSONObject: parameters, options: [])
+  
+  var request = URLRequest(url: URL(string: url)!)
+  request.setBasicAuth(username: user, password: pwd)
+  
+  request.httpMethod = "POST"
+  request.allHTTPHeaderFields = headers
+  request.httpBody = postData as Data
+  return request
+}
+
+public func sendScript(_ request: URLRequest) -> Effect<RemoteAction, Never> {
+  return URLSession.DataTaskPublisher(request: request, session: .shared)
+    .receive(on: DispatchQueue.main)
+    .catchToEffect()
+    .map { result in
+      switch result {
+      case .success(_):
+        return .scriptSent(true)
+        
+      case .failure:
+        return .scriptSent(false)
+      }
+    }
+    .eraseToEffect()
+}
+
+// "https://192.168.1.220/restapi/script/start/"
