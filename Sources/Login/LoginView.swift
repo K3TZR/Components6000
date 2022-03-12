@@ -18,9 +18,6 @@ public struct LoginView: View {
     self.store = store
   }
   
-  @State var email = ""
-  @State var pwd = ""
-
   public var body: some View {
     WithViewStore(self.store) { viewStore in
       VStack(spacing: 30) {
@@ -34,8 +31,8 @@ public struct LoginView: View {
           }
           
           VStack(alignment: .leading, spacing: 40) {
-            TextField("", text: $email)
-            SecureField("", text: $pwd, onCommit: { viewStore.send( .loginButton(LoginResult(email, pwd: pwd))) })
+            TextField("", text: viewStore.binding(\.$email))
+            SecureField("", text: viewStore.binding(\.$pwd))
           }
         }
         
@@ -43,8 +40,7 @@ public struct LoginView: View {
           Button("Cancel") { viewStore.send(.cancelButton) }
           .keyboardShortcut(.cancelAction)
           
-          Button("Log in") { viewStore.send(.loginButton(LoginResult(email, pwd: pwd))) }
-          .disabled(email == "" || pwd == "")
+          Button("Log in") { viewStore.send(.loginButton) }
           .keyboardShortcut(.defaultAction)
         }
       }

@@ -30,15 +30,17 @@ public struct LoginState: Equatable {
     self.heading = heading
     self.pwd = pwd
   }
-  var email: String
-  var heading: String
-  var pwd: String
+  @BindableState var email: String
+  @BindableState var pwd: String
+  @BindableState var heading: String
 }
 
-public enum LoginAction: Equatable {
+public enum LoginAction: BindableAction, Equatable {
+  
   // UI controls
   case cancelButton
-  case loginButton(LoginResult)
+  case loginButton
+  case binding(BindingAction<LoginState>)
 }
 
 public struct LoginEnvironment {
@@ -49,5 +51,28 @@ public struct LoginEnvironment {
 
 let loginReducer = Reducer<LoginState, LoginAction, LoginEnvironment>
   { state, action, environment in
+    
+//    switch action {
+//    case .binding(\.$email):
+//      print("email = \(state.email)")
+//      return .none
+//
+//    case .binding(\.$pwd):
+//      print("pwd = \(state.pwd)")
+//      return .none
+//
+//    case .cancelButton:
+//      print("cancel button")
+//      return .none
+//
+//    case .loginButton:
+//      print("login button, email = \(state.email), pwd = \(state.pwd)")
+//      return .none
+//
+//    case .binding(_):
+//      print("other binding")
+//      return .none
+//    }
     return .none
   }
+  .binding()
