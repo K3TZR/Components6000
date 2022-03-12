@@ -452,7 +452,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // MARK: - Actions sent by long-running effects
                   
     case .cancelEffects:
-      return .cancel(ids: LogAlertSubscriptionId(), SentMessagesSubscriptionId(), ReceivedMessagesSubscriptionId())
+      return .cancel(ids: LogAlertSubscriptionId(),
+                     SentMessagesSubscriptionId(),
+                     ReceivedMessagesSubscriptionId(),
+                     MeterSubscriptionId())
       
     case .logAlertReceived(let logEntry):
       // a Warning or Error has been logged.
@@ -510,6 +513,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         // failed
         state.alert = AlertState(title: TextState("Failed to connect to Radio \(selection.packet.nickname)"))
       }
+      return .none
+    
+    case .loginAction(.binding(_)):
       return .none
     }
   }

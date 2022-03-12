@@ -39,7 +39,7 @@ public enum LoginAction: BindableAction, Equatable {
   
   // UI controls
   case cancelButton
-  case loginButton
+  case loginButton(LoginResult)
   case binding(BindingAction<LoginState>)
 }
 
@@ -52,7 +52,7 @@ public struct LoginEnvironment {
 let loginReducer = Reducer<LoginState, LoginAction, LoginEnvironment>
   { state, action, environment in
     
-//    switch action {
+    switch action {
 //    case .binding(\.$email):
 //      print("email = \(state.email)")
 //      return .none
@@ -61,18 +61,18 @@ let loginReducer = Reducer<LoginState, LoginAction, LoginEnvironment>
 //      print("pwd = \(state.pwd)")
 //      return .none
 //
-//    case .cancelButton:
-//      print("cancel button")
-//      return .none
-//
-//    case .loginButton:
-//      print("login button, email = \(state.email), pwd = \(state.pwd)")
-//      return .none
-//
-//    case .binding(_):
-//      print("other binding")
-//      return .none
-//    }
-    return .none
+    case .cancelButton:
+      print("cancel button")
+      return .none
+
+    case .loginButton(let credentials):
+      print("login button, email = \(credentials.email), pwd = \(credentials.pwd)")
+      return .none
+
+    case .binding(_):
+      print("other binding")
+      return .none
+    }
+//    return .none
   }
   .binding()

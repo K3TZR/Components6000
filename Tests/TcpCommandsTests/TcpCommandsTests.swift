@@ -34,65 +34,65 @@ class TcpCommandsTests: XCTestCase {
     "S0|interlock tx_client_handle=0x00000000 state=RECEIVE reason= source= tx_allowed=0 amplifier=\n"
   ]
 
-  func testTcpLoopback() {
-    var commandCancellable: AnyCancellable?
-    var statusCancellable: AnyCancellable?
-    var messages = [String]()
-    var status = [TcpStatus]()
-
-    // subscribe to Tcp messages (sent & received)
-    let tcp = Tcp()
-    commandCancellable = tcp.receivedPublisher
-      .sink { tcpMessage in
-        messages.append(tcpMessage.text)
-      }
-
-    // subscribe to Tcp status
-    statusCancellable = tcp.statusPublisher
-      .sink { tcpStatus in
-        status.append(tcpStatus)
-      }
-
-    if tcp.connect(testPacket) {
-      // wait to be connected
-      sleep(1)
-
-      if status.count == 1 {
-        XCTAssert( status[0].statusType == testStatus.statusType, "TCP connection failed, \(status[0].error?.localizedDescription ?? "???")" )
-        XCTAssert( status[0].host == testStatus.host, "TCP host error, \(status[0].host) != \(testStatus.host)" )
-        XCTAssert( status[0].port == testStatus.port, "TCP port error, \(status[0].port) != \(testStatus.port)" )
-        XCTAssert( status[0].error == nil, "TCP error, \(status[0].error!) != nil" )
-        
-        // send a message
-        var sequenceNumber = tcp.send(testMessage1)
-        
-        sleep(1)
-        
-        if messages.count == 1 {
-          XCTAssert(messages[0] == testMessage1, "Received message \(sequenceNumber) error, \(messages[0]) != \(testMessage1)" )
-        } else {
-          XCTFail("Failed to receive first message")
-        }
-        messages.removeAll()
-        // send a message
-        sequenceNumber = tcp.send(testMessage2)
-        
-        sleep(1)
-        if messages.count == 1 {
-          XCTAssert(messages[0] == testMessage1, "Received message \(sequenceNumber) error, \(messages[0]) != \(testMessage1)" )
-        } else {
-          XCTFail("Failed to receive second message")
-        }
-      } else {
-        XCTFail("Failed to receive status")
-      }
-    } else {
-      XCTFail("Failed to connect to Loopback address")
-    }
-    commandCancellable = nil
-    statusCancellable = nil
-    tcp.disconnect()
-  }
+//  func testTcpLoopback() {
+//    var commandCancellable: AnyCancellable?
+//    var statusCancellable: AnyCancellable?
+//    var messages = [String]()
+//    var status = [TcpStatus]()
+//
+//    // subscribe to Tcp messages (sent & received)
+//    let tcp = Tcp()
+//    commandCancellable = tcp.receivedPublisher
+//      .sink { tcpMessage in
+//        messages.append(tcpMessage.text)
+//      }
+//
+//    // subscribe to Tcp status
+//    statusCancellable = tcp.statusPublisher
+//      .sink { tcpStatus in
+//        status.append(tcpStatus)
+//      }
+//
+//    if tcp.connect(testPacket) {
+//      // wait to be connected
+//      sleep(1)
+//
+//      if status.count == 1 {
+//        XCTAssert( status[0].statusType == testStatus.statusType, "TCP connection failed, \(status[0].error?.localizedDescription ?? "???")" )
+//        XCTAssert( status[0].host == testStatus.host, "TCP host error, \(status[0].host) != \(testStatus.host)" )
+//        XCTAssert( status[0].port == testStatus.port, "TCP port error, \(status[0].port) != \(testStatus.port)" )
+//        XCTAssert( status[0].error == nil, "TCP error, \(status[0].error!) != nil" )
+//        
+//        // send a message
+//        var sequenceNumber = tcp.send(testMessage1)
+//        
+//        sleep(1)
+//        
+//        if messages.count == 1 {
+//          XCTAssert(messages[0] == testMessage1, "Received message \(sequenceNumber) error, \(messages[0]) != \(testMessage1)" )
+//        } else {
+//          XCTFail("Failed to receive first message")
+//        }
+//        messages.removeAll()
+//        // send a message
+//        sequenceNumber = tcp.send(testMessage2)
+//        
+//        sleep(1)
+//        if messages.count == 1 {
+//          XCTAssert(messages[0] == testMessage1, "Received message \(sequenceNumber) error, \(messages[0]) != \(testMessage1)" )
+//        } else {
+//          XCTFail("Failed to receive second message")
+//        }
+//      } else {
+//        XCTFail("Failed to receive status")
+//      }
+//    } else {
+//      XCTFail("Failed to connect to Loopback address")
+//    }
+//    commandCancellable = nil
+//    statusCancellable = nil
+//    tcp.disconnect()
+//  }
   
 //  func testTcpSmartlink() {
 //    var commandCancellable: AnyCancellable?

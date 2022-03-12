@@ -116,7 +116,7 @@ final class WanAuthentication {
       let result = performRequest(request, for: [kKeyIdToken, kKeyRefreshToken])
       
       // validate the Id Token
-      if isValid(result[0]), let refreshToken = result[1] {
+      if result.count == 2 && isValid(result[0]), let refreshToken = result[1] {
         // save the email & picture
         updateClaims(from: result[0])
         // save the Refresh Token

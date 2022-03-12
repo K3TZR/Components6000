@@ -33,6 +33,7 @@ let package = Package(
     .target(
       name: "RemoteViewer",
       dependencies: [
+        "Shared",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),

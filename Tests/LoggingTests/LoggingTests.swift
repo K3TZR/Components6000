@@ -298,7 +298,7 @@ class LoggingTests: XCTestCase {
     //      "2022-02-11 20:01:17.131 [Info] > XCGWrapperTests-2: info message",
     //      "2022-02-11 20:01:17.131 [Warning] > XCGWrapperTests-2: warning message",
     //      "2022-02-11 20:01:17.131 [Error] > XCGWrapperTests-2: error message",
-    store.send(.refreshButton(logFileUrl, .debug)) {
+    store.send(.refreshButton) {
       $0.logMessages = expected
     }
     

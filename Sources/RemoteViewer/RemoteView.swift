@@ -1,6 +1,6 @@
 //
 //  RemoteView.swift
-//  Components6000/DinRelay
+//  Components6000/RemoteViewer
 //
 //  Created by Douglas Adams on 2/26/22.
 //
@@ -22,52 +22,66 @@ public struct RemoteView: View {
     
     WithViewStore(store) { viewStore in
       VStack {
-        Text(viewStore.heading).font(.title).padding(.vertical)
-        HStack {
-          Text("Number").frame(width: 100, alignment: .leading)
-          Text("Name").frame(width: 250, alignment: .leading)
-          Text("State").frame(width: 100, alignment: .center)
-          Text("Locked").frame(width: 100, alignment: .center)
-          Text("Cycle Delay").frame(width: 150, alignment: .center)
-        }.font(.title2)
         
-        Divider().background(Color(.red))
-        ForEach(viewStore.relays.indices) { index in
-          HStack {
-            VStack {
-              Text("\(index + 1)")
-            }.frame(width: 100, alignment: .leading)
-
-            VStack {
-              Text(viewStore.relays[index].name == "" ? "-- none --" : viewStore.relays[index].name)
-            }.frame(width: 250, alignment: .leading)
-
-            VStack {
-              Toggle("", isOn: viewStore.binding(get: \.relays[index].state, send: .toggleState(index)))
-            }.frame(width: 100, alignment: .center)
-            
-            VStack {
-              Toggle("", isOn: viewStore.binding(get: \.relays[index].locked, send: .toggleLocked(index)))
-            }.frame(width: 100, alignment: .center)
-          
-            VStack {
-              Text(viewStore.relays[index].cycleDelay == nil ? "-- none --" : "\(viewStore.relays[index].cycleDelay!)")
-            }.frame(width: 150, alignment: .center)
-          }
-          .font(.title2)
+        RemoteViewHeading(store: store)
+        
+        List {
+          ForEachStore(
+            self.store.scope(state: \.relays, action: RemoteAction.relay(id:action:)),
+            content: RelayView.init(store:)
+          )
         }
-        Spacer()
-        Divider().background(Color(.red))
-        HStack(spacing: 60) {
-          Button("Refresh") { viewStore.send(.refresh) }.disabled(viewStore.scriptInFlight)
-          Button("All Off") { viewStore.send(.allOff) }.disabled(viewStore.scriptInFlight)
-          Spacer()
-          Button("Start") { viewStore.send(.start) }.disabled(viewStore.scriptInFlight)
-          Button("Stop") { viewStore.send(.stop) }.disabled(viewStore.scriptInFlight)
-        }
-        .onAppear() { viewStore.send(.onAppear) }
+
+        RemoteViewFooter(store: store)
       }
+      .onAppear() { viewStore.send(.onAppear) }
       .padding()
+    }
+  }
+}
+
+public struct RemoteViewHeading: View {
+  let store: Store<RemoteState, RemoteAction>
+  
+  public var body: some View {
+    
+    WithViewStore(store) { viewStore in
+      Text(viewStore.heading).font(.title).padding(.vertical)
+      Text("- - - - - - - - - State - - - - - - - - -").font(.title2).frame(alignment: .leading).padding(.trailing, 70)
+      HStack {
+        Text("Name")
+          .frame(width: 250, alignment: .leading)
+        Group {
+          Text("Physical")
+          Text("Transient")
+          Text("Current")
+          Text("Critical")
+          Text("Locked")
+          Text("Cycle Delay")
+        }
+        .frame(width: 100, alignment: .center)
+        .font(.title2)
+      }
+      Divider().background(Color(.red))
+    }
+  }
+}
+
+public struct RemoteViewFooter: View {
+  let store: Store<RemoteState, RemoteAction>
+  
+  public var body: some View {
+    
+    WithViewStore(store) { viewStore in
+      Spacer()
+      Divider().background(Color(.red))
+      HStack(spacing: 60) {
+        Button("Refresh") { viewStore.send(.refresh) }.disabled(viewStore.scriptInFlight)
+        Button("All Off") { viewStore.send(.allOff) }.disabled(viewStore.scriptInFlight)
+        Spacer()
+        Button("Cycle ON") { viewStore.send(.cycleOn) }.disabled(viewStore.scriptInFlight)
+        Button("Cycle OFF") { viewStore.send(.cycleOff) }.disabled(viewStore.scriptInFlight)
+      }
     }
   }
 }
@@ -80,7 +94,7 @@ struct RemoteView_Previews: PreviewProvider {
   static var previews: some View {
     RemoteView(
       store: Store(
-        initialState: RemoteState("Test Relays"),
+        initialState: RemoteState("Relay Status"),
         reducer: remoteReducer,
         environment: RemoteEnvironment()
       )

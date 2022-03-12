@@ -21,7 +21,7 @@ final class RadioTests: XCTestCase {
     // give the parseStatus method the values (they will be updated on the main thread)
     Amplifier.parseStatus(amplifierStatus.keyValuesArray(), true)
     
-    if let object = Objects.sharedInstance.amplifiers["0x12345678".streamId!] {
+    if let object = Objects.sharedInstance.amplifiers[id: "0x12345678".streamId!] {
       
       XCTAssertEqual(object.id, "0x12345678".handle!, file: #function)
       XCTAssertEqual(object.ant, "ANT1", "ant", file: #function)
@@ -57,15 +57,15 @@ final class RadioTests: XCTestCase {
   private var equalizerTxStatus = "txsc mode=0 63Hz=0 125Hz=10 250Hz=20 500Hz=30 1000Hz=-10 2000Hz=-20 4000Hz=-30 8000Hz=-40"
   
   func testEqualizerRxParse() {
-    Objects.sharedInstance.equalizers[.rxsc] = Equalizer(Equalizer.EqType.rxsc.rawValue)
+    Objects.sharedInstance.equalizers[id: Equalizer.EqType.rxsc.rawValue] = Equalizer(Equalizer.EqType.rxsc.rawValue)
     equalizerParse(.rxsc)
-    Objects.sharedInstance.equalizers[.rxsc] = nil
+    Objects.sharedInstance.equalizers[id: Equalizer.EqType.rxsc.rawValue] = nil
   }
   
   func testEqualizerTxParse() {
-    Objects.sharedInstance.equalizers[.txsc] = Equalizer(Equalizer.EqType.rxsc.rawValue)
+    Objects.sharedInstance.equalizers[id: Equalizer.EqType.txsc.rawValue] = Equalizer(Equalizer.EqType.txsc.rawValue)
     equalizerParse(.txsc)
-    Objects.sharedInstance.equalizers[.txsc] = nil
+    Objects.sharedInstance.equalizers[id: Equalizer.EqType.txsc.rawValue] = nil
   }
   
   func equalizerParse(_ eqType: Equalizer.EqType) {
@@ -79,7 +79,7 @@ final class RadioTests: XCTestCase {
       return
     }
     
-    if let object = Objects.sharedInstance.equalizers[eqType] {
+    if let object = Objects.sharedInstance.equalizers[id: eqType.rawValue] {
       
       XCTAssertEqual(object.eqEnabled, false, "eqEnabled", file: #function)
       XCTAssertEqual(object.level63Hz, 0, "level63Hz", file: #function)
@@ -99,20 +99,20 @@ final class RadioTests: XCTestCase {
   
   
   func testEqualizerRx() {
-    Objects.sharedInstance.equalizers[.rxsc] = Equalizer(Equalizer.EqType.rxsc.rawValue)
+    Objects.sharedInstance.equalizers[id: Equalizer.EqType.rxsc.rawValue] = Equalizer(Equalizer.EqType.rxsc.rawValue)
     equalizer(.rxsc)
-    Objects.sharedInstance.equalizers[.rxsc] = nil
+    Objects.sharedInstance.equalizers[id: Equalizer.EqType.rxsc.rawValue] = nil
   }
   
   func testEqualizerTx() {
-    Objects.sharedInstance.equalizers[.txsc] = Equalizer(Equalizer.EqType.rxsc.rawValue)
+    Objects.sharedInstance.equalizers[id: Equalizer.EqType.txsc.rawValue] = Equalizer(Equalizer.EqType.txsc.rawValue)
     equalizer(.txsc)
-    Objects.sharedInstance.equalizers[.txsc] = nil
+    Objects.sharedInstance.equalizers[id: Equalizer.EqType.txsc.rawValue] = nil
   }
   
   func equalizer(_ eqType: Equalizer.EqType) {
     
-    if let object = Objects.sharedInstance.equalizers[eqType] {
+    if let object = Objects.sharedInstance.equalizers[id: eqType.rawValue] {
       
       object.eqEnabled = true
       object.level63Hz    = 10
@@ -168,7 +168,7 @@ final class RadioTests: XCTestCase {
     // give the parseStatus method the values (they will be updated on the main thread)
     Memory.parseStatus(memoryStatus.keyValuesArray(), true)
     
-    if let object = Objects.sharedInstance.memories["1".objectId!] {
+    if let object = Objects.sharedInstance.memories[id: "1".objectId!] {
       
       XCTAssertEqual(object.owner, "K3TZR", "owner", file: #function)
       XCTAssertEqual(object.group, "", "Group", file: #function)
@@ -244,9 +244,9 @@ final class RadioTests: XCTestCase {
     // remove all
     Objects.sharedInstance.memories.removeAll()
     
-    Objects.sharedInstance.memories[1] = Memory(1)
+    Objects.sharedInstance.memories[id: 1] = Memory(1)
     
-    if let object = Objects.sharedInstance.memories.first?.value {
+    if let object = Objects.sharedInstance.memories.first {
       
       // save params
       let firstId = object.id
@@ -272,11 +272,11 @@ final class RadioTests: XCTestCase {
       let digitalLowerOffset = object.digitalLowerOffset
       let digitalUpperOffset = object.digitalUpperOffset
       
-      Objects.sharedInstance.memories[firstId] = nil
+      Objects.sharedInstance.memories[id: firstId] = nil
       
-      Objects.sharedInstance.memories[2] = Memory(2)
+      Objects.sharedInstance.memories[id: 2] = Memory(2)
       
-      if let object = Objects.sharedInstance.memories.first?.value {
+      if let object = Objects.sharedInstance.memories.first {
         
         let secondId = object.id
         
@@ -343,7 +343,7 @@ final class RadioTests: XCTestCase {
         XCTAssertEqual(object.digitalLowerOffset, 3321, "digitalLowerOffset", file: #function)
         XCTAssertEqual(object.digitalUpperOffset, 2612, "digitalUpperOffset", file: #function)
         
-        Objects.sharedInstance.memories[secondId] = nil
+        Objects.sharedInstance.memories[id: secondId] = nil
       }
     }
     Objects.sharedInstance.memories.removeAll()
@@ -358,7 +358,7 @@ final class RadioTests: XCTestCase {
     // give the parseStatus method the values (they will be updated on the main thread)
     Meter.parseStatus(meterStatus.keyValuesArray(delimiter: "#"), true)
     
-    if let object = Objects.sharedInstance.meters["1".objectId!] {
+    if let object = Objects.sharedInstance.meters[id: "1".objectId!] {
       
       XCTAssertEqual(object.source, "cod-", "source", file: #function)
       XCTAssertEqual(object.name, "micpeak", "name", file: #function)

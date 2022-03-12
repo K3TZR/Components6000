@@ -104,6 +104,16 @@ public struct AlertView: Equatable, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - Extensions
 
+public extension Bool {
+    var as1or0Int   : Int     { self ? 1 : 0 }
+    var as1or0      : String  { self ? "1" : "0" }
+    var asTrueFalse : String  { self ? "True" : "False" }
+    var asTF        : String  { self ? "T" : "F" }
+    var asOnOff     : String  { self ? "on" : "off" }
+    var asPassFail  : String  { self ? "PASS" : "FAIL" }
+    var asYesNo     : String  { self ? "YES" : "NO" }
+}
+
 extension FileManager {
   
   public static func appFolder(for bundleIdentifier: String) -> URL {
@@ -127,16 +137,6 @@ extension FileManager {
 
 extension URL {
   public static var appSupport : URL { return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first! }
-}
-
-public extension Bool {
-  var as1or0Int: Int { self ? 1 : 0 }
-  var as1or0: String { self ? "1" : "0" }
-  var asTrueFalse: String { self ? "True" : "False" }
-  var asTF: String { self ? "T" : "F" }
-  var asOnOff: String { self ? "on" : "off" }
-  var asPassFail: String { self ? "PASS" : "FAIL" }
-  var asYesNo: String { self ? "YES" : "NO" }
 }
 
 public extension String {
