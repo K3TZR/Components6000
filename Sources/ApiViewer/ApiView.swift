@@ -107,7 +107,7 @@ public struct ApiView: View {
       
       } else {
         RemoteView(store: Store(
-          initialState: RemoteState( "Din 4 Relays" ),
+          initialState: RemoteState( "Remote Relays" ),
           reducer: remoteReducer,
           environment: RemoteEnvironment() )
         )

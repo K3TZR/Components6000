@@ -14,16 +14,17 @@ public struct RelayView: View {
   public var body: some View {
     WithViewStore(self.store) { viewStore in
       HStack {
-        Text(viewStore.name == "" ? "-- none --" : viewStore.name)
-          .frame(width: 250, alignment: .leading)
-        HStack {
-          Text("\(viewStore.physicalState ? "ON" : " ")").frame(width: 100, alignment: .center)
-          Text("\(viewStore.transientState ? "ON" : " ")").frame(width: 100, alignment: .center)
-          Text("\(viewStore.currentState ? "ON" : " ")").frame(width: 100, alignment: .center)
-          Text("\(viewStore.critical ? "T" : " ")").frame(width: 100, alignment: .center)
-          Text("\(viewStore.locked ? "T" : " ")").frame(width: 100, alignment: .center)
+        TextField("", text: viewStore.binding(\.$name)).frame(width: 250, alignment: .leading)
+        Group {
+          Toggle("", isOn: viewStore.binding(\.$physicalState)).disabled(true)
+          Toggle("", isOn: viewStore.binding(\.$transientState)).disabled(true)
+          Toggle("", isOn: viewStore.binding(\.$currentState)).disabled(viewStore.locked)
+          Toggle("", isOn: viewStore.binding(\.$critical))
+          Toggle("", isOn: viewStore.binding(\.$locked)).disabled(true)
         }
-        Text("\(viewStore.cycleDelayString)").frame(width: 100, alignment: .trailing)
+        .frame(width: 100, alignment: .center)
+        TextField("", text: viewStore.binding(\.$cycleDelayString))
+          .frame(width: 100).multilineTextAlignment(.trailing)
       }
       .font(.title2)
     }

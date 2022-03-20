@@ -22,7 +22,11 @@ public enum LanListenerError: Error {
 ///      listens for the udp broadcasts announcing the presence
 ///      of a Flex-6000 Radio, publishes changes
 ///
-final class LanListener: NSObject, ObservableObject {
+final public class LanListener: NSObject, ObservableObject {
+  
+  public var clientPublisher = PassthroughSubject<ClientUpdate, Never>()
+  public var packetPublisher = PassthroughSubject<PacketUpdate, Never>()
+
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
@@ -31,14 +35,14 @@ final class LanListener: NSObject, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
   
-  weak var _discovery: Discovery?
+//  weak var _discovery: Discovery?
 
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
   private var _cancellables = Set<AnyCancellable>()
   private let _formatter = DateFormatter()
-  private let _udpQ = DispatchQueue(label: "DiscoveryListener" + ".udpQ")
+  private let _udpQ = DispatchQueue(label: "LanListener" + ".udpQ")
   private var _udpSocket: GCDAsyncUdpSocket!
 
   let _log = LogProxy.sharedInstance.log
@@ -46,9 +50,8 @@ final class LanListener: NSObject, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
-  init(_ discovery: Discovery, port: UInt16 = 4992) {
+  public init(port: UInt16 = 4992) {
     super.init()
-    _discovery = discovery
     
     _formatter.timeZone = .current
     _formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -60,12 +63,12 @@ final class LanListener: NSObject, ObservableObject {
     
     try! _udpSocket.enableReusePort(true)
     try! _udpSocket.bind(toPort: port)
-    _log("Discovery: Lan Listener UDP Socket initialized", .debug, #function, #file, #line)
+    _log("Lan Listener: UDP Socket initialized", .debug, #function, #file, #line)
   }
 
-  func start(checkInterval: TimeInterval = 1.0, timeout: TimeInterval = 10.0) {
+  public func start(checkInterval: TimeInterval = 1.0, timeout: TimeInterval = 10.0) {
     try! _udpSocket.beginReceiving()
-    _log("Discovery: Lan Listener is listening", .debug, #function, #file, #line)
+    _log("Lan Listener: is listening", .debug, #function, #file, #line)
     
     // setup a timer to watch for Radio timeouts
     Timer.publish(every: checkInterval, on: .main, in: .default)
@@ -76,11 +79,24 @@ final class LanListener: NSObject, ObservableObject {
       .store(in: &_cancellables)
   }
   
+//  public func startLanListener() {
+//    guard _lanListener == nil else { return }
+//    _lanListener = LanListener(self)
+//    _lanListener?.start()
+//  }
+//
+//  public func stopLanListener() {
+//    guard _lanListener != nil else { return }
+//    _lanListener?.stop()
+//    removePackets(ofType: .local)
+//    _lanListener = nil
+//  }
+
   // ----------------------------------------------------------------------------
   // MARK: - Internal methods
   
   /// stop the listener
-  func stop() {
+  public func stop() {
     _cancellables = Set<AnyCancellable>()
     _udpSocket?.close()
     isListening = false
@@ -92,10 +108,10 @@ final class LanListener: NSObject, ObservableObject {
   /// Remove a packet from the collection
   /// - Parameter condition:  a closure defining the condition for removal
   private func remove(condition: (Packet) -> Bool) {
-    for packet in _discovery!.packets where condition(packet) { 
-      let removedPacket = _discovery?.packets.remove(id: packet.id)
-      _discovery!.packetPublisher.send(PacketUpdate(.deleted, packet: removedPacket!))
-      self._log("Discovery: Lan Listener packet removed, interval = \(abs(removedPacket!.lastSeen.timeIntervalSince(Date())))", .debug, #function, #file, #line)
+    for packet in PacketCollection.sharedInstance.packets where condition(packet) {
+      let removedPacket = PacketCollection.sharedInstance.packets.remove(id: packet.id)
+      packetPublisher.send(PacketUpdate(.deleted, packet: removedPacket!))
+      self._log("Lan Listener: packet removed, interval = \(abs(removedPacket!.lastSeen.timeIntervalSince(Date())))", .debug, #function, #file, #line)
     }
   }
 
@@ -139,6 +155,6 @@ extension LanListener: GCDAsyncUdpSocketDelegate {
     guard let packet = parseVita(vita) else { return }
     
     // YES, process it
-    _discovery?.processPacket(packet)
+    PacketCollection.sharedInstance.processPacket(packet)
   }
 }

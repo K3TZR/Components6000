@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-import Discovery
+import LanDiscovery
 import TcpCommands
 import UdpStreams
 import Shared
@@ -265,12 +265,12 @@ public final class Radio: Equatable {
         self?.udpStatus(status)
       }
     
-    _cancellablePacketUpdate = Discovery.sharedInstance.packetPublisher
+    _cancellablePacketUpdate = PacketCollection.sharedInstance.packetPublisher
       .sink { [weak self] update in
         self?.packetUpdate(update)
       }
 
-    _cancellableClientUpdate = Discovery.sharedInstance.clientPublisher
+    _cancellableClientUpdate = PacketCollection.sharedInstance.clientPublisher
       .sink { [weak self] update in
         self?.clientUpdate(update)
       }

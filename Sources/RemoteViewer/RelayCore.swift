@@ -28,15 +28,19 @@ public struct Relay: Codable, Equatable, Identifiable {
     self.cycleDelay = cycleDelay
     self.locked = locked
   }
-  public var id: String { name }
+  public var id = UUID()
   @BindableState public var critical: Bool
-  public var transientState: Bool
-  public var physicalState: Bool
+  @BindableState public var transientState: Bool
+  @BindableState public var physicalState: Bool
   @BindableState public var currentState: Bool
   @BindableState public var name: String
-  public var cycleDelay: Int?
-  @BindableState public var cycleDelayString: String = ""
-  public var locked: Bool
+  public var cycleDelay: Int? {
+    didSet { cycleDelayString = cycleDelay == nil ? "" : String(cycleDelay!) }
+  }
+  @BindableState public var cycleDelayString: String = "" {
+    didSet { cycleDelay = cycleDelayString == "" ? nil : Int(cycleDelayString)}
+  }
+  @BindableState public var locked: Bool
   
   public enum CodingKeys: String, CodingKey {
     case critical
@@ -58,15 +62,7 @@ public enum RelayAction: BindableAction, Equatable {
 public struct RelayEnvironment {}
 
 public let relayReducer = Reducer<Relay, RelayAction, RelayEnvironment> { state, action, _ in
-//  switch action {
-//  case .checkBoxToggled:
-//    todo.isComplete.toggle()
-//    return .none
-//
-//  case let .textFieldChanged(description):
-//    todo.description = description
-//    return .none
-//  }
+
   return .none
 }
   .binding()

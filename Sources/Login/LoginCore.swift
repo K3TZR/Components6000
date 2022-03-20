@@ -32,7 +32,7 @@ public struct LoginState: Equatable {
   }
   @BindableState var email: String
   @BindableState var pwd: String
-  @BindableState var heading: String
+  var heading: String
 }
 
 public enum LoginAction: BindableAction, Equatable {
@@ -44,12 +44,14 @@ public enum LoginAction: BindableAction, Equatable {
 }
 
 public struct LoginEnvironment {
+  
+  public init() {}
 }
 
 // ----------------------------------------------------------------------------
 // MARK: - Reducer
 
-let loginReducer = Reducer<LoginState, LoginAction, LoginEnvironment>
+public let loginReducer = Reducer<LoginState, LoginAction, LoginEnvironment>
   { state, action, environment in
     
     switch action {

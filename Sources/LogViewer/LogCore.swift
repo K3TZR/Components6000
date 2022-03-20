@@ -264,13 +264,12 @@ func logLineColor(_ text: String) -> Color {
 /// - Returns:       the URL of the selected file or nil
 func showSavePanel() -> URL? {
   let savePanel = NSSavePanel()
-  savePanel.allowedFileTypes = ["log"]
+  savePanel.allowedContentTypes = [.log]
   savePanel.canCreateDirectories = true
   savePanel.isExtensionHidden = false
   savePanel.allowsOtherFileTypes = false
   savePanel.title = "Save the Log"
-  savePanel.message = "Choose a folder and a name to store your Log."
-  savePanel.nameFieldLabel = "File name:"
+//  savePanel.nameFieldLabel = "File name:"
 
   let response = savePanel.runModal()
   return response == .OK ? savePanel.url : nil
@@ -280,10 +279,11 @@ func showSavePanel() -> URL? {
 /// - Returns:        the URL of the selected file or nil
 func showOpenPanel() -> URL? {
   let openPanel = NSOpenPanel()
-  openPanel.allowedFileTypes = ["log"]
+  openPanel.allowedContentTypes = [.log]
   openPanel.allowsMultipleSelection = false
   openPanel.canChooseDirectories = false
   openPanel.canChooseFiles = true
+  openPanel.title = "Open an existing Log"
   let response = openPanel.runModal()
   return response == .OK ? openPanel.url : nil
 }

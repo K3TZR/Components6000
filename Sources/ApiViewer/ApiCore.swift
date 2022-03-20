@@ -10,7 +10,7 @@ import ComposableArchitecture
 import Dispatch
 import SwiftUI
 
-import Discovery
+import LanDiscovery
 import Login
 import LogViewer
 import Picker
@@ -169,7 +169,8 @@ public struct ApiState: Equatable {
   public var alert: AlertState<ApiAction>?
   public var clearNow = false
   public var commandToSend = ""
-  public var discovery: Discovery? = nil
+  public var packetCollection: PacketCollection?
+  public var lanListener: LanListener?
   public var filteredMessages = IdentifiedArrayOf<TcpMessage>()
   public var forceWanLogin = false
   public var loginState: LoginState? = nil
@@ -242,6 +243,13 @@ public struct ApiEnvironment {
 
 // swiftlint:disable trailing_closure
 public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
+  loginReducer
+    .optional()
+    .pullback(
+      state: \ApiState.loginState,
+      action: /ApiAction.loginAction,
+      environment: { _ in LoginEnvironment() }
+    ),
   pickerReducer
     .optional()
     .pullback(
@@ -257,9 +265,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .onAppear:
       // if the first time, start various effects
-      if state.discovery == nil {
-        // instantiale Discovery
-        state.discovery = Discovery.sharedInstance
+      if state.packetCollection == nil {
+        // instantiate the collection
+        state.packetCollection = PacketCollection.sharedInstance
         // instantiate the Logger,
         _ = environment.logger(LogProxy.sharedInstance.logPublisher, .debug)
         // subscribe to packets, log alerts and TCP messages (sent & received)
@@ -274,21 +282,23 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
 
     case .finishInitialization:
       // needed when coming from other than .onAppear
-      Discovery.sharedInstance.stopLanListener()
-      Discovery.sharedInstance.stopWanListener()
+      state.lanListener?.stop()
+//      Discovery.sharedInstance.stopWanListener()
 
       switch state.connectionMode {
       case .local:
-        state.discovery!.startLanListener()
+        state.lanListener = LanListener()
+        state.lanListener!.start()
       case .smartlink:
-        if state.discovery!.startWanListener(smartlinkEmail: state.smartlinkEmail, forceLogin: state.forceWanLogin) == false {
-          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
-        }
+//        if state.discovery!.startWanListener(forceLogin: state.forceWanLogin) == false {
+//          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
+//        }
+        break
       case .both:
-        state.discovery!.startLanListener()
-        if state.discovery!.startWanListener(smartlinkEmail: state.smartlinkEmail, forceLogin: state.forceWanLogin) == false {
-          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
-        }
+        state.lanListener!.start()
+//        if state.discovery!.startWanListener(forceLogin: state.forceWanLogin) == false {
+//          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
+//        }
       case .none:
         break
       }
@@ -434,11 +444,11 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .loginAction(.loginButton(let credentials)):
       state.loginState = nil
       state.smartlinkEmail = credentials.email
-      if state.discovery!.startWanListener( using: credentials) {
-        state.forceWanLogin = false
-      } else {
+//      if state.discovery!.startWanListener( using: credentials) {
+//        state.forceWanLogin = false
+//      } else {
         state.alert = AlertState(title: TextState("Smartlink login failed"))
-      }
+//      }
       return .none
       
       // ----------------------------------------------------------------------------
@@ -584,7 +594,7 @@ func hasDefault(_ state: ApiState) -> PickerSelection? {
   // is there a saved default?
   if let saved = state.defaultConnection {
     // YES, find a matching discovered packet
-    for packet in state.discovery!.packets where saved.source == packet.source.rawValue && saved.serial == packet.serial {
+    for packet in state.packetCollection!.packets where saved.source == packet.source.rawValue && saved.serial == packet.serial {
       // found one
       return PickerSelection(packet, saved.station, nil)
     }

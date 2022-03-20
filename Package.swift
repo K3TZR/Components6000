@@ -10,7 +10,7 @@ let package = Package(
   ],
   products: [
     .library(name: "Shared", targets: ["Shared"]),
-    .library(name: "Discovery", targets: ["Discovery"]),
+    .library(name: "LanDiscovery", targets: ["LanDiscovery"]),
     .library(name: "Picker", targets: ["Picker"]),
     .library(name: "ApiViewer", targets: ["ApiViewer"]),
     .library(name: "LogViewer", targets: ["LogViewer"]),
@@ -47,7 +47,7 @@ let package = Package(
     .target(
       name: "Radio",
       dependencies: [
-        "Discovery",
+        "LanDiscovery",
         "TcpCommands",
         "UdpStreams",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -62,7 +62,11 @@ let package = Package(
     .target(
       name: "Login",
       dependencies: [
+        "Shared",
+        "SecureStorage",
+        .product(name: "JWTDecode", package: "JWTDecode.swift"),
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),
     .target(
@@ -75,7 +79,7 @@ let package = Package(
         "Login",
         "Picker",
         "ClientStatus",
-        "Discovery",
+        "LanDiscovery",
         "TcpCommands",
         "UdpStreams",
         "Radio",
@@ -93,7 +97,7 @@ let package = Package(
       ]
     ),
     .target(
-      name: "Discovery",
+      name: "LanDiscovery",
       dependencies: [
         "Shared",
         "SecureStorage",
@@ -105,7 +109,7 @@ let package = Package(
     .target(
       name: "Picker",
       dependencies: [
-        "Discovery",
+        "LanDiscovery",
         "ClientStatus",
         "Shared",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -135,7 +139,7 @@ let package = Package(
     ),
     .testTarget(
       name: "DiscoveryTests",
-      dependencies: ["Discovery"]
+      dependencies: ["LanDiscovery"]
     ),
     .testTarget(
       name: "PickerTests",
@@ -151,7 +155,7 @@ let package = Package(
     ),
     .testTarget(
       name: "TcpCommandsTests",
-      dependencies: ["TcpCommands", "Discovery"]
+      dependencies: ["TcpCommands", "LanDiscovery"]
     ),
     .testTarget(
       name: "LoggingTests",

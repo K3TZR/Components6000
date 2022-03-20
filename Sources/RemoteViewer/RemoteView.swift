@@ -25,7 +25,7 @@ public struct RemoteView: View {
         
         RemoteViewHeading(store: store)
         
-        List {
+        VStack {
           ForEachStore(
             self.store.scope(state: \.relays, action: RemoteAction.relay(id:action:)),
             content: RelayView.init(store:)
@@ -35,7 +35,7 @@ public struct RemoteView: View {
         RemoteViewFooter(store: store)
       }
       .onAppear() { viewStore.send(.onAppear) }
-      .padding()
+      .padding(.horizontal)
     }
   }
 }
@@ -46,24 +46,26 @@ public struct RemoteViewHeading: View {
   public var body: some View {
     
     WithViewStore(store) { viewStore in
-      Text(viewStore.heading).font(.title).padding(.vertical)
-      Text("- - - - - - - - - State - - - - - - - - -").font(.title2).frame(alignment: .leading).padding(.trailing, 70)
-      HStack {
-        Text("Name")
-          .frame(width: 250, alignment: .leading)
-        Group {
-          Text("Physical")
-          Text("Transient")
-          Text("Current")
-          Text("Critical")
-          Text("Locked")
-          Text("Cycle Delay")
+      VStack {
+        Text(viewStore.heading).font(.title).padding(.bottom)
+        Text("- - - - - - - - - State - - - - - - - - -").padding(.trailing, 60)
+        HStack {
+          Text("Name").frame(width: 250, alignment: .leading)
+          Group {
+            Text("Physical")
+            Text("Transient")
+            Text("Current")
+            Text("Critical")
+            Text("Locked")
+            Text("Cycle Delay")
+          }
+          .frame(width: 100, alignment: .center)
         }
-        .frame(width: 100, alignment: .center)
-        .font(.title2)
       }
-      Divider().background(Color(.red))
+      .font(.title2)
     }
+    
+    Divider().background(Color(.red))
   }
 }
 

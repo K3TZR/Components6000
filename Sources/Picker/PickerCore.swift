@@ -10,7 +10,8 @@ import ComposableArchitecture
 import Dispatch
 import AppKit
 
-import Discovery
+import LanDiscovery
+import Login
 import ClientStatus
 import Shared
 
@@ -28,13 +29,13 @@ struct WanStatusSubscriptionId: Hashable {}
 public struct PickerState: Equatable {
   public init(connectionType: ConnectionType = .gui,
               defaultSelection: PickerSelection? = nil,
-              discovery: Discovery = Discovery.sharedInstance,
+              packetCollection: PacketCollection = PacketCollection.sharedInstance,
               pickerSelection: PickerSelection? = nil,
               testResult: SmartlinkTestResult? = nil)
   {
     self.connectionType = connectionType
     self.defaultSelection = defaultSelection
-    self.discovery = discovery
+    self.packetCollection = packetCollection
     self.pickerSelection = pickerSelection
     self.testResult = testResult
   }
@@ -43,7 +44,7 @@ public struct PickerState: Equatable {
   public var clientState: ClientState?
   public var connectionType: ConnectionType
   public var defaultSelection: PickerSelection?
-  public var discovery: Discovery
+  public var packetCollection: PacketCollection
   public var forceUpdate = false
   public var pickerSelection: PickerSelection?
   public var testResult: SmartlinkTestResult?
@@ -119,7 +120,7 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
     case .connectButton(let selection):
       if selection.packet.source == .smartlink {
         // get wan specific params (wanHandle)
-        state.discovery.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
+//        state.discovery.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
         // reply will generate a wanStatusReceived action
         return .none
       } else {
@@ -155,17 +156,22 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .none
 
     case .testButton(let selection):
-      state.testResult = nil
-      // try to send a Test
-      if state.discovery.sendSmartlinkTest(selection.packet.serial) {
-        // reply will generate a testResultReceived action
-        return subscribeToTestResult()
-
-      } else {
-        // NOT SENT (why?)
-        NSSound.beep()
-        return .none
-      }
+//      state.testResult = nil
+//      // try to send a Test
+//      if state.discovery.sendSmartlinkTest(selection.packet.serial) {
+//        // reply will generate a testResultReceived action
+//        return subscribeToTestResult()
+//
+//      } else {
+//        // NOT SENT (why?)
+//        NSSound.beep()
+//        return .none
+//      }
+      
+      
+      // FIXME: !!!!!!
+      
+      return .none
       
       // ----------------------------------------------------------------------------
       // MARK: - Client actions
@@ -253,13 +259,13 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
 
 public func subscribeToDiscoveryPackets() -> Effect<PickerAction, Never> {
   Effect.merge(
-    Discovery.sharedInstance.packetPublisher
+    PacketCollection.sharedInstance.packetPublisher
       .receive(on: DispatchQueue.main)
       .map { update in .packetChangeReceived(update) }
       .eraseToEffect()
       .cancellable(id: DiscoveryPacketSubscriptionId()),
     
-    Discovery.sharedInstance.clientPublisher
+    PacketCollection.sharedInstance.clientPublisher
       .receive(on: DispatchQueue.main)
       .map { update in .clientChangeReceived(update) }
       .eraseToEffect()
@@ -269,7 +275,7 @@ public func subscribeToDiscoveryPackets() -> Effect<PickerAction, Never> {
 
 public func subscribeToTestResult() -> Effect<PickerAction, Never> {
   Effect(
-    Discovery.sharedInstance.testPublisher
+    Authentication.sharedInstance.testPublisher
       .receive(on: DispatchQueue.main)
       .map { result in .testResultReceived(result) }
       .eraseToEffect()
@@ -279,7 +285,7 @@ public func subscribeToTestResult() -> Effect<PickerAction, Never> {
 
 public func subscribeToWanStatus() -> Effect<PickerAction, Never> {
   Effect(
-    Discovery.sharedInstance.wanStatusPublisher
+    Authentication.sharedInstance.wanStatusPublisher
       .receive(on: DispatchQueue.main)
       .map { status in .wanStatusReceived(status) }
       .eraseToEffect()

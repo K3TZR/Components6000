@@ -40,7 +40,7 @@ public struct LoginView: View {
           Button("Cancel") { viewStore.send(.cancelButton) }
           .keyboardShortcut(.cancelAction)
           
-          Button("Log in") { viewStore.send(.loginButton(LoginResult(viewStore.email, pwd: viewStore.pwd))) }
+          Button("Log in") { viewStore.send(.loginButton( LoginResult(viewStore.email, pwd: viewStore.pwd) )) }
           .keyboardShortcut(.defaultAction)
         }
       }

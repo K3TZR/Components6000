@@ -9,7 +9,7 @@ import SwiftUI
 import Combine
 import ComposableArchitecture
 
-import Discovery
+import LanDiscovery
 import ClientStatus
 import Shared
 
@@ -30,9 +30,9 @@ public struct PickerView: View {
   /// - Returns:                 a Bool
   func noItemsToDisplay(_ viewStore: ViewStore<PickerState, PickerAction>) -> Bool {
     if viewStore.connectionType == .gui {
-      return viewStore.discovery.packets.count == 0
+      return viewStore.packetCollection.packets.count == 0
     } else {
-      for packet in viewStore.discovery.packets where packet.guiClients.count > 0 {
+      for packet in viewStore.packetCollection.packets where packet.guiClients.count > 0 {
         return false
       }
       return true
@@ -104,7 +104,7 @@ public struct PacketView: View {
   public var body: some View {
     
     WithViewStore(store) { viewStore in
-      ForEach(viewStore.discovery.packets, id: \.id) { packet in
+      ForEach(viewStore.packetCollection.packets, id: \.id) { packet in
         ZStack {
           HStack(spacing: 0) {
             Group {
