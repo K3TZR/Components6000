@@ -9,7 +9,6 @@ import Foundation
 import CocoaAsyncSocket
 import Combine
 
-import Login
 import Shared
 
 public enum WanStatusType {
@@ -109,7 +108,7 @@ final class WanListener: NSObject, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
   
-  weak var _discovery: Discovery?
+//  weak var _discovery: Discovery?
   var _tcpSocket: GCDAsyncSocket!
   
   // ----------------------------------------------------------------------------
@@ -123,7 +122,6 @@ final class WanListener: NSObject, ObservableObject {
   var _publicIp: String?
 
   private var _appName: String?
-  private var _authentication = WanAuthentication()
   private var _cancellables = Set<AnyCancellable>()
   private var _domain: String?
   private var _idToken: IdToken? = nil
@@ -145,12 +143,11 @@ final class WanListener: NSObject, ObservableObject {
   // ------------------------------------------------------------------------------
   // MARK: - Initialization
   
-  convenience init(_ discovery: Discovery, timeout: Double = kTimeout) {
+  convenience init(timeout: Double = kTimeout) {
     self.init()
     
     _appName = (Bundle.main.infoDictionary!["CFBundleName"] as! String)
     _timeout = timeout
-    _discovery = discovery
 
     // get a socket & set it's parameters
     _tcpSocket = GCDAsyncSocket(delegate: self, delegateQueue: _socketQ)
@@ -167,45 +164,51 @@ final class WanListener: NSObject, ObservableObject {
   /// Start listening given a Smartlink email
   /// - Parameters:
   ///   - smartlinkEmail:     an email address associated with the Smartlink account
-  func start(using smartlinkEmail: String?, forceLogin: Bool) -> Bool {
-    guard forceLogin == false else { return false }
-    // obtain an ID Token
-    if let idToken = _authentication.getValidIdToken(from: _previousIdToken, or: smartlinkEmail) {
-      _previousIdToken = idToken
-      _log("Discovery: Wan Listener IdToken obtained from previous credentials", .debug, #function, #file, #line)
-      // use the ID Token to connect to the Smartlink service
-      do {
-        try connectToSmartlink(using: idToken)
-        return true
-      } catch {
-        return false
-      }
-      
-    } else {
-      return false
-    }
-  }
+//  func start(using smartlinkEmail: String?, forceLogin: Bool) -> Bool {
+//    guard forceLogin == false else { return false }
+//    // obtain an ID Token
+//    if let idToken = _authentication.getValidIdToken(from: _previousIdToken, or: smartlinkEmail) {
+//      _previousIdToken = idToken
+//      _log("Discovery: Wan Listener IdToken obtained from previous credentials", .debug, #function, #file, #line)
+//      // use the ID Token to connect to the Smartlink service
+//      do {
+//        try connectToSmartlink(using: idToken)
+//        return true
+//      } catch {
+//        return false
+//      }
+//
+//    } else {
+//      return false
+//    }
+//  }
   
   /// Start listening given a User / Pwd
   /// - Parameters:
   ///   - loginResult:           a struct with email & pwd
   func start(using loginResult: LoginResult) -> Bool {
-    if let idToken = _authentication.requestTokens(using: loginResult) {
+    if let idToken = Authentication.sharedInstance.requestTokens(using: loginResult) {
       _previousIdToken = idToken
       _log("Discovery: Wan Listener IdToken obtained from login credentials", .debug, #function, #file, #line)
-      // use the ID Token to connect to the Smartlink service
-      do {
-        try connectToSmartlink(using: idToken)
-        return true
-      } catch {
-        return false
-      }
-      
-    } else {
+      if start(using: idToken) { return true }
+    }
+    return false
+  }
+  
+  /// Start listening given an IdToken
+  /// - Parameters:
+  ///   - idToken:           a valid IdToken
+  func start(using idToken: IdToken) -> Bool {
+    _previousIdToken = idToken
+    // use the ID Token to connect to the Smartlink service
+    do {
+      try connectToSmartlink(using: idToken)
+      return true
+    } catch {
       return false
     }
   }
-  
+
   /// Send a command to the server using TLS
   /// - Parameter cmd:                command text
   func sendTlsCommand(_ cmd: String, timeout: TimeInterval = kTimeout, tag: Int = 1) {

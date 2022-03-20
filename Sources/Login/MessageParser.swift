@@ -133,7 +133,7 @@ extension WanListener {
       }
       if _publicIp != nil {
         // publish
-        _discovery?.wanStatusPublisher.send(WanStatus(.publicIp, _firstName! + " " + _lastName!, _callsign!, _serial, _wanHandle, _publicIp))
+        Authentication.sharedInstance.wanStatusPublisher.send(WanStatus(.publicIp, _firstName! + " " + _lastName!, _callsign!, _serial, _wanHandle, _publicIp))
       }
     }
   }
@@ -169,7 +169,7 @@ extension WanListener {
     
     if _firstName != nil && _lastName != nil && _callsign != nil {
       // publish
-      _discovery?.wanStatusPublisher.send(WanStatus(.settings, _firstName! + " " + _lastName!, _callsign!, _serial, _wanHandle, _publicIp))
+      Authentication.sharedInstance.wanStatusPublisher.send(WanStatus(.settings, _firstName! + " " + _lastName!, _callsign!, _serial, _wanHandle, _publicIp))
     }
   }
   
@@ -197,7 +197,7 @@ extension WanListener {
     
     if _wanHandle != nil && _serial != nil {
       // publish
-      _discovery?.wanStatusPublisher.send(WanStatus(.connect, nil, nil, _serial, _wanHandle, _publicIp))
+      Authentication.sharedInstance.wanStatusPublisher.send(WanStatus(.connect, nil, nil, _serial, _wanHandle, _publicIp))
     }
   }
   
@@ -242,7 +242,12 @@ extension WanListener {
       }
       packet.source = .smartlink
       // add packet to Packets
-      _discovery?.processPacket(packet)
+      
+      
+      // FIXME: !!!!!!
+      
+      
+//      _discovery?.processPacket(packet)
     }
   }
   
@@ -273,6 +278,6 @@ extension WanListener {
     }
     _log("Discovery: smartlink test result received, \(result.success ? "SUCCESS" : "FAILURE")", result.success ? .debug : .warning, #function, #file, #line)
     // publish the result
-    _discovery?.testPublisher.send(result)
+    Authentication.sharedInstance.testPublisher.send(result)
   }
 }

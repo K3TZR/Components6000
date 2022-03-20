@@ -1,19 +1,24 @@
 //
 //  Authentication.swift
-//  Components6000/Discovery/Wan
+//  Components6000/Login
 //
 //  Created by Douglas Adams on 12/5/21.
 //
 
 import Foundation
 import SwiftUI
+import Combine
 
 import JWTDecode
 import Shared
 import SecureStorage
-import Login
 
-final class WanAuthentication {
+
+final public class Authentication {
+  
+  public var testPublisher = PassthroughSubject<SmartlinkTestResult, Never>()
+  public var wanStatusPublisher = PassthroughSubject<WanStatus, Never>()
+
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
 
@@ -56,55 +61,105 @@ final class WanAuthentication {
   private let kDefaultPicture     = "person.fill"
   
   // ----------------------------------------------------------------------------
-  // MARK: - Initialization
+  // MARK: - Singleton
   
-  init() {
+  public static var sharedInstance = Authentication()
+  private init() {
     let appName = (Bundle.main.infoDictionary!["CFBundleName"] as! String)
     _secureStore = SecureStore(service: appName + kServiceName)
   }
+
+  // ----------------------------------------------------------------------------
+  // MARK: - Initialization
+  
+//  public init() {
+//    let appName = (Bundle.main.infoDictionary!["CFBundleName"] as! String)
+//    _secureStore = SecureStore(service: appName + kServiceName)
+//  }
+  
+  // ----------------------------------------------------------------------------
+  // MARK: - Public methods
+  
+  public func forceLogin() {
+    _previousIdToken = nil
+    // delete the saved refresh token from the Keychain
+    _ = _secureStore.delete(account: _smartlinkEmail)
+  }
+  
+  public func authenticate() -> IdToken? {
+    // is there a previous idToken which has not expired?
+    if _previousIdToken != nil, isValid(_previousIdToken) {
+      // YES, use the previous idToken
+      updateClaims(from: _previousIdToken)
+      return _previousIdToken
+    }
+    
+    // is there an email and a refresh token in the Keychain?
+    if _smartlinkEmail != nil, let refreshToken = _secureStore.get(account: _smartlinkEmail) {
+      // YES, can we get an Id Token from the Refresh Token?
+      if let idToken = requestIdToken(from: refreshToken, smartlinkEmail: _smartlinkEmail!), isValid(idToken) {
+        // YES, update the claims and use the Id Token
+        updateClaims(from: idToken)
+        _previousIdToken = idToken
+        return idToken
+
+      } else {
+        // NO, delete the saved refresh token from the Keychain
+        _ = _secureStore.delete(account: _smartlinkEmail)
+        _previousIdToken = nil
+      }
+    }
+    
+    // No token available, require a login
+    return nil
+  }
+
+  
+  
+  
   
   // ----------------------------------------------------------------------------
   // MARK: - Internal methods
   
-  func forceNewLogin(for smartlinkEmail: String) {
-    _previousIdToken = nil
-    // remove the Refresh Token from the KeyChain
-    _ = _secureStore.delete(account: smartlinkEmail)
-  }
+//  func forceNewLogin(for smartlinkEmail: String) {
+//    _previousIdToken = nil
+//    // remove the Refresh Token from the KeyChain
+//    _ = _secureStore.delete(account: smartlinkEmail)
+//  }
   
   /// Obtain an Id Token from previous credentials
   /// - Parameters:
   ///   - smartlinkEmail:       email address
   ///   - previousToken:        a token from an earlier exchange
   /// - Returns:                an Id Token (if any)
-  func getValidIdToken(from previousToken: IdToken?, or smartlinkEmail: String?) -> IdToken? {
-    // is there a saved Auth0 token which has not expired?
-    if let previousToken = previousToken, isValid(previousToken) {
-      // YES, use the saved token
-      updateClaims(from: previousToken)
-      return previousToken
-      
-    } else if smartlinkEmail != nil, let refreshToken = _secureStore.get(account: smartlinkEmail) {
-      // NO, can we get an ID Token using the Refresh Token?
-      if let idToken = requestIdToken(from: refreshToken, smartlinkEmail: smartlinkEmail!), isValid(idToken) {
-        // YES
-        return idToken
-        
-      } else {
-        // NO, the Keychain entry is no longer valid, delete it
-        _ = _secureStore.delete(account: smartlinkEmail)
-      }
-    }
-    // unable to obtain an ID Token
-    return nil
-  }
+//  func getValidIdToken(from previousToken: IdToken?, or smartlinkEmail: String?) -> IdToken? {
+//    // is there a saved Auth0 token which has not expired?
+//    if let previousToken = previousToken, isValid(previousToken) {
+//      // YES, use the saved token
+//      updateClaims(from: previousToken)
+//      return previousToken
+//
+//    } else if smartlinkEmail != nil, let refreshToken = _secureStore.get(account: smartlinkEmail) {
+//      // NO, can we get an ID Token using the Refresh Token?
+//      if let idToken = requestIdToken(from: refreshToken, smartlinkEmail: smartlinkEmail!), isValid(idToken) {
+//        // YES
+//        return idToken
+//
+//      } else {
+//        // NO, the Keychain entry is no longer valid, delete it
+//        _ = _secureStore.delete(account: smartlinkEmail)
+//      }
+//    }
+//    // unable to obtain an ID Token
+//    return nil
+//  }
   
   /// Given a UserId / Password, request an ID Token & Refresh Token
   /// - Parameters:
   ///   - user:       User name
   ///   - pwd:        User password
   /// - Returns:      an Id Token (if any)
-  func requestTokens(using loginResult: LoginResult) -> IdToken? {
+  public func requestTokens(using loginResult: LoginResult) -> IdToken? {
     // build the request
     var request = URLRequest(url: URL(string: kAuth0Authenticate)!)
     request.httpMethod = kHttpPost
@@ -130,10 +185,13 @@ final class WanAuthentication {
     return nil
   }
   
+  // ----------------------------------------------------------------------------
+  // MARK: - Private methods
+  
   /// Given a Refresh Token, request an ID Token
   /// - Parameter refreshToken:     a Refresh Token
   /// - Returns:                    an Id Token (if any)
-  func requestIdToken(from refreshToken: String, smartlinkEmail: String) -> IdToken? {
+  private func requestIdToken(from refreshToken: String, smartlinkEmail: String) -> IdToken? {
     // build the request
     var request = URLRequest(url: URL(string: kAuth0Delegation)!)
     request.httpMethod = kHttpPost
@@ -162,7 +220,7 @@ final class WanAuthentication {
   /// Validate an Id Token
   /// - Parameter idToken:        the Id Token
   /// - Returns:                  true / false
-  func isValid(_ idToken: IdToken?) -> Bool {
+  private func isValid(_ idToken: IdToken?) -> Bool {
     if let token = idToken {
       if let jwt = try? decode(jwt: token) {
         let result = IDTokenValidation(issuer: kDomain, audience: kClientId).validate(jwt)
@@ -171,10 +229,7 @@ final class WanAuthentication {
     }
     return false
   }
-  
-  // ----------------------------------------------------------------------------
-  // MARK: - Private methods
-  
+
   /// Perform a URL Request
   /// - Parameter urlRequest:     the Request
   /// - Returns:                  an Id Token (if any)
