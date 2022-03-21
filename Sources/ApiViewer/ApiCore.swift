@@ -11,7 +11,7 @@ import Dispatch
 import SwiftUI
 
 import LanDiscovery
-import Login
+import WanDiscovery
 import LogViewer
 import Picker
 import Radio
@@ -171,6 +171,7 @@ public struct ApiState: Equatable {
   public var commandToSend = ""
   public var packetCollection: PacketCollection?
   public var lanListener: LanListener?
+  public var wanListener: WanListener?
   public var filteredMessages = IdentifiedArrayOf<TcpMessage>()
   public var forceWanLogin = false
   public var loginState: LoginState? = nil
@@ -283,22 +284,28 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .finishInitialization:
       // needed when coming from other than .onAppear
       state.lanListener?.stop()
-//      Discovery.sharedInstance.stopWanListener()
+      state.lanListener = nil
+      state.wanListener?.stop()
+      state.wanListener = nil
 
       switch state.connectionMode {
       case .local:
+        state.packetCollection?.removePackets(ofType: .smartlink)
         state.lanListener = LanListener()
         state.lanListener!.start()
       case .smartlink:
-//        if state.discovery!.startWanListener(forceLogin: state.forceWanLogin) == false {
-//          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
-//        }
-        break
+        state.packetCollection?.removePackets(ofType: .local)
+        state.wanListener = WanListener()
+        if state.wanListener!.start() == false {
+          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
+        }
       case .both:
+        state.lanListener = LanListener()
         state.lanListener!.start()
-//        if state.discovery!.startWanListener(forceLogin: state.forceWanLogin) == false {
-//          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
-//        }
+        state.wanListener = WanListener()
+        if state.wanListener!.start() == false {
+          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
+        }
       case .none:
         break
       }
@@ -430,6 +437,17 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       }
       return .none
       
+    case .pickerAction(.connectButton(let selection)):
+      state.wanListener!.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
+      // reply will generate a wanStatusReceived action
+      return .none
+
+    case .pickerAction(.testButton(let selection)):
+      // try to send a Test
+      state.wanListener!.sendSmartlinkTest(selection.packet.serial) 
+      // reply will generate a testResultReceived action
+      return .none
+
     case .pickerAction(_):
       // IGNORE ALL OTHER picker actions
       return .none
@@ -444,11 +462,11 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .loginAction(.loginButton(let credentials)):
       state.loginState = nil
       state.smartlinkEmail = credentials.email
-//      if state.discovery!.startWanListener( using: credentials) {
-//        state.forceWanLogin = false
-//      } else {
+      if state.wanListener!.start(using: credentials) {
+        state.forceWanLogin = false
+      } else {
         state.alert = AlertState(title: TextState("Smartlink login failed"))
-//      }
+      }
       return .none
       
       // ----------------------------------------------------------------------------
@@ -526,6 +544,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
     
     case .loginAction(.binding(_)):
+      print("other binding")
       return .none
     }
   }

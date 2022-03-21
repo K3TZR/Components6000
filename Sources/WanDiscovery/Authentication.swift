@@ -16,9 +16,6 @@ import SecureStorage
 
 final public class Authentication {
   
-  public var testPublisher = PassthroughSubject<SmartlinkTestResult, Never>()
-  public var wanStatusPublisher = PassthroughSubject<WanStatus, Never>()
-
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
 
@@ -110,7 +107,7 @@ final public class Authentication {
       }
     }
     
-    // No token available, require a login
+    // No token available, requires a login
     return nil
   }
 

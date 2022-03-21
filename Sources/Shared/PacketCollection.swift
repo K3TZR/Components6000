@@ -19,8 +19,8 @@ public final class PacketCollection: Equatable, ObservableObject {
   
   public var clientPublisher = PassthroughSubject<ClientUpdate, Never>()
   public var packetPublisher = PassthroughSubject<PacketUpdate, Never>()
-//  public var testPublisher = PassthroughSubject<SmartlinkTestResult, Never>()
-//  public var wanStatusPublisher = PassthroughSubject<WanStatus, Never>()
+  public var testPublisher = PassthroughSubject<SmartlinkTestResult, Never>()
+  public var wanStatusPublisher = PassthroughSubject<WanStatus, Never>()
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
@@ -67,7 +67,7 @@ public final class PacketCollection: Equatable, ObservableObject {
 
         // publish and log the packet
         packetPublisher.send(PacketUpdate(.updated, packet: newPacket))
-        _log("Discovery: \(newPacket.source.rawValue) packet updated, \(newPacket.serial)", .debug, #function, #file, #line)
+        _log("PacketCollection: \(newPacket.source.rawValue) packet updated, \(newPacket.serial)", .debug, #function, #file, #line)
 
         // find, publish & log client additions / deletions
         findClientAdditions(in: newPacket, from: oldPacket)
@@ -87,20 +87,20 @@ public final class PacketCollection: Equatable, ObservableObject {
 
     // publish & log
     packetPublisher.send(PacketUpdate(.added, packet: newPacket))
-    _log("Discovery: \(newPacket.source.rawValue) packet added, \(newPacket.serial)", .debug, #function, #file, #line)
+    _log("PacketCollection: \(newPacket.source.rawValue) packet added, \(newPacket.serial)", .debug, #function, #file, #line)
 
     // find, publish & log client additions
     findClientAdditions(in: newPacket)
   }
 
-  // ----------------------------------------------------------------------------
-  // MARK: - Private methods
-  
-  private func removePackets(ofType source: PacketSource) {
+  public func removePackets(ofType source: PacketSource) {
     for packet in packets where packet.source == source {
       packets[id: packet.id] = nil
     }
   }
+  
+  // ----------------------------------------------------------------------------
+  // MARK: - Private methods
   
   private func findClientAdditions(in newPacket: Packet, from oldPacket: Packet? = nil) {
     
@@ -109,7 +109,7 @@ public final class PacketCollection: Equatable, ObservableObject {
         
         // publish & log
         clientPublisher.send(ClientUpdate(.added, client: guiClient, source: newPacket.source))
-        _log("Discovery: \(newPacket.source.rawValue) guiClient added, \(guiClient.station)", .debug, #function, #file, #line)
+        _log("PacketCollection: \(newPacket.source.rawValue) guiClient added, \(guiClient.station)", .debug, #function, #file, #line)
         
         let newStation = Packet(source: newPacket.source)
         var packetCopy = newPacket
@@ -129,7 +129,7 @@ public final class PacketCollection: Equatable, ObservableObject {
         
         // publish & log
         clientPublisher.send(ClientUpdate(.deleted, client: guiClient, source: newPacket.source))
-        _log("Discovery: \(newPacket.source.rawValue) guiClient deleted, \(guiClient.station)", .debug, #function, #file, #line)
+        _log("PacketCollection: \(newPacket.source.rawValue) guiClient deleted, \(guiClient.station)", .debug, #function, #file, #line)
         
         for station in stations where station.guiClientStations == guiClient.station {
           stations.remove(station)

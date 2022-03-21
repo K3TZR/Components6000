@@ -30,7 +30,7 @@ final public class LanListener: NSObject, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  public private(set) var isListening: Bool = false
+//  public private(set) var isListening: Bool = false
 
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
@@ -79,19 +79,6 @@ final public class LanListener: NSObject, ObservableObject {
       .store(in: &_cancellables)
   }
   
-//  public func startLanListener() {
-//    guard _lanListener == nil else { return }
-//    _lanListener = LanListener(self)
-//    _lanListener?.start()
-//  }
-//
-//  public func stopLanListener() {
-//    guard _lanListener != nil else { return }
-//    _lanListener?.stop()
-//    removePackets(ofType: .local)
-//    _lanListener = nil
-//  }
-
   // ----------------------------------------------------------------------------
   // MARK: - Internal methods
   
@@ -99,7 +86,6 @@ final public class LanListener: NSObject, ObservableObject {
   public func stop() {
     _cancellables = Set<AnyCancellable>()
     _udpSocket?.close()
-    isListening = false
   }
   
   // ----------------------------------------------------------------------------

@@ -167,6 +167,82 @@ public struct Version {
   }
 }
 
+public enum WanStatusType {
+  case connect
+  case publicIp
+  case settings
+}
+
+public struct WanStatus: Equatable {
+  
+  public init(
+    _ type: WanStatusType,
+    _ name: String?,
+    _ callsign: String?,
+    _ serial: String?,
+    _ wanHandle: String?,
+    _ publicIp: String?
+  )
+  {
+    self.type = type
+    self.name = name
+    self.callsign = callsign
+    self.serial = serial
+    self.wanHandle = wanHandle
+    self.publicIp = publicIp
+  }
+  
+  public var type: WanStatusType
+  public var name: String?
+  public var callsign: String?
+  public var serial: String?
+  public var wanHandle: String?
+  public var publicIp: String?
+}
+
+public enum WanListenerError: Error {
+  case kFailedToObtainIdToken
+  case kFailedToConnect
+}
+
+public struct SmartlinkTestResult: Equatable {
+  public var upnpTcpPortWorking = false
+  public var upnpUdpPortWorking = false
+  public var forwardTcpPortWorking = false
+  public var forwardUdpPortWorking = false
+  public var natSupportsHolePunch = false
+  public var radioSerial = ""
+  
+  public init() {}
+  
+  // format the result as a String
+  public var result: String {
+        """
+        Forward Tcp Port:\t\t\(forwardTcpPortWorking)
+        Forward Udp Port:\t\t\(forwardUdpPortWorking)
+        UPNP Tcp Port:\t\t\(upnpTcpPortWorking)
+        UPNP Udp Port:\t\t\(upnpUdpPortWorking)
+        Nat Hole Punch:\t\t\(natSupportsHolePunch)
+        """
+  }
+  
+  // result was Success / Failure
+  public var success: Bool {
+    (
+      forwardTcpPortWorking == true &&
+      forwardUdpPortWorking == true &&
+      upnpTcpPortWorking == false &&
+      upnpUdpPortWorking == false &&
+      natSupportsHolePunch  == false) ||
+    (
+      forwardTcpPortWorking == false &&
+      forwardUdpPortWorking == false &&
+      upnpTcpPortWorking == true &&
+      upnpUdpPortWorking == true &&
+      natSupportsHolePunch  == false)
+  }
+}
+
 // ----------------------------------------------------------------------------
 // MARK: - Functions
 

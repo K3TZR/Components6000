@@ -18,7 +18,7 @@ let package = Package(
     .library(name: "UdpStreams", targets: ["UdpStreams"]),
     .library(name: "XCGWrapper", targets: ["XCGWrapper"]),
     .library(name: "SecureStorage", targets: ["SecureStorage"]),
-    .library(name: "Login", targets: ["Login"]),
+    .library(name: "WanDiscovery", targets: ["WanDiscovery"]),
     .library(name: "Radio", targets: ["Radio"]),
     .library(name: "ClientStatus", targets: ["ClientStatus"]),
     .library(name: "RemoteViewer", targets: ["RemoteViewer"]),
@@ -48,6 +48,7 @@ let package = Package(
       name: "Radio",
       dependencies: [
         "LanDiscovery",
+        "WanDiscovery",
         "TcpCommands",
         "UdpStreams",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -60,7 +61,7 @@ let package = Package(
       ]
     ),
     .target(
-      name: "Login",
+      name: "WanDiscovery",
       dependencies: [
         "Shared",
         "SecureStorage",
@@ -76,7 +77,7 @@ let package = Package(
     .target(
       name: "ApiViewer",
       dependencies: [
-        "Login",
+        "WanDiscovery",
         "Picker",
         "ClientStatus",
         "LanDiscovery",
@@ -101,7 +102,6 @@ let package = Package(
       dependencies: [
         "Shared",
         "SecureStorage",
-        "Login",
         .product(name: "JWTDecode", package: "JWTDecode.swift"),
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
@@ -110,6 +110,7 @@ let package = Package(
       name: "Picker",
       dependencies: [
         "LanDiscovery",
+        "WanDiscovery",
         "ClientStatus",
         "Shared",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),

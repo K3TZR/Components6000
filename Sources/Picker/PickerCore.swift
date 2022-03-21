@@ -11,7 +11,7 @@ import Dispatch
 import AppKit
 
 import LanDiscovery
-import Login
+import WanDiscovery
 import ClientStatus
 import Shared
 
@@ -119,14 +119,18 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
 
     case .connectButton(let selection):
       if selection.packet.source == .smartlink {
-        // get wan specific params (wanHandle)
-//        state.discovery.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
+        // upstream will get wan specific params (wanHandle)
+//        state.wanListener!.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
         // reply will generate a wanStatusReceived action
         return .none
       } else {
         // check for other connections
         return Effect(value: .checkConnectionStatus(selection))
       }
+      
+      // FIXME: !!!!
+      
+      return .none
 
     case .defaultButton(let selection):
       if state.defaultSelection == selection {
@@ -156,22 +160,9 @@ public let pickerReducer = Reducer<PickerState, PickerAction, PickerEnvironment>
       return .none
 
     case .testButton(let selection):
-//      state.testResult = nil
-//      // try to send a Test
-//      if state.discovery.sendSmartlinkTest(selection.packet.serial) {
-//        // reply will generate a testResultReceived action
-//        return subscribeToTestResult()
-//
-//      } else {
-//        // NOT SENT (why?)
-//        NSSound.beep()
-//        return .none
-//      }
-      
-      
-      // FIXME: !!!!!!
-      
-      return .none
+      state.testResult = nil
+      // reply will generate a testResultReceived action
+      return subscribeToTestResult()
       
       // ----------------------------------------------------------------------------
       // MARK: - Client actions
@@ -275,7 +266,7 @@ public func subscribeToDiscoveryPackets() -> Effect<PickerAction, Never> {
 
 public func subscribeToTestResult() -> Effect<PickerAction, Never> {
   Effect(
-    Authentication.sharedInstance.testPublisher
+    PacketCollection.sharedInstance.testPublisher
       .receive(on: DispatchQueue.main)
       .map { result in .testResultReceived(result) }
       .eraseToEffect()
@@ -285,7 +276,7 @@ public func subscribeToTestResult() -> Effect<PickerAction, Never> {
 
 public func subscribeToWanStatus() -> Effect<PickerAction, Never> {
   Effect(
-    Authentication.sharedInstance.wanStatusPublisher
+    PacketCollection.sharedInstance.wanStatusPublisher
       .receive(on: DispatchQueue.main)
       .map { status in .wanStatusReceived(status) }
       .eraseToEffect()

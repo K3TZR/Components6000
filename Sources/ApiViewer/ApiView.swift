@@ -8,7 +8,7 @@
 import SwiftUI
 import ComposableArchitecture
 
-import Login
+import WanDiscovery
 import ClientStatus
 import Picker
 import LogViewer

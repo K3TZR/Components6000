@@ -61,7 +61,7 @@ extension WanListener {
     // Check for unknown Message Types
     guard let token = MessageTokens(rawValue: properties[0].key)  else {
       // log it
-      _log("Discovery: \(msg)", .warning, #function, #file, #line)
+      _log("Wan Parser: \(msg)", .warning, #function, #file, #line)
       return
     }
     // which primary message type?
@@ -82,7 +82,7 @@ extension WanListener {
     // Check for unknown property (ignore 0th property)
     guard let token = ApplicationTokens(rawValue: properties[0].key)  else {
       // log it and ignore the message
-      _log("Discovery: unknown application token:, \(properties[1].key)", .warning, #function, #file, #line)
+      _log("Wan Parser: unknown application token:, \(properties[1].key)", .warning, #function, #file, #line)
       return
     }
     switch token {
@@ -99,7 +99,7 @@ extension WanListener {
     // Check for unknown Message Types (ignore 0th property)
     guard let token = RadioTokens(rawValue: properties[0].key)  else {
       // log it and ignore the message
-      _log("Discovery: unknown radio token: \(properties[1].key)", .warning, #function, #file,#line)
+      _log("Wan Parser: unknown radio token: \(properties[1].key)", .warning, #function, #file,#line)
       return
     }
     // which secondary message type?
@@ -116,14 +116,14 @@ extension WanListener {
   /// - Parameter properties:         a KeyValuesArray
   private func parseApplicationInfo(_ properties: KeyValuesArray) {
     
-    _log("Discovery: Wan Parser ApplicationInfo received", .debug, #function, #file, #line)
+    _log("Wan Parser: ApplicationInfo received", .debug, #function, #file, #line)
 
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys
       guard let token = InfoTokens(rawValue: property.key)  else {
         // log it and ignore the Key
-        _log("Discovery: unknown info token: \(property.key)", .warning, #function, #file, #line)
+        _log("Wan Parser: unknown info token: \(property.key)", .warning, #function, #file, #line)
         continue
       }
       // Known tokens, in alphabetical order
@@ -133,7 +133,7 @@ extension WanListener {
       }
       if _publicIp != nil {
         // publish
-        Authentication.sharedInstance.wanStatusPublisher.send(WanStatus(.publicIp, _firstName! + " " + _lastName!, _callsign!, _serial, _wanHandle, _publicIp))
+        PacketCollection.sharedInstance.wanStatusPublisher.send(WanStatus(.publicIp, _firstName! + " " + _lastName!, _callsign!, _serial, _wanHandle, _publicIp))
       }
     }
   }
@@ -141,21 +141,21 @@ extension WanListener {
   /// Respond to an Invalid registration
   /// - Parameter msg:                the message text
   private func parseRegistrationInvalid(_ properties: KeyValuesArray) {
-        _log("Discovery: invalid registration: \(properties.count == 3 ? properties[2].key : "")", .warning, #function, #file, #line)
+        _log("Wan Parser: invalid registration: \(properties.count == 3 ? properties[2].key : "")", .warning, #function, #file, #line)
   }
   
   /// Parse a received "user settings" message
   /// - Parameter properties:         a KeyValuesArray
   private func parseUserSettings(_ properties: KeyValuesArray) {
     
-    _log("Discovery: Wan Parser UserSettings received", .debug, #function, #file, #line)
+    _log("Wan Parser: UserSettings received", .debug, #function, #file, #line)
 
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys
       guard let token = UserSettingsTokens(rawValue: property.key)  else {
         // log it and ignore the Key
-        _log("Discovery: unknown settings token: \(property.key)", .warning, #function, #file, #line)
+        _log("Wan Parser: unknown settings token: \(property.key)", .warning, #function, #file, #line)
         continue
       }
       // Known tokens, in alphabetical order
@@ -169,7 +169,7 @@ extension WanListener {
     
     if _firstName != nil && _lastName != nil && _callsign != nil {
       // publish
-      Authentication.sharedInstance.wanStatusPublisher.send(WanStatus(.settings, _firstName! + " " + _lastName!, _callsign!, _serial, _wanHandle, _publicIp))
+      PacketCollection.sharedInstance.wanStatusPublisher.send(WanStatus(.settings, _firstName! + " " + _lastName!, _callsign!, _serial, _wanHandle, _publicIp))
     }
   }
   
@@ -177,14 +177,14 @@ extension WanListener {
   /// - Parameter properties:         a KeyValuesArray
   private func parseRadioConnectReady(_ properties: KeyValuesArray) {
     
-    _log("Discovery: Wan Parser ConnectReady received", .debug, #function, #file, #line)
+    _log("Wan Parser: ConnectReady received", .debug, #function, #file, #line)
 
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys
       guard let token = ConnectReadyTokens(rawValue: property.key)  else {
         // log it and ignore the Key
-        _log("Discovery: unknown connect token: \(property.key)", .warning, #function, #file, #line)
+        _log("Wan Parser: unknown connect token: \(property.key)", .warning, #function, #file, #line)
         continue
       }
       // Known tokens, in alphabetical order
@@ -197,7 +197,7 @@ extension WanListener {
     
     if _wanHandle != nil && _serial != nil {
       // publish
-      Authentication.sharedInstance.wanStatusPublisher.send(WanStatus(.connect, nil, nil, _serial, _wanHandle, _publicIp))
+      PacketCollection.sharedInstance.wanStatusPublisher.send(WanStatus(.connect, nil, nil, _serial, _wanHandle, _publicIp))
     }
   }
   
@@ -211,7 +211,7 @@ extension WanListener {
     // several radios are possible, separate list into its components
     let radioMessages = msg.components(separatedBy: "|")
     
-    _log("Discovery: Wan Parser RadioList received", .debug, #function, #file, #line)
+    _log("Wan Parser: RadioList received", .debug, #function, #file, #line)
 
     for message in radioMessages where message != "" {
       packet = Packet.populate( message.keyValuesArray() )
@@ -242,12 +242,7 @@ extension WanListener {
       }
       packet.source = .smartlink
       // add packet to Packets
-      
-      
-      // FIXME: !!!!!!
-      
-      
-//      _discovery?.processPacket(packet)
+      PacketCollection.sharedInstance.processPacket(packet)
     }
   }
   
@@ -261,7 +256,7 @@ extension WanListener {
       // Check for Unknown Keys
       guard let token = TestConnectionTokens(rawValue: property.key)  else {
         // log it and ignore the Key
-        _log("Discovery: unknown testConnection token: \(property.key)", .warning, #function, #file, #line)
+        _log("Wan Parser: unknown testConnection token: \(property.key)", .warning, #function, #file, #line)
         continue
       }
       
@@ -276,8 +271,8 @@ extension WanListener {
       case .upnpUdpPortWorking:         result.upnpUdpPortWorking = property.value.tValue
       }
     }
-    _log("Discovery: smartlink test result received, \(result.success ? "SUCCESS" : "FAILURE")", result.success ? .debug : .warning, #function, #file, #line)
+    _log("Wan Parser: smartlink test result received, \(result.success ? "SUCCESS" : "FAILURE")", result.success ? .debug : .warning, #function, #file, #line)
     // publish the result
-    Authentication.sharedInstance.testPublisher.send(result)
+    PacketCollection.sharedInstance.testPublisher.send(result)
   }
 }

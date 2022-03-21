@@ -68,11 +68,9 @@ public let loginReducer = Reducer<LoginState, LoginAction, LoginEnvironment>
       return .none
 
     case .loginButton(let credentials):
-      print("login button, email = \(credentials.email), pwd = \(credentials.pwd)")
       return .none
 
     case .binding(_):
-      print("other binding")
       return .none
     }
 //    return .none
