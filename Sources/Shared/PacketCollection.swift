@@ -31,10 +31,6 @@ public final class PacketCollection: Equatable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
-//  private var _authentication: Authentication?
-//  private var _lanListener: LanListener?
-//  private var _wanListener: WanListener?
-
   let _log = LogProxy.sharedInstance.log
 
   // ----------------------------------------------------------------------------

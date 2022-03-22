@@ -61,28 +61,12 @@ public struct PickerView: View {
           PickerFooterView(store: store)
       }
       .frame(minWidth: 600, minHeight: 250)
-      .onAppear { viewStore.send(.onAppear) }
 
       // alert dialogs
       .alert(
         self.store.scope(state: \.alert),
         dismiss: .alertCancelled
-      )
-      
-      // Connection sheet
-      .sheet(
-        isPresented: viewStore.binding(
-          get: { $0.clientState != nil },
-          send: PickerAction.clientAction(.cancelButton)),
-        content: {
-          IfLetStore(
-            store.scope(state: \.clientState,
-                        action: PickerAction.clientAction
-                       ),
-            then: ClientView.init(store:)
-          )
-        }
-      )
+      )      
     }
   }
 }

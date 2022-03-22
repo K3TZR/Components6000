@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import ComposableArchitecture
 import Combine
 
 import CocoaAsyncSocket
@@ -44,6 +45,9 @@ final public class LanListener: NSObject, ObservableObject {
   private let _formatter = DateFormatter()
   private let _udpQ = DispatchQueue(label: "LanListener" + ".udpQ")
   private var _udpSocket: GCDAsyncUdpSocket!
+  private var _packets: IdentifiedArrayOf<Packet> {
+    get { PacketCollection.sharedInstance.packets }
+    set { PacketCollection.sharedInstance.packets = newValue}}
 
   let _log = LogProxy.sharedInstance.log
 
@@ -94,8 +98,8 @@ final public class LanListener: NSObject, ObservableObject {
   /// Remove a packet from the collection
   /// - Parameter condition:  a closure defining the condition for removal
   private func remove(condition: (Packet) -> Bool) {
-    for packet in PacketCollection.sharedInstance.packets where condition(packet) {
-      let removedPacket = PacketCollection.sharedInstance.packets.remove(id: packet.id)
+    for packet in _packets where condition(packet) {
+      let removedPacket = _packets.remove(id: packet.id)
       packetPublisher.send(PacketUpdate(.deleted, packet: removedPacket!))
       self._log("Lan Listener: packet removed, interval = \(abs(removedPacket!.lastSeen.timeIntervalSince(Date())))", .debug, #function, #file, #line)
     }

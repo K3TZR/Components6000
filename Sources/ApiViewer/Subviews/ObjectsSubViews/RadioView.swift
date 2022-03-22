@@ -34,7 +34,7 @@ struct RadioView: View {
         if viewStore.radio!.atuPresent {  AtuView(store: store) }
         if viewStore.radio!.gpsPresent {  GpsView(store: store) }
       }
-      .foregroundColor(Color(.systemGreen))
+      .foregroundColor( viewStore.radio!.packet.source == .local ? Color(.systemGreen) : Color(.systemTeal))
       .frame(alignment: .leading)
     }
   }

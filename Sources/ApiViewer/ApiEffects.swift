@@ -2,94 +2,75 @@
 //  ApiEffects.swift
 //  Components6000/ApiViewer
 //
-//  Created by Douglas Adams on 1/7/22.
+//  Created by Douglas Adams on 3/21/22.
 //
 
 import Foundation
 import ComposableArchitecture
-import Combine
 import SwiftUI
 
-import Discovery
 import TcpCommands
+import Radio
 import Shared
 
 // ----------------------------------------------------------------------------
-// MARK: - Public proerties
+// MARK: - Subscriptions to publishers
 
-public enum ConnectionMode: String {
-  case both
-  case local
-  case none
-  case smartlink
+// cancellation IDs
+struct PacketSubscriptionId: Hashable {}
+struct ClientSubscriptionId: Hashable {}
+struct WanSubscriptionId: Hashable {}
+struct ReceivedSubscriptionId: Hashable {}
+struct SentSubscriptionId: Hashable {}
+struct LogAlertSubscriptionId: Hashable {}
+struct MeterSubscriptionId: Hashable {}
+
+func subscribeToPackets() -> Effect<ApiAction, Never> {
+  Effect.merge(
+    PacketCollection.sharedInstance.packetPublisher
+      .receive(on: DispatchQueue.main)
+      .map { update in .packetChangeReceived(update) }
+      .eraseToEffect()
+      .cancellable(id: PacketSubscriptionId()),
+    
+    PacketCollection.sharedInstance.clientPublisher
+      .receive(on: DispatchQueue.main)
+      .map { update in .clientChangeReceived(update) }
+      .eraseToEffect()
+      .cancellable(id: ClientSubscriptionId())
+  )
 }
 
-public struct TcpMessage: Equatable, Identifiable {
-  public var id = UUID()
-  var direction: TcpMessageDirection
-  var text: String
-  var color: Color
-  var timeInterval: TimeInterval
+func subscribeToWan() -> Effect<ApiAction, Never> {
+  Effect(
+    PacketCollection.sharedInstance.wanStatusPublisher
+      .receive(on: DispatchQueue.main)
+      .map { status in .wanStatus(status) }
+      .eraseToEffect()
+      .cancellable(id: WanSubscriptionId())
+  )
 }
 
-// ----------------------------------------------------------------------------
-// MARK: - Internal methods
-
-func subscribeToSentMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
+func subscribeToSent(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   // subscribe to the publisher of sent TcpMessages
   tcp.sentPublisher
     .receive(on: DispatchQueue.main)
     // convert to TcpMessage format
-    .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
+    .map { tcpMessage in .tcpMessage(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: Color(.systemGreen), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
-    .cancellable(id: SentMessagesSubscriptionId())
+    .cancellable(id: SentSubscriptionId())
 }
 
-func subscribeToReceivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
+func subscribeToReceived(_ tcp: Tcp) -> Effect<ApiAction, Never> {
   // subscribe to the publisher of received TcpMessages
   tcp.receivedPublisher
     // eliminate replies unless they have errors or data
     .filter { allowToPass($0.text) }
     .receive(on: DispatchQueue.main)
     // convert to an ApiAction
-    .map { tcpMessage in .tcpAction(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: lineColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
+    .map { tcpMessage in .tcpMessage(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: messageColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
     .eraseToEffect()
-    .cancellable(id: ReceivedMessagesSubscriptionId())
-}
-
-func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
-  // subscribe to the publisher of LogEntries with Warning or Error levels
-  LogProxy.sharedInstance.alertPublisher
-    .receive(on: DispatchQueue.main)
-    // convert to an ApiAction
-    .map { logEntry in .logAlert(logEntry) }
-    .eraseToEffect()
-    .cancellable(id: LogAlertSubscriptionId())
-}
-
-//func subscribeToDiscoveryPackets(_ packetPublisher: PassthroughSubject<PacketChange, Never>) -> Effect<ApiAction, Never> {
-//  // subscribe to the publisher of Discovery Packets
-//  packetPublisher
-//    .receive(on: DispatchQueue.main)
-//    // convert to an ApiAction
-//    .map { change in .packetChange(change) }
-//    .eraseToEffect()
-//    .cancellable(id: ReceivedPacketId())
-//}
-
-// ----------------------------------------------------------------------------
-// MARK: - Private methods
-
-/// Assign each text line a color
-/// - Parameter text:   the text line
-/// - Returns:          a Color
-private func lineColor(_ text: String) -> Color {
-  if text.prefix(1) == "C" { return Color(.systemGreen) }                         // Commands
-  if text.prefix(1) == "R" && text.contains("|0|") { return Color(.systemGray) }  // Replies no error
-  if text.prefix(1) == "R" && !text.contains("|0|") { return Color(.systemRed) }  // Replies w/error
-  if text.prefix(2) == "S0" { return Color(.systemOrange) }                       // S0
-  
-  return Color(.textColor)
+    .cancellable(id: ReceivedSubscriptionId())
 }
 
 /// Received data Filter condition
@@ -102,4 +83,42 @@ private func allowToPass(_ text: String) -> Bool {
   if parts[1] != kNoError { return true }   // pass if error of some type
   if parts[2] != "" { return true }         // pass if additional data present
   return false                              // otherwise, filter out (i.e. don't pass)
+}
+
+/// Assign each text line a color
+/// - Parameter text:   the text line
+/// - Returns:          a Color
+private func messageColor(_ text: String) -> Color {
+//  if text.prefix(1) == "C" { return Color(.systemGreen) }                         // Commands
+  if text.prefix(1) == "R" && text.contains("|0|") { return Color(.systemGray) }  // Replies no error
+  if text.prefix(1) == "R" && !text.contains("|0|") { return Color(.systemRed) }  // Replies w/error
+  if text.prefix(2) == "S0" { return Color(.systemOrange) }                       // S0
+
+  return Color(.textColor)
+}
+
+func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
+//  #if DEBUG
+  // subscribe to the publisher of LogEntries with Warning or Error levels
+  LogProxy.sharedInstance.alertPublisher
+    .receive(on: DispatchQueue.main)
+    // convert to an ApiAction
+    .map { logEntry in .logAlertReceived(logEntry) }
+    .eraseToEffect()
+    .cancellable(id: LogAlertSubscriptionId())
+//  #else
+//    .empty
+//  #endif
+}
+
+func subscribeToMeters() -> Effect<ApiAction, Never> {
+  // subscribe to the publisher of received TcpMessages
+  Meter.meterPublisher
+    .receive(on: DispatchQueue.main)
+    // limit updates to 1 per second
+    .throttle(for: 1.0, scheduler: RunLoop.main, latest: true)
+    // convert to an ApiAction
+    .map { meter in .meterReceived(meter) }
+    .eraseToEffect()
+    .cancellable(id: MeterSubscriptionId())
 }

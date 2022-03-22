@@ -2,51 +2,26 @@
 //  PickerEffects.swift
 //  Components6000/Picker
 //
-//  Created by Douglas Adams on 11/17/21.
+//  Created by Douglas Adams on 3/21/22.
 //
 
 import Foundation
 import ComposableArchitecture
-import Combine
 
-import Discovery
 import Shared
 
 // ----------------------------------------------------------------------------
-// MARK: - Production effects
+// MARK: - Subscriptions to publishers
 
-public func subscribeToDiscoveryPackets() -> Effect<PickerAction, Never> {
-  Effect.concatenate(
-    Discovery.sharedInstance.packetPublisher
-      .receive(on: DispatchQueue.main)
-      .map { update in .packetChange(update) }
-      .eraseToEffect()
-      .cancellable(id: DiscoveryPacketSubscriptionId()),
-    
-    Discovery.sharedInstance.clientPublisher
-      .receive(on: DispatchQueue.main)
-      .map { update in .clientChange(update) }
-      .eraseToEffect()
-      .cancellable(id: DiscoveryClientSubscriptionId())
-  )
-}
+// cancellation IDs
+struct TestSubscriptionId: Hashable {}
 
-public func subscribeToTestResult() -> Effect<PickerAction, Never> {
+func subscribeToTest() -> Effect<PickerAction, Never> {
   Effect(
-    Discovery.sharedInstance.testPublisher
+    PacketCollection.sharedInstance.testPublisher
       .receive(on: DispatchQueue.main)
-      .map { result in .testResultReceived(result) }
+      .map { result in .testResult(result) }
       .eraseToEffect()
-      .cancellable(id: TestResultSubscriptionId())
-  )
-}
-
-public func subscribeToWanStatus() -> Effect<PickerAction, Never> {
-  Effect(
-    Discovery.sharedInstance.wanStatusPublisher
-      .receive(on: DispatchQueue.main)
-      .map { status in .wanStatus(status) }
-      .eraseToEffect()
-      .cancellable(id: WanStatusSubscriptionId())
+      .cancellable(id: TestSubscriptionId())
   )
 }

@@ -20,20 +20,14 @@ import Shared
 import TcpCommands
 import UdpStreams
 import XCGWrapper
+import ClientStatus
+
 import simd
 
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums
 
 public typealias Logger = (PassthroughSubject<LogEntry, Never>, LogLevel) -> Void
-
-// cancellation IDs
-struct ReceivedMessagesSubscriptionId: Hashable {}
-struct SentMessagesSubscriptionId: Hashable {}
-struct LogAlertSubscriptionId: Hashable {}
-struct MeterSubscriptionId: Hashable {}
-struct WanStatusSubscriptionId: Hashable {}
-struct ReceivedPacketSubscriptionId: Hashable {}
 
 public struct TcpMessage: Equatable, Identifiable {
   public var id = UUID()
@@ -186,6 +180,8 @@ public struct ApiState: Equatable {
   public var forceUpdate = false
   
   public var objects = Objects.sharedInstance
+  public var clientState: ClientState?
+  public var pendingWanSelection: PickerSelection?
 }
 
 public enum ApiAction: Equatable {
@@ -199,7 +195,6 @@ public enum ApiAction: Equatable {
   case commandTextField(String)
   case connectionModePicker(ConnectionMode)
   case fontSizeStepper(CGFloat)
-  case forceLoginButton
   case logViewButton
   case messagesPicker(MessagesFilter)
   case messagesFilterTextField(String)
@@ -208,21 +203,26 @@ public enum ApiAction: Equatable {
   case sendButton
   case startStopButton
   case toggleButton(WritableKeyPath<ApiState, Bool>)
+  case packetChangeReceived(PacketUpdate)
+  case clientChangeReceived(ClientUpdate)
+ 
   
   // sheet/alert related
   case alertDismissed
   case loginAction(LoginAction)
   case pickerAction(PickerAction)
-
+  case clientAction(ClientAction)
+  
   // Effects related
   case cancelEffects
   case finishInitialization
   case logAlertReceived(LogEntry)
   case meterReceived(Meter)
   case openSelection(PickerSelection)
-//  case startMetersSubscription
-//  case stopMetersSubscription
-  case tcpMessageSentOrReceived(TcpMessage)
+  case tcpMessage(TcpMessage)
+  case wanStatus(WanStatus)
+  case checkConnectionStatus(PickerSelection)
+
 }
 
 public struct ApiEnvironment {
@@ -244,6 +244,13 @@ public struct ApiEnvironment {
 
 // swiftlint:disable trailing_closure
 public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
+  clientReducer
+    .optional()
+    .pullback(
+      state: \ApiState.clientState,
+      action: /ApiAction.clientAction,
+      environment: { _ in ClientEnvironment() }
+    ),
   loginReducer
     .optional()
     .pullback(
@@ -271,11 +278,12 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         state.packetCollection = PacketCollection.sharedInstance
         // instantiate the Logger,
         _ = environment.logger(LogProxy.sharedInstance.logPublisher, .debug)
-        // subscribe to packets, log alerts and TCP messages (sent & received)
+        // start subscriptions
         return .merge(
-//          subscribeToDiscoveryPackets(state.discovery!.packetPublisher),
-          subscribeToSentMessages(state.tcp),
-          subscribeToReceivedMessages(state.tcp),
+          subscribeToPackets(),
+          subscribeToWan(),
+          subscribeToSent(state.tcp),
+          subscribeToReceived(state.tcp),
           subscribeToLogAlerts(),
           Effect(value: .finishInitialization))
       }
@@ -296,18 +304,19 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       case .smartlink:
         state.packetCollection?.removePackets(ofType: .local)
         state.wanListener = WanListener()
-        if state.wanListener!.start() == false {
+        if state.forceWanLogin || state.wanListener!.start(state.smartlinkEmail) == false {
           state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
         }
       case .both:
         state.lanListener = LanListener()
         state.lanListener!.start()
         state.wanListener = WanListener()
-        if state.wanListener!.start() == false {
+        if state.forceWanLogin || state.wanListener!.start(state.smartlinkEmail) == false {
           state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
         }
       case .none:
-        break
+        state.packetCollection?.removePackets(ofType: .local)
+        state.packetCollection?.removePackets(ofType: .smartlink)
       }
       if state.objectsFilterBy == .core || state.objectsFilterBy == .meters {
         return subscribeToMeters()
@@ -340,14 +349,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
 
     case .fontSizeStepper(let size):
       state.fontSize = size
-      return .none
-      
-    case .forceLoginButton:
-      // set the force flag, restart listeners
-      state.forceWanLogin.toggle()
-      if state.forceWanLogin {
-        return Effect(value: .finishInitialization)
-      }
       return .none
       
     case .logViewButton:
@@ -390,9 +391,19 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       if state.radio == nil {
         // NOT connected, check for a default
         // is there a default?
-        if let defaultSelection = hasDefault(state) {
-          // YES, open it
-          return Effect(value: .openSelection(defaultSelection))
+        if let selection = hasDefault(state) {
+          // YES, is it Wan?
+          if selection.packet.source == .smartlink {
+            // YES, reply will generate a wanStatus action
+            state.pendingWanSelection = selection
+            state.wanListener!.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
+            return .none
+
+          } else {
+            // NO, check for other connections
+            return Effect(value: .checkConnectionStatus(selection))
+          }
+          
         } else {
           // NO, or failed to find a match, open the Picker
           state.pickerState = PickerState(connectionType: state.isGui ? .gui : .nonGui)
@@ -413,6 +424,9 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .toggleButton(let keyPath):
       // handles all buttons with a Bool state
       state[keyPath: keyPath].toggle()
+      if keyPath == \.forceWanLogin && state.forceWanLogin {
+        return Effect(value: .finishInitialization)
+      }
       return .none
       
       // ----------------------------------------------------------------------------
@@ -423,10 +437,20 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.pickerState = nil
       return .none
       
-    case .pickerAction(.openSelection(let selection)):
+    case .pickerAction(.connectButton(let selection)):
       // close the Picker sheet
       state.pickerState = nil
-      return Effect(value: .openSelection(selection))
+      
+      if selection.packet.source == .smartlink {
+        // reply will generate a wanStatus action
+        state.pendingWanSelection = selection
+        state.wanListener!.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
+        return .none
+
+      } else {
+        // check for other connections
+        return Effect(value: .checkConnectionStatus(selection))
+      }
       
     case .pickerAction(.defaultButton(let selection)):
       // set / reset the default connection
@@ -437,11 +461,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       }
       return .none
       
-    case .pickerAction(.connectButton(let selection)):
-      state.wanListener!.sendWanConnectMessage(for: selection.packet.serial, holePunchPort: selection.packet.negotiatedHolePunchPort)
-      // reply will generate a wanStatusReceived action
-      return .none
-
     case .pickerAction(.testButton(let selection)):
       // try to send a Test
       state.wanListener!.sendSmartlinkTest(selection.packet.serial) 
@@ -452,6 +471,19 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // IGNORE ALL OTHER picker actions
       return .none
       
+      // ----------------------------------------------------------------------------
+      // MARK: - Actions sent upstream by Client (i.e. Client -> ApiViewe)
+      
+    case .clientAction(.cancelButton):
+      state.clientState = nil
+      // additional processing upstream
+      return .none
+
+    case .clientAction(.connect(let selection, let disconnectHandle)):
+      state.clientState = nil
+      return Effect(value: .openSelection(PickerSelection(selection.packet, selection.station, disconnectHandle)))
+
+ 
       // ----------------------------------------------------------------------------
       // MARK: - Actions sent upstream by Login (i.e. Login -> ApiViewer)
 
@@ -481,8 +513,8 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
                   
     case .cancelEffects:
       return .cancel(ids: LogAlertSubscriptionId(),
-                     SentMessagesSubscriptionId(),
-                     ReceivedMessagesSubscriptionId(),
+                     SentSubscriptionId(),
+                     ReceivedSubscriptionId(),
                      MeterSubscriptionId())
       
     case .logAlertReceived(let logEntry):
@@ -503,7 +535,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       )
       return .none
       
-    case .tcpMessageSentOrReceived(let message):
+    case .tcpMessage(let message):
       // a TCP messages (either sent or received) has been captured
       // ignore sent "ping" messages unless showPings is true
       if message.direction == .sent && message.text.contains("ping") && state.showPings == false { return .none }
@@ -520,6 +552,18 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // ----------------------------------------------------------------------------
       // MARK: - Actions sent by other actions
       
+    case .checkConnectionStatus(let selection):
+      // are there any Gui connections?
+      if state.isGui && selection.packet.guiClients.count > 0 {
+        // YES, may need a disconnect, let the user choose
+        state.clientState = ClientState(pickerSelection: selection)
+        return .none
+
+      } else {
+        // NO, proceed to opening
+        return Effect(value: .openSelection(selection))
+      }
+
     case .openSelection(let selection):
       // instantiate a Radio object
       state.radio = Radio(selection.packet,
@@ -546,13 +590,28 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
     case .loginAction(.binding(_)):
       print("other binding")
       return .none
+    
+    case .packetChangeReceived(_):
+      return .none
+    
+    case .clientChangeReceived(_):
+      return .none
+    
+    case .wanStatus(let status):
+      if state.pendingWanSelection != nil && status.type == .connect && status.wanHandle != nil {
+          state.pendingWanSelection!.packet.wanHandle = status.wanHandle!
+          // check for other connections
+          return Effect(value: .checkConnectionStatus(state.pendingWanSelection!))
+      }
+      return .none
     }
   }
 )
 //  .debug("APIVIEWER ")
 
+
 // ----------------------------------------------------------------------------
-// MARK: - Helper functions
+// MARK: - Helper methods
 
 /// FIlter the Messages array
 /// - Parameters:
@@ -620,76 +679,4 @@ func hasDefault(_ state: ApiState) -> PickerSelection? {
   }
   // NO default or failed to find a match
   return nil
-}
-
-func subscribeToSentMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
-  // subscribe to the publisher of sent TcpMessages
-  tcp.sentPublisher
-    .receive(on: DispatchQueue.main)
-    // convert to TcpMessage format
-    .map { tcpMessage in .tcpMessageSentOrReceived(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: messageColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
-    .eraseToEffect()
-    .cancellable(id: SentMessagesSubscriptionId())
-}
-
-func subscribeToReceivedMessages(_ tcp: Tcp) -> Effect<ApiAction, Never> {
-  // subscribe to the publisher of received TcpMessages
-  tcp.receivedPublisher
-    // eliminate replies unless they have errors or data
-    .filter { allowToPass($0.text) }
-    .receive(on: DispatchQueue.main)
-    // convert to an ApiAction
-    .map { tcpMessage in .tcpMessageSentOrReceived(TcpMessage(direction: tcpMessage.direction, text: tcpMessage.text, color: messageColor(tcpMessage.text), timeInterval: tcpMessage.timeInterval)) }
-    .eraseToEffect()
-    .cancellable(id: ReceivedMessagesSubscriptionId())
-}
-
-func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
-//  #if DEBUG
-  // subscribe to the publisher of LogEntries with Warning or Error levels
-  LogProxy.sharedInstance.alertPublisher
-    .receive(on: DispatchQueue.main)
-    // convert to an ApiAction
-    .map { logEntry in .logAlertReceived(logEntry) }
-    .eraseToEffect()
-    .cancellable(id: LogAlertSubscriptionId())
-//  #else
-//    .empty
-//  #endif
-}
-
-func subscribeToMeters() -> Effect<ApiAction, Never> {
-  // subscribe to the publisher of received TcpMessages
-  Meter.meterPublisher
-    .receive(on: DispatchQueue.main)
-    // limit updates to 1 per second
-//    .throttle(for: 1.0, scheduler: RunLoop.main, latest: true)
-    // convert to an ApiAction
-    .map { meter in .meterReceived(meter) }
-    .eraseToEffect()
-    .cancellable(id: MeterSubscriptionId())
-}
-
-/// Assign each text line a color
-/// - Parameter text:   the text line
-/// - Returns:          a Color
-private func messageColor(_ text: String) -> Color {
-  if text.prefix(1) == "C" { return Color(.systemGreen) }                         // Commands
-  if text.prefix(1) == "R" && text.contains("|0|") { return Color(.systemGray) }  // Replies no error
-  if text.prefix(1) == "R" && !text.contains("|0|") { return Color(.systemRed) }  // Replies w/error
-  if text.prefix(2) == "S0" { return Color(.systemOrange) }                       // S0
-  
-  return Color(.textColor)
-}
-
-/// Received data Filter condition
-/// - Parameter text:    the text of a received command
-/// - Returns:           a boolean
-private func allowToPass(_ text: String) -> Bool {
-  if text.first != "R" { return true }     // pass if not a Reply
-  let parts = text.components(separatedBy: "|")
-  if parts.count < 3 { return true }        // pass if incomplete
-  if parts[1] != kNoError { return true }   // pass if error of some type
-  if parts[2] != "" { return true }         // pass if additional data present
-  return false                              // otherwise, filter out (i.e. don't pass)
 }

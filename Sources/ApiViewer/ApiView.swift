@@ -53,12 +53,6 @@ public struct ApiView: View {
         // initialize on first appearance
         .onAppear() { viewStore.send(.onAppear) }
         
-        .onReceive(NotificationCenter.default.publisher(
-          for: NSNotification.Name("WindowWillCLose")
-        )) { _ in
-            print("-----> CLOSING")
-        }
-
         // alert dialogs
         .alert(
           self.store.scope(state: \.alert),
@@ -72,9 +66,7 @@ public struct ApiView: View {
             send: ApiAction.pickerAction(.cancelButton)),
           content: {
             IfLetStore(
-              store.scope(state: \.pickerState,
-                          action: ApiAction.pickerAction
-                         ),
+              store.scope(state: \.pickerState, action: ApiAction.pickerAction),
               then: PickerView.init(store:)
             )
           }
@@ -87,33 +79,43 @@ public struct ApiView: View {
             send: ApiAction.loginAction(.cancelButton)),
           content: {
             IfLetStore(
-              store.scope(state: \.loginState,
-                          action: ApiAction.loginAction
-                         ),
+              store.scope(state: \.loginState, action: ApiAction.loginAction),
               then: LoginView.init(store:)
             )
           }
         )
+
+        // Connection sheet
+        .sheet(
+          isPresented: viewStore.binding(
+            get: { $0.clientState != nil },
+            send: ApiAction.clientAction(.cancelButton)),
+          content: {
+            IfLetStore(
+              store.scope(state: \.clientState, action: ApiAction.clientAction),
+              then: ClientView.init(store:)
+            )
+          }
+        )
+
         
       } else if viewStore.viewType == .log {
         LogView(store: Store(
           initialState: LogState(),
           reducer: logReducer,
           environment: LogEnvironment() )
-        )
-          .toolbar {
-            Button("Api View") { viewStore.send(.apiViewButton) }
-          }
-      
+        ).toolbar {
+          Button("Api View") { viewStore.send(.apiViewButton) }
+        }
+        
       } else {
         RemoteView(store: Store(
           initialState: RemoteState( "Remote Relays" ),
           reducer: remoteReducer,
           environment: RemoteEnvironment() )
-        )
-          .toolbar {
-            Button("Api View") { viewStore.send(.apiViewButton) }
-          }
+        ).toolbar {
+          Button("Api View") { viewStore.send(.apiViewButton) }
+        }
       }
     }
   }

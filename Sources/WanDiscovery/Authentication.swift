@@ -56,23 +56,14 @@ final public class Authentication {
   private let kKeyUserName        = "username"
   
   private let kDefaultPicture     = "person.fill"
-  
-  // ----------------------------------------------------------------------------
-  // MARK: - Singleton
-  
-  public static var sharedInstance = Authentication()
-  private init() {
-    let appName = (Bundle.main.infoDictionary!["CFBundleName"] as! String)
-    _secureStore = SecureStore(service: appName + kServiceName)
-  }
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
-//  public init() {
-//    let appName = (Bundle.main.infoDictionary!["CFBundleName"] as! String)
-//    _secureStore = SecureStore(service: appName + kServiceName)
-//  }
+  public init() {
+    let appName = (Bundle.main.infoDictionary!["CFBundleName"] as! String)
+    _secureStore = SecureStore(service: appName + kServiceName)
+  }
   
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
@@ -83,7 +74,8 @@ final public class Authentication {
     _ = _secureStore.delete(account: _smartlinkEmail)
   }
   
-  public func authenticate() -> IdToken? {
+  public func authenticate(_ smartlinkEmail: String) -> IdToken? {
+    _smartlinkEmail = smartlinkEmail
     // is there a previous idToken which has not expired?
     if _previousIdToken != nil, isValid(_previousIdToken) {
       // YES, use the previous idToken

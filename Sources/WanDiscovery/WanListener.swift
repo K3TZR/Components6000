@@ -47,7 +47,7 @@ public final class WanListener: NSObject, ObservableObject {
   var _publicIp: String?
 
   private var _appName: String?
-  private var _authentication = Authentication.sharedInstance
+  private var _authentication = Authentication()
   private var _cancellables = Set<AnyCancellable>()
   private var _domain: String?
   private var _idToken: IdToken? = nil
@@ -110,8 +110,8 @@ public final class WanListener: NSObject, ObservableObject {
   
   
   
-  public func start() -> Bool {
-    if let idToken = _authentication.authenticate() {
+  public func start(_ smartlinkEmail: String) -> Bool {
+    if let idToken = _authentication.authenticate(smartlinkEmail) {
       return start(using: idToken)
     }
     return false
@@ -121,7 +121,7 @@ public final class WanListener: NSObject, ObservableObject {
   /// - Parameters:
   ///   - loginResult:           a struct with email & pwd
   public func start(using loginResult: LoginResult) -> Bool {
-    if let idToken = Authentication.sharedInstance.requestTokens(using: loginResult) {
+    if let idToken = _authentication.requestTokens(using: loginResult) {
       _previousIdToken = idToken
       _log("Wan Listener: IdToken obtained from login credentials", .debug, #function, #file, #line)
       if start(using: idToken) { return true }
