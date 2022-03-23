@@ -462,7 +462,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       return .none
       
     case .pickerAction(.testButton(let selection)):
-      // try to send a Test
+      // send a Test request
       state.wanListener!.sendSmartlinkTest(selection.packet.serial) 
       // reply will generate a testResultReceived action
       return .none

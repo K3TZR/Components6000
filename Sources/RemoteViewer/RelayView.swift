@@ -23,8 +23,8 @@ public struct RelayView: View {
           Toggle("", isOn: viewStore.binding(\.$locked)).disabled(true)
         }
         .frame(width: 100, alignment: .center)
-        TextField("", text: viewStore.binding(\.$cycleDelayString))
-          .frame(width: 100).multilineTextAlignment(.trailing)
+        TextField("", text: viewStore.binding(\.$cycleDelay))
+          .frame(width: 100)
       }
       .font(.title2)
     }

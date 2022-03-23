@@ -77,10 +77,10 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
       //      }
       ////      return .none
       //      return getName( "admin", "ruwn1viwn_RUF_zolt" )
-//      return setProperty("state", value: "false", at: nil, "admin", "ruwn1viwn_RUF_zolt" )
+      return setProperty("state", value: "false", at: nil, "admin", "ruwn1viwn_RUF_zolt" )
       //      return .none
 //      return setProperties(["name":"Some new name"], at: 5, "admin", "ruwn1viwn_RUF_zolt" )
-      return setRelay(4, "admin", "ruwn1viwn_RUF_zolt")
+//      return setRelay(4, "admin", "ruwn1viwn_RUF_zolt")
     
     case .refresh:
       return getRelays( "admin", "ruwn1viwn_RUF_zolt" )
@@ -147,7 +147,7 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
       return .none
       
     case .relay(let id, let action):
-      var property = ""
+      var property: String?
       var value = ""
       var index = 0
       
@@ -164,23 +164,23 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
         property = "state"
         value = state.relays[id: id]!.currentState.asTrueFalse.lowercased()
         
-      case .binding(\.$cycleDelayString):
-        print("$cycleDelayString: id = \(id)")
+      case .binding(\.$cycleDelay):
+        print("$cycleDelay: id = \(id)")
         property = "cycle_delay"
-        value = state.relays[id: id]!.cycleDelayString
+        value = state.relays[id: id]!.cycleDelay
         
       case .binding(\.$name):
-        print("3$name: id = \(id)")
+        print("$name: id = \(id)")
         property = "name"
         value = state.relays[id: id]!.name
         
       default:
         print("OTHER: id = \(id)")
       }
-      if property == "" {
+      if property == nil {
         return .none
       } else {
-        return setProperty(property, value: value, at: index, "admin", "ruwn1viwn_RUF_zolt")
+        return setProperty(property!, value: value, at: index, "admin", "ruwn1viwn_RUF_zolt")
       }
     }
   }
@@ -272,6 +272,38 @@ func getName(_ index: Int, _ user: String, _ pwd: String) -> Effect<RemoteAction
     .eraseToEffect()
 }
 
+func setProperty(_ property: String, value: String, at index: Int?, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
+  let headers = [
+    "Connection": "close",
+    "X-CSRF": "x"
+  ]
+  
+  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/\(index == nil ? "all;" : String(index!))/\(property)/")!)
+  request.setBasicAuth(username: user, password: pwd)
+  request.allHTTPHeaderFields = headers
+  request.httpMethod = "PUT"
+  request.httpBody = Data(value.utf8)
+  
+  return URLSession.DataTaskPublisher(request: request, session: .shared)
+    .receive(on: DispatchQueue.main)
+    .catchToEffect()
+    .map { result in
+      switch result {
+      case .success(let output):
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        print( String(decoding: output.data, as: UTF8.self))
+        
+        return .postResult(true, "set \(property) to: \(value) at: \(index == nil ? "all" : String(index!))" )
+        
+      case .failure:
+        return .postResult(false, "set \(property) to: \(value) at: \(index == nil ? "all" : String(index!))" )
+      }
+    }
+    .eraseToEffect()
+}
+
+/*
 func setRelay(_ index: Int, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
   //
   // Sample for relay object / outlets[].
@@ -322,53 +354,7 @@ func setRelay(_ index: Int, _ user: String, _ pwd: String) -> Effect<RemoteActio
     }
     .eraseToEffect()
 }
-
-func setProperty(_ property: String, value: String, at index: Int?, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
-    let headers = [
-      "Connection": "close",
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      "X-CSRF": "x"
-    ]
-  //  let parameters = [["value":"Some other relay"]]
-  //  let postData = try! JSONSerialization.data(withJSONObject: parameters, options: [])
-  let postData = value.data(using: String.Encoding.utf8)!
-  
-//  let x = 123
-//  let postData = withUnsafeBytes(of: x) { Data($0) }
-  
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/4/name/")!)
-  let authData = (user + ":" + pwd).data(using: .utf8)!.base64EncodedString()
-  request.addValue("Basic \(authData)", forHTTPHeaderField: "Authorization")
-  
-  request.addValue("close", forHTTPHeaderField: "Connection")
-  request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
-  //  request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-  request.addValue("close", forHTTPHeaderField: "Connection")
-  request.addValue("x", forHTTPHeaderField: "X-CSRF")
-  
-  request.httpMethod = "PUT"
-  
-  request.httpBody = postData
-  
-  return URLSession.DataTaskPublisher(request: request, session: .shared)
-    .receive(on: DispatchQueue.main)
-    .catchToEffect()
-    .map { result in
-      switch result {
-      case .success(let output):
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        print( String(decoding: output.data, as: UTF8.self))
-        
-        return .postResult(true, "set \(property) to: \(value) at: \(index == nil ? "all" : String(index!))" )
-        
-      case .failure:
-        return .postResult(false, "set \(property) to: \(value) at: \(index == nil ? "all" : String(index!))" )
-      }
-    }
-    .eraseToEffect()
-}
+*/
 
 public func sendScript(_ script: String, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
   

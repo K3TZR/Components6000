@@ -17,7 +17,7 @@ public struct Relay: Codable, Equatable, Identifiable {
     physicalState: Bool = false,
     currentState: Bool = false,
     name: String,
-    cycleDelay: Int? = 0,
+    cycleDelay: String = "0",
     locked: Bool = false
   ) {
     self.critical = critical
@@ -34,12 +34,7 @@ public struct Relay: Codable, Equatable, Identifiable {
   @BindableState public var physicalState: Bool
   @BindableState public var currentState: Bool
   @BindableState public var name: String
-  public var cycleDelay: Int? {
-    didSet { cycleDelayString = cycleDelay == nil ? "" : String(cycleDelay!) }
-  }
-  @BindableState public var cycleDelayString: String = "" {
-    didSet { cycleDelay = cycleDelayString == "" ? nil : Int(cycleDelayString)}
-  }
+  @BindableState public var cycleDelay: String
   @BindableState public var locked: Bool
   
   public enum CodingKeys: String, CodingKey {
@@ -51,6 +46,28 @@ public struct Relay: Codable, Equatable, Identifiable {
     case cycleDelay = "cycle_delay"
     case locked
   }
+  
+  // The Initializer function from Decodable
+  public init(from decoder: Decoder) throws {
+    // Container
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    
+    // Normal Decoding
+    critical = try values.decode(Bool.self, forKey: .critical)
+    transientState = try values.decode(Bool.self, forKey: .transientState)
+    physicalState = try values.decode(Bool.self, forKey: .physicalState)
+    currentState = try values.decode(Bool.self, forKey: .currentState)
+    name = try values.decode(String.self, forKey: .name)
+    locked = try values.decode(Bool.self, forKey: .locked)
+    
+    // Conditional Decoding (handles "null")
+    if let cycleDelay = try values.decodeIfPresent(Int.self, forKey: .cycleDelay) {
+      self.cycleDelay = String(cycleDelay)
+    }else {
+      self.cycleDelay = ""
+    }
+  }
+  
 }
 
 public enum RelayAction: BindableAction, Equatable {
