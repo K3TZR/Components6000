@@ -27,10 +27,10 @@ struct TopButtonsView: View {
         .keyboardShortcut(viewStore.radio == nil ? .defaultAction : .cancelAction)
 
         HStack(spacing: 20) {
-          Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .toggleButton(\.isGui)))
+          Toggle("Gui", isOn: viewStore.binding(get: \.isGui, send: .toggle(\.isGui)))
             .disabled(viewStore.radio != nil)
-          Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .toggleButton(\.showTimes)))
-          Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .toggleButton(\.showPings)))
+          Toggle("Times", isOn: viewStore.binding(get: \.showTimes, send: .toggle(\.showTimes)))
+          Toggle("Pings", isOn: viewStore.binding(get: \.showPings, send: .toggle(\.showPings)))
         }
 
         Spacer()
@@ -48,7 +48,7 @@ struct TopButtonsView: View {
         .frame(width: 200)
 
         Spacer()
-        Toggle("Force Smartlink Login", isOn: viewStore.binding(get: \.forceWanLogin, send: .toggleButton(\.forceWanLogin)))
+        Toggle("Force Smartlink Login", isOn: viewStore.binding(get: \.forceWanLogin, send: .toggle(\.forceWanLogin)))
         .disabled(viewStore.connectionMode == .local || viewStore.connectionMode == .none)
         Button("Clear Default") { viewStore.send(.clearDefaultButton) }
         .disabled(viewStore.defaultConnection == nil)

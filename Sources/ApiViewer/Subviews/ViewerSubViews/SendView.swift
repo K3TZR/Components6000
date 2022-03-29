@@ -37,7 +37,7 @@ struct SendView: View {
         .disabled(viewStore.radio == nil)
 
         Spacer()
-        Toggle("Clear on Send", isOn: viewStore.binding(get: \.clearOnSend, send: .toggleButton(\.clearOnSend)))
+        Toggle("Clear on Send", isOn: viewStore.binding(get: \.clearOnSend, send: .toggle(\.clearOnSend)))
       }
     }
   }

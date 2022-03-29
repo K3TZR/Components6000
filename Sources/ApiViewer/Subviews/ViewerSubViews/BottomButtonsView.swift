@@ -27,11 +27,11 @@ struct BottomButtonsView: View {
                 in: 8...14)
         Text(String(format: "%2.0f", viewStore.fontSize)).frame(alignment: .leading)
         Spacer()
-        Button("Reverse") { viewStore.send(.toggleButton(\.reverseLog))}
+        Button("Reverse") { viewStore.send(.toggle(\.reverseLog))}
         Spacer()
         HStack(spacing: 40) {
-          Toggle("Clear on Connect", isOn: viewStore.binding(get: \.clearOnConnect, send: .toggleButton(\.clearOnConnect)))
-          Toggle("Clear on Disconnect", isOn: viewStore.binding(get: \.clearOnDisconnect, send: .toggleButton(\.clearOnDisconnect)))
+          Toggle("Clear on Connect", isOn: viewStore.binding(get: \.clearOnConnect, send: .toggle(\.clearOnConnect)))
+          Toggle("Clear on Disconnect", isOn: viewStore.binding(get: \.clearOnDisconnect, send: .toggle(\.clearOnDisconnect)))
           Button("Clear Now") { viewStore.send(.clearNowButton)}
         }
       }

@@ -22,6 +22,7 @@ let package = Package(
     .library(name: "Radio", targets: ["Radio"]),
     .library(name: "ClientStatus", targets: ["ClientStatus"]),
     .library(name: "RemoteViewer", targets: ["RemoteViewer"]),
+    .library(name: "Login", targets: ["Login"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
@@ -31,9 +32,17 @@ let package = Package(
   ],
   targets: [
     .target(
+      name: "Login",
+      dependencies: [
+        "Shared",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
+    .target(
       name: "RemoteViewer",
       dependencies: [
         "Shared",
+        "Login",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
@@ -64,6 +73,7 @@ let package = Package(
       name: "WanDiscovery",
       dependencies: [
         "Shared",
+        "Login",
         "SecureStorage",
         .product(name: "JWTDecode", package: "JWTDecode.swift"),
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),

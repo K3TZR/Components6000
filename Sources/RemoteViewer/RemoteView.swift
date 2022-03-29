@@ -20,23 +20,18 @@ public struct RemoteView: View {
   
   public var body: some View {
     
-    WithViewStore(store) { viewStore in
-      VStack {
-        
-        RemoteViewHeading(store: store)
-        
-        VStack {
-          ForEachStore(
-            self.store.scope(state: \.relays, action: RemoteAction.relay(id:action:)),
-            content: RelayView.init(store:)
-          )
-        }
-
-        RemoteViewFooter(store: store)
-      }
-      .onAppear() { viewStore.send(.onAppear) }
-      .padding(.horizontal)
+    VStack {
+      RemoteViewHeading(store: store)
+      RemoteViewBody(store: store)
+      RemoteViewFooter(store: store)
     }
+    .padding(.horizontal)
+    
+    // alert dialogs
+    .alert(
+      self.store.scope(state: \.alert),
+      dismiss: .alertDismissed
+    )
   }
 }
 
@@ -48,24 +43,47 @@ public struct RemoteViewHeading: View {
     WithViewStore(store) { viewStore in
       VStack {
         Text(viewStore.heading).font(.title).padding(.bottom)
-        Text("- - - - - - - - - State - - - - - - - - -").padding(.trailing, 60)
         HStack {
-          Text("Name").frame(width: 250, alignment: .leading)
+          Text("Name").frame(width: 300, alignment: .leading)
           Group {
-            Text("Physical")
-            Text("Transient")
-            Text("Current")
-            Text("Critical")
+            Text("State")
             Text("Locked")
-            Text("Cycle Delay")
           }
           .frame(width: 100, alignment: .center)
         }
       }
       .font(.title2)
+      .onAppear() { viewStore.send(.onAppear) }
+
+      // Progress sheet
+      .sheet(
+        isPresented: viewStore.binding(
+          get: { $0.progressState != nil },
+          send: RemoteAction.progressAction(.cancel)),
+        content: {
+          IfLetStore(
+            store.scope(state: \.progressState, action: RemoteAction.progressAction),
+            then: ProgressView.init(store:)
+          )
+        }
+      )
     }
     
     Divider().background(Color(.red))
+  }
+}
+
+public struct RemoteViewBody: View {
+  let store: Store<RemoteState, RemoteAction>
+  
+  public var body: some View {
+    
+    VStack {
+      ForEachStore(
+        self.store.scope(state: \.relays, action: RemoteAction.relay(id:action:)),
+        content: RelayView.init(store:)
+      )
+    }
   }
 }
 
@@ -78,11 +96,14 @@ public struct RemoteViewFooter: View {
       Spacer()
       Divider().background(Color(.red))
       HStack(spacing: 60) {
-        Button("Refresh") { viewStore.send(.refresh) }.disabled(viewStore.scriptInFlight)
-        Button("All Off") { viewStore.send(.allOff) }.disabled(viewStore.scriptInFlight)
+        Button("Refresh") { viewStore.send(.getRelays) }.disabled(viewStore.progressState != nil)
+        Button("All Off") { viewStore.send(.allOff) }.disabled(viewStore.progressState != nil)
         Spacer()
-        Button("Cycle ON") { viewStore.send(.cycleOn) }.disabled(viewStore.scriptInFlight)
-        Button("Cycle OFF") { viewStore.send(.cycleOff) }.disabled(viewStore.scriptInFlight)
+        Button("Set Scripts") { viewStore.send(.setScripts) }.disabled(viewStore.progressState != nil)
+        Button("Get Scripts") { viewStore.send(.getScripts) }.disabled(viewStore.progressState != nil)
+        Spacer()
+        Button("Cycle ON") { viewStore.send(.runScript(cycleOnScript)) }.disabled(viewStore.progressState != nil)
+        Button("Cycle OFF") { viewStore.send(.runScript(cycleOffScript)) }.disabled(viewStore.progressState != nil)
       }
     }
   }

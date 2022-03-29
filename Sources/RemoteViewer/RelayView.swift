@@ -14,17 +14,15 @@ public struct RelayView: View {
   public var body: some View {
     WithViewStore(self.store) { viewStore in
       HStack {
-        TextField("", text: viewStore.binding(\.$name)).frame(width: 250, alignment: .leading)
+        TextField("", text: viewStore.binding(\.$name), onCommit: { viewStore.send(.nameChanged) }).frame(width: 300)
         Group {
-          Toggle("", isOn: viewStore.binding(\.$physicalState)).disabled(true)
-          Toggle("", isOn: viewStore.binding(\.$transientState)).disabled(true)
-          Toggle("", isOn: viewStore.binding(\.$currentState)).disabled(viewStore.locked)
-          Toggle("", isOn: viewStore.binding(\.$critical))
-          Toggle("", isOn: viewStore.binding(\.$locked)).disabled(true)
+          
+          Button(action: { viewStore.send(.toggleStatus) }, label: { Text("\(viewStore.status ? "ON" : "OFF")").frame(width: 40) })
+            .foregroundColor(viewStore.locked ? .gray : viewStore.status ? .green : .red)
+            .disabled(viewStore.locked)
+          Text("\(viewStore.locked ? "YES" : "NO")").foregroundColor(viewStore.locked ? .yellow : .gray)
         }
         .frame(width: 100, alignment: .center)
-        TextField("", text: viewStore.binding(\.$cycleDelay))
-          .frame(width: 100)
       }
       .font(.title2)
     }

@@ -9,6 +9,7 @@ import SwiftUI
 import ComposableArchitecture
 
 import WanDiscovery
+import Login
 import ClientStatus
 import Picker
 import LogViewer
@@ -110,7 +111,7 @@ public struct ApiView: View {
         
       } else {
         RemoteView(store: Store(
-          initialState: RemoteState( "Remote Relays" ),
+          initialState: RemoteState( "Relay Status" ),
           reducer: remoteReducer,
           environment: RemoteEnvironment() )
         ).toolbar {

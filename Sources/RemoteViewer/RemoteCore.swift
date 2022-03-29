@@ -16,6 +16,24 @@ import Shared
 
 struct RelaySubscriptionId: Hashable {}
 
+public struct RelayScript: Equatable {
+  public var type: ScriptType
+  public var duration: Float
+  public var source: String
+  public var msg: String
+}
+
+public enum ScriptType: String {
+  case cycleOff = "cycle_off"
+  case cycleOn = "cycle_on"
+}
+
+public enum RelayProperty: String {
+  case critical
+  case cycleDelay = "cycle_delay"
+  case name
+  case status = "state"
+}
 
 // ----------------------------------------------------------------------------
 // MARK: - State, Actions & Environment
@@ -25,25 +43,38 @@ public struct RemoteState: Equatable {
   public init(_ heading: String = "Relay Status") {
     self.heading = heading
   }
+  public var alert: AlertState<RemoteAction>?
+  public var forceUpdate = false
   public var heading: String
   public var relays = initialRelays
-  public var forceUpdate = false
-  public var scriptInFlight = false
+  public var progressState: ProgressState? = nil
 }
 
 public enum RemoteAction: Equatable {
-  case allOff
-  case getResult(Bool, String)
-  case noAction
+  // initialization
   case onAppear
-  case refresh
-  case relayLoadFailed
-  case relaysReceived(IdentifiedArrayOf<Relay>)
-  case postResult(Bool, String)
-  case cycleOn
-  case cycleOff
-  
+
+  // UI controls
+  case allOff
+//  case cycleOn
+//  case cycleOff
+  case getScripts
+  case getRelays
+  case runScript(RelayScript)
+  case setScripts
+
+  // subview/sheet/alert related
+  case alertDismissed
+  case progressAction(ProgressAction)   // placeholder, never issued
   case relay(id: Relay.ID, action: RelayAction)
+
+  // Effects related
+  case getPropertyCompleted(Bool, String)
+  case getRelaysCompleted(Bool, IdentifiedArrayOf<Relay>)
+  case getScriptsCompleted(Bool, String)
+  case runScriptCompleted(Float, Bool, RelayScript)
+  case setPropertyCompleted(Bool, String)
+  case setScriptsCompleted(Bool)
 }
 
 public struct RemoteEnvironment {
@@ -54,6 +85,13 @@ public struct RemoteEnvironment {
 // MARK: - Reducer
 
 public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>.combine(
+  progressReducer
+    .optional()
+    .pullback(
+      state: \RemoteState.progressState,
+      action: /RemoteAction.progressAction,
+      environment: { _ in ProgressEnvironment() }
+    ),
   relayReducer.forEach(
     state: \.relays,
     action: /RemoteAction.relay(id:action:),
@@ -69,119 +107,112 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
       return getRelays( "admin", "ruwn1viwn_RUF_zolt" )
       
       // ----------------------------------------------------------------------------
-      // MARK: - RelayView UI actions
+      // MARK: - RemoteView UI actions
       
     case .allOff:
-      //      for (i, relay) in state.relays.enumerated() {
-      //        state.relays[i].state = false
-      //      }
-      ////      return .none
-      //      return getName( "admin", "ruwn1viwn_RUF_zolt" )
-      return setProperty("state", value: "false", at: nil, "admin", "ruwn1viwn_RUF_zolt" )
-      //      return .none
-//      return setProperties(["name":"Some new name"], at: 5, "admin", "ruwn1viwn_RUF_zolt" )
-//      return setRelay(4, "admin", "ruwn1viwn_RUF_zolt")
+      state.progressState = ProgressState(title: "while all relays are switched off")
+      return setProperty(.status, at: nil, value: "false", "admin", "ruwn1viwn_RUF_zolt" )
     
-    case .refresh:
+    case .getScripts:
+      state.progressState = ProgressState(title: "while scripts are downloaded")
+      return getScripts( "admin", "ruwn1viwn_RUF_zolt" )
+
+    case .getRelays:
+      state.progressState = ProgressState(title: "while relays are fetched")
+      return getRelays( "admin", "ruwn1viwn_RUF_zolt" )
+     
+    case .runScript(let script):
+      state.progressState = ProgressState(title: script.msg, duration: script.duration)
+      return runScript( script, "admin", "ruwn1viwn_RUF_zolt" )
+      
+    case .setScripts:
+      state.progressState = ProgressState(title: "while scripts are uploaded")
+      return setScripts( scripts, "admin", "ruwn1viwn_RUF_zolt" )
+
+      // ----------------------------------------------------------------------------
+      // MARK: - Action sent when an Alert is closed
+      
+    case .alertDismissed:
+      state.alert = nil
+      return .none
+      
+      // ----------------------------------------------------------------------------
+      // MARK: - Actions sent by effects
+                  
+    case .getPropertyCompleted(let success, let text):
+      sleep(3)
+      state.progressState = nil
+      if !success { state.alert = AlertState(title: TextState("GET failure: \(text)")) }
+      return .none
+            
+    case .setPropertyCompleted(let success, let text):
+      sleep(3)
+      state.progressState = nil
+      if !success { state.alert = AlertState(title: TextState("POST failure: \(text)")) }
       return getRelays( "admin", "ruwn1viwn_RUF_zolt" )
       
-      //    case .toggleLocked(let index):
-      //      // permanently disabled
-      //      return .none
-      //
-      //    case .toggleState(let id):
-      //      state.relays[id: id].currentState.toggle()
-      //      return setProperty("state", value: state.relays[index].state.asTrueFalse.lowercased(), at: index, "admin", "ruwn1viwn_RUF_zolt")
-      //
-      //    case .toggleCritical(let id):
-      //      state.relays[id: id].critical.toggle()
-      //      return setProperty("critical", value: state.relays[index].critical.asTrueFalse.lowercased(), at: index, "admin", "ruwn1viwn_RUF_zolt")
-      
-    case .relaysReceived(let relays):
-      state.relays = relays
-      state.forceUpdate.toggle()
-      return .none
-      
-    case .relayLoadFailed:
-      return .none
-      
-      //    case .cycleDelayChanged(let index, let text):
-      //      print("cycleDelayChanged: index = \(index), value = \(text)")
-      ////      state.relays[index].cycleDelay = currentValue
-      ////      return setProperty("cycle_delay", value: valueString, at: index, "admin", "ruwn1viwn_RUF_zolt")
-      //      return .none
-      //
-      ////    case .incrCycleDelay(let index):
-      ////      var currentValue = state.relays[index].cycleDelay ?? 0
-      ////      currentValue += 1
-      ////      let valueString = String(currentValue)
-      ////      print("INCR: valueString = \(valueString)")
-      ////      state.relays[index].cycleDelay = currentValue
-      ////      return setProperty("cycle_delay", value: valueString, at: index, "admin", "ruwn1viwn_RUF_zolt")
-      
-    case .cycleOn:
-      state.scriptInFlight = true
-      return sendScript( "cycle_on", "admin", "ruwn1viwn_RUF_zolt" )
-      
-    case .cycleOff:
-      state.scriptInFlight = true
-      return sendScript( "cycle_off", "admin", "ruwn1viwn_RUF_zolt" )
-      
-    case .getResult(let success, let value):
-      //      print( "-----> Get result, (\(success ? "success" : "failure")), value = \(value)" )
-      sleep(4)
-      state.scriptInFlight = false
-      //      return Effect(value: .refresh)
-      return .none
-      
-    case .postResult(let success, let command):
-      print( "-----> Post result, (\(success ? "success" : "failure")), command = \(command)" )
-      //      sleep(4)
-      state.scriptInFlight = false
-      //      return Effect(value: .refresh)
-      return .none
-      
-    case .noAction:
-      // this is a placeholder, it should never happen
-      //      fatalError("noAction occurred")
-      return .none
-      
-    case .relay(let id, let action):
-      var property: String?
-      var value = ""
-      var index = 0
-      
-      guard let index = state.relays.index(id: id) else { return .none }
-      
-      switch action {
-      case .binding(\.$critical):
-        print("$critical: id = \(id)")
-        property = "critical"
-        value = state.relays[id: id]!.critical.asTrueFalse.lowercased()
-        
-      case .binding(\.$currentState):
-        print("$currentState: id = \(id)")
-        property = "state"
-        value = state.relays[id: id]!.currentState.asTrueFalse.lowercased()
-        
-      case .binding(\.$cycleDelay):
-        print("$cycleDelay: id = \(id)")
-        property = "cycle_delay"
-        value = state.relays[id: id]!.cycleDelay
-        
-      case .binding(\.$name):
-        print("$name: id = \(id)")
-        property = "name"
-        value = state.relays[id: id]!.name
-        
-      default:
-        print("OTHER: id = \(id)")
-      }
-      if property == nil {
-        return .none
+    case .getRelaysCompleted(let success, let relays):
+      state.progressState = nil
+      if success {
+        state.relays = relays
+        state.forceUpdate.toggle()
       } else {
-        return setProperty(property!, value: value, at: index, "admin", "ruwn1viwn_RUF_zolt")
+        state.alert = AlertState(title: TextState("Relay load failure"))
       }
+      return .none
+      
+    case .getScriptsCompleted(let success, let scripts):
+      sleep(3)
+      state.progressState = nil
+      if !success { state.alert = AlertState(title: TextState("Get Scripts failure"))}
+      return .none
+      
+    case .runScriptCompleted(let duration, let success, let script):
+      sleep(UInt32(duration))
+      state.progressState = nil
+      if success {
+        return getRelays( "admin", "ruwn1viwn_RUF_zolt" )
+      } else {
+        state.alert = AlertState(title: TextState("Run \(script.type.rawValue) Script failure"))
+      }
+      return .none
+
+    case .setScriptsCompleted(let success):
+      sleep(3)
+      state.progressState = nil
+      if success {
+        return getRelays( "admin", "ruwn1viwn_RUF_zolt" )
+      
+      } else {
+        state.alert = AlertState(title: TextState("Set Scripts failure"))
+        return .none
+      }
+      
+      // ----------------------------------------------------------------------------
+      // MARK: - Actions sent upstream by the RelayView (i.e. RelayView -> RemoteView)
+
+    case .relay(let id, .nameChanged):
+      state.progressState = ProgressState(title: "while the name is changed")
+      return setProperty(.name, at: state.relays.index(id: id), value: state.relays[id: id]!.name, "admin", "ruwn1viwn_RUF_zolt")
+
+    case .relay(let id, .toggleStatus):
+      state.progressState = ProgressState(title: "while the state is changed")
+      return setProperty(.status, at: state.relays.index(id: id), value: state.relays[id: id]!.name, "admin", "ruwn1viwn_RUF_zolt")
+
+    case .relay(id: let id, action: _):
+      // ignore all others
+      return .none
+      
+      // ----------------------------------------------------------------------------
+      // MARK: - Actions sent upstream by the ProgressView (i.e. ProgressView -> RemoteView)
+      
+    case .progressAction(.cancel):
+      state.progressState = nil
+      return .none
+    
+    case .progressAction(_):
+      // ignore all others
+      return .none
     }
   }
 )
@@ -191,14 +222,14 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
 // MARK: - Helper functions
 
 public var initialRelays: IdentifiedArrayOf<Relay> = [
-  Relay(critical: true, transientState: true, physicalState: true, currentState: true, name: "Relay 0", locked: true),
-  Relay(critical: false, transientState: true, physicalState: true, currentState: true, name: "Relay 1", locked: false),
-  Relay(name: "Relay 2"),
-  Relay(name: "Relay 3"),
-  Relay(name: "Relay 4"),
-  Relay(critical: false, transientState: false, physicalState: false, currentState: false, name: "Relay 5", locked: false),
-  Relay(name: "Relay 6"),
-  Relay(name: "Relay 7")
+  Relay( name: "Relay 0" ),
+  Relay( name: "Relay 1" ),
+  Relay( name: "Relay 2" ),
+  Relay( name: "Relay 3" ),
+  Relay( name: "Relay 4" ),
+  Relay( name: "Relay 5" ),
+  Relay( name: "Relay 6" ),
+  Relay( name: "Relay 7" )
 ]
 
 extension URLRequest {
@@ -210,311 +241,4 @@ extension URLRequest {
   }
 }
 
-// WORKING
-func getRelays(_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
-  let headers = [
-    "Connection": "close",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "X-CSRF": "x"
-  ]
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/")!)
-  request.setBasicAuth(username: user, password: pwd)
-  request.httpMethod = "GET"
-  request.allHTTPHeaderFields = headers
-  
-  return URLSession.DataTaskPublisher(request: request, session: .shared)
-    .receive(on: DispatchQueue.main)
-    .catchToEffect()
-    .map { result in
-      switch result {
-      case .success(let output):
-        let decoder = JSONDecoder()
-        print( String(decoding: output.data, as: UTF8.self))
-        return .relaysReceived(try! decoder.decode( IdentifiedArrayOf<Relay>.self, from: output.data))
-        
-      case .failure:
-        return .relayLoadFailed
-      }
-    }
-    .eraseToEffect()
-}
 
-
-
-// working
-func getName(_ index: Int, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
-  let headers = [
-    "Connection": "close",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "X-CSRF": "x"
-  ]
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/\(index)/name/")!)
-  
-  request.setBasicAuth(username: user, password: pwd)
-  request.allHTTPHeaderFields = headers
-  request.httpMethod = "GET"
-  
-  return URLSession.DataTaskPublisher(request: request, session: .shared)
-    .receive(on: DispatchQueue.main)
-    .catchToEffect()
-    .map { result in
-      switch result {
-      case .success(let output):
-        print( String(decoding: output.data, as: UTF8.self))
-        return .getResult(true, String(decoding: output.data, as: UTF8.self))
-        
-      case .failure:
-        return .getResult(false, "")
-      }
-    }
-    .eraseToEffect()
-}
-
-func setProperty(_ property: String, value: String, at index: Int?, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
-  let headers = [
-    "Connection": "close",
-    "X-CSRF": "x"
-  ]
-  
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/\(index == nil ? "all;" : String(index!))/\(property)/")!)
-  request.setBasicAuth(username: user, password: pwd)
-  request.allHTTPHeaderFields = headers
-  request.httpMethod = "PUT"
-  request.httpBody = Data(value.utf8)
-  
-  return URLSession.DataTaskPublisher(request: request, session: .shared)
-    .receive(on: DispatchQueue.main)
-    .catchToEffect()
-    .map { result in
-      switch result {
-      case .success(let output):
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        print( String(decoding: output.data, as: UTF8.self))
-        
-        return .postResult(true, "set \(property) to: \(value) at: \(index == nil ? "all" : String(index!))" )
-        
-      case .failure:
-        return .postResult(false, "set \(property) to: \(value) at: \(index == nil ? "all" : String(index!))" )
-      }
-    }
-    .eraseToEffect()
-}
-
-/*
-func setRelay(_ index: Int, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
-  //
-  // Sample for relay object / outlets[].
-  //
-  // This is a sample demonstrating how to set the outlet.
-  //
-  
-  // Note that this sample has been generated by httpsnippet;
-  // authentication configuration (usually digest) is not included.
-  
-  let headers = [
-    "Connection": "close",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "X-CSRF": "x"
-  ]
-  let parameters = [
-    "state": false,
-    "critical": true,
-    "cycle_delay": 8,
-    "locked": false,
-    "transient_state": false,
-    "physical_state": true,
-    "name": "POE Injector"
-  ] as [String : Any]
-  
-  let postData = try! JSONSerialization.data(withJSONObject: parameters, options: [])
-  
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/\(index)/")!)
-  
-  request.setBasicAuth(username: user, password: pwd)
-  request.allHTTPHeaderFields = headers
-  request.httpMethod = "PUT"
-  request.httpBody = postData as Data
-  
-  return URLSession.DataTaskPublisher(request: request, session: .shared)
-    .receive(on: DispatchQueue.main)
-    .catchToEffect()
-    .map { result -> RemoteAction in
-      switch result {
-      case .success(let output):
-        print( String(decoding: output.data, as: UTF8.self))
-        return .getResult(true, String(decoding: output.data, as: UTF8.self))
-        
-      case .failure:
-        return .getResult(false, "")
-      }
-    }
-    .eraseToEffect()
-}
-*/
-
-public func sendScript(_ script: String, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
-  
-  let headers = [
-    "Connection": "close",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "X-CSRF": "x"
-  ]
-  let parameters = [["user_function": script as Any]]
-  let postData = try! JSONSerialization.data(withJSONObject: parameters, options: [])
-  
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/script/start/")!)
-  request.setBasicAuth(username: user, password: pwd)
-  request.httpMethod = "POST"
-  request.allHTTPHeaderFields = headers
-  request.httpBody = postData as Data
-  
-  return URLSession.DataTaskPublisher(request: request, session: .shared)
-    .receive(on: DispatchQueue.main)
-    .catchToEffect()
-    .map { result in
-      switch result {
-      case .success(_):
-        return .postResult(true, script)
-        
-      case .failure:
-        return .postResult(false, script)
-      }
-    }
-    .eraseToEffect()
-}
-
-/*
-
- func setRelays(_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
-   let headers = [
-     "Connection": "close",
-     "Content-Type": "application/json",
-     "Accept": "application/json",
-     "X-CSRF": "x"
-   ]
-   
-   let postData = try! JSONSerialization.data(withJSONObject: ["name": "Some new name"] as [String:Any], options: [])
-   
-   var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/2/")!)
-   request.setBasicAuth(username: user, password: pwd)
-   request.httpMethod = "PUT"
-   request.allHTTPHeaderFields = headers
-   request.httpBody = postData as Data
-   
-   return URLSession.DataTaskPublisher(request: request, session: .shared)
-     .receive(on: DispatchQueue.main)
-     .catchToEffect()
-     .map { result in
-       switch result {
-       case .success(let output):
-         print( String(decoding: output.data, as: UTF8.self))
-         return .postResult(true, "setRelays")
-         
-       case .failure:
-         return .postResult(false, "setRelays")
-       }
-     }
-     .eraseToEffect()
- }
-
-func setProperties(_ properties: [String:Any], at index: Int, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
-//  let headers = [
-//    "Connection": "close",
-//    "Content-Type": "application/json",
-//    "Accept": "application/json",
-//    "X-CSRF": "x"
-//  ]
-  let postData = try! JSONSerialization.data(withJSONObject: properties, options: [])
-  
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/\(String(index))/")!)
-  let authData = (user + ":" + pwd).data(using: .utf8)!.base64EncodedString()
-  
-  request.addValue("Basic \(authData)", forHTTPHeaderField: "Authorization")
-  request.addValue("close", forHTTPHeaderField: "Connection")
-  request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-//  request.addValue("application/json", forHTTPHeaderField: "Accept")
-  request.addValue("x", forHTTPHeaderField: "X-CSRF")
-  
-  request.httpMethod = "PUT"
-  
-  request.httpBody = postData
-  
-  return URLSession.DataTaskPublisher(request: request, session: .shared)
-    .receive(on: DispatchQueue.main)
-    .catchToEffect()
-    .map { result in
-      switch result {
-      case .success(let output):
-        print( String(decoding: output.data, as: UTF8.self))
-        return .getResult(true, String(decoding: output.data, as: UTF8.self))
-        
-      case .failure:
-        return .getResult(false, "")
-      }
-    }
-    .eraseToEffect()
-}
-
-
-
-
-
-
-
-
-
-
-
-//public func scriptRequest(_ script: String, _ user: String, _ pwd: String) -> URLRequest {
-//
-//  let headers = [
-//    "Connection": "close",
-//    "Content-Type": "application/json",
-//    "Accept": "application/json",
-//    "X-CSRF": "x"
-//  ]
-//  let parameters = [["user_function": script as Any]]
-//  let postData = try! JSONSerialization.data(withJSONObject: parameters, options: [])
-//
-//  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/script/start/")!)
-//  request.setBasicAuth(username: user, password: pwd)
-//
-//  request.httpMethod = "POST"
-//  request.allHTTPHeaderFields = headers
-//  request.httpBody = postData as Data
-//  return request
-//}
-
-
-func reboot(_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
-  let headers = [
-    "Connection": "close",
-    "Content-Type": "application/json",
-    "X-CSRF": "x"
-  ]
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/system/reboot/")!)
-  request.setBasicAuth(username: user, password: pwd)
-  
-  request.httpMethod = "POST"
-  request.allHTTPHeaderFields = headers
-  
-  return URLSession.DataTaskPublisher(request: request, session: .shared)
-    .receive(on: DispatchQueue.main)
-    .catchToEffect()
-    .map { result in
-      switch result {
-      case .success(_):
-        return .postResult(true, "reboot")
-        
-      case .failure:
-        return .postResult(false, "reboot")
-      }
-    }
-    .eraseToEffect()
-}
-*/

@@ -12,6 +12,7 @@ import SwiftUI
 
 import LanDiscovery
 import WanDiscovery
+import Login
 import LogViewer
 import Picker
 import Radio
@@ -202,26 +203,25 @@ public enum ApiAction: Equatable {
   case remoteViewButton
   case sendButton
   case startStopButton
-  case toggleButton(WritableKeyPath<ApiState, Bool>)
-  case packetChangeReceived(PacketUpdate)
-  case clientChangeReceived(ClientUpdate)
+  case toggle(WritableKeyPath<ApiState, Bool>)
  
-  
-  // sheet/alert related
+  // subview/sheet/alert related
   case alertDismissed
+  case clientAction(ClientAction)
   case loginAction(LoginAction)
   case pickerAction(PickerAction)
-  case clientAction(ClientAction)
   
   // Effects related
   case cancelEffects
+  case checkConnectionStatus(PickerSelection)
+  case clientChangeReceived(ClientUpdate)
   case finishInitialization
   case logAlertReceived(LogEntry)
   case meterReceived(Meter)
   case openSelection(PickerSelection)
+  case packetChangeReceived(PacketUpdate)
   case tcpMessage(TcpMessage)
   case wanStatus(WanStatus)
-  case checkConnectionStatus(PickerSelection)
 
 }
 
@@ -421,7 +421,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         return .none
       }
       
-    case .toggleButton(let keyPath):
+    case .toggle(let keyPath):
       // handles all buttons with a Bool state
       state[keyPath: keyPath].toggle()
       if keyPath == \.forceWanLogin && state.forceWanLogin {
