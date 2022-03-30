@@ -26,12 +26,12 @@ public struct LoginView: View {
         
         HStack {
           VStack(alignment: .leading, spacing: 40) {
-            Text("Email:")
-            Text("Password:")
+            Text(viewStore.userLabel)
+            Text(viewStore.pwdLabel)
           }
           
           VStack(alignment: .leading, spacing: 40) {
-            TextField("", text: viewStore.binding(\.$email))
+            TextField("", text: viewStore.binding(\.$user))
             SecureField("", text: viewStore.binding(\.$pwd))
           }
         }
@@ -40,7 +40,7 @@ public struct LoginView: View {
           Button("Cancel") { viewStore.send(.cancelButton) }
           .keyboardShortcut(.cancelAction)
           
-          Button("Log in") { viewStore.send(.loginButton( LoginResult(viewStore.email, pwd: viewStore.pwd) )) }
+          Button("Log in") { viewStore.send(.loginButton( LoginResult(viewStore.user, pwd: viewStore.pwd) )) }
           .keyboardShortcut(.defaultAction)
         }
       }

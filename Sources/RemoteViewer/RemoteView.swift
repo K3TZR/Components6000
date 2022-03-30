@@ -8,6 +8,9 @@
 import ComposableArchitecture
 import SwiftUI
 
+import LoginView
+import ProgressView
+
 // ----------------------------------------------------------------------------
 // MARK: - View(s)
 
@@ -20,18 +23,32 @@ public struct RemoteView: View {
   
   public var body: some View {
     
-    VStack {
-      RemoteViewHeading(store: store)
-      RemoteViewBody(store: store)
-      RemoteViewFooter(store: store)
+    WithViewStore(store) { viewStore in
+      VStack {
+        RemoteViewHeading(store: store)
+        RemoteViewBody(store: store)
+        RemoteViewFooter(store: store)
+      }
+      // alert dialogs
+      .alert(
+        self.store.scope(state: \.alertState),
+        dismiss: .alertDismissed
+      )
+
+      // Login sheet
+      .sheet(
+        isPresented: viewStore.binding(
+          get: { $0.loginState != nil },
+          send: RemoteAction.loginAction(.cancelButton)),
+        content: {
+          IfLetStore(
+            store.scope(state: \.loginState, action: RemoteAction.loginAction),
+            then: LoginView.init(store:)
+          )
+        }
+      )
     }
     .padding(.horizontal)
-    
-    // alert dialogs
-    .alert(
-      self.store.scope(state: \.alert),
-      dismiss: .alertDismissed
-    )
   }
 }
 
@@ -96,14 +113,14 @@ public struct RemoteViewFooter: View {
       Spacer()
       Divider().background(Color(.red))
       HStack(spacing: 60) {
-        Button("Refresh") { viewStore.send(.getRelays) }.disabled(viewStore.progressState != nil)
-        Button("All Off") { viewStore.send(.allOff) }.disabled(viewStore.progressState != nil)
+        Button("Refresh") { viewStore.send(.getRelays) }.disabled(viewStore.loginSuccessful == false || viewStore.progressState != nil)
+        Button("All Off") { viewStore.send(.allOff) }.disabled(viewStore.loginSuccessful == false || viewStore.progressState != nil)
         Spacer()
-        Button("Set Scripts") { viewStore.send(.setScripts) }.disabled(viewStore.progressState != nil)
-        Button("Get Scripts") { viewStore.send(.getScripts) }.disabled(viewStore.progressState != nil)
+        Button("Set Scripts") { viewStore.send(.setScripts) }.disabled(viewStore.loginSuccessful == false || viewStore.progressState != nil)
+        Button("Get Scripts") { viewStore.send(.getScripts) }.disabled(viewStore.loginSuccessful == false || viewStore.progressState != nil)
         Spacer()
-        Button("Cycle ON") { viewStore.send(.runScript(cycleOnScript)) }.disabled(viewStore.progressState != nil)
-        Button("Cycle OFF") { viewStore.send(.runScript(cycleOffScript)) }.disabled(viewStore.progressState != nil)
+        Button("Cycle ON") { viewStore.send(.runScript(cycleOnScript)) }.disabled(viewStore.loginSuccessful == false || viewStore.progressState != nil)
+        Button("Cycle OFF") { viewStore.send(.runScript(cycleOffScript)) }.disabled(viewStore.loginSuccessful == false || viewStore.progressState != nil)
       }
     }
   }

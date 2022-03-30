@@ -90,6 +90,38 @@ func setScripts(_ scripts: String, _ user: String, _ pwd: String) -> Effect<Remo
     .eraseToEffect()
 }
 
+public func runScript(_ script: RelayScript,_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
+  
+  let headers = [
+    "Connection": "close",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "X-CSRF": "x"
+  ]
+  let parameters = [["user_function": script.type.rawValue as Any]]
+  let postData = try! JSONSerialization.data(withJSONObject: parameters, options: [])
+  
+  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/script/start/")!)
+  request.setBasicAuth(username: user, password: pwd)
+  request.httpMethod = "POST"
+  request.allHTTPHeaderFields = headers
+  request.httpBody = postData as Data
+  
+  return URLSession.DataTaskPublisher(request: request, session: .shared)
+    .receive(on: DispatchQueue.main)
+    .catchToEffect()
+    .map { result in
+      switch result {
+      case .success(_):
+        return .runScriptCompleted(script.duration, true, script)
+        
+      case .failure:
+        return .runScriptCompleted(script.duration, false, script)
+      }
+    }
+    .eraseToEffect()
+}
+
 func getProperty(_ property: RelayProperty, at index: Int?, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
   let headers = [
     "Connection": "close",
@@ -141,38 +173,6 @@ func setProperty(_ property: RelayProperty, at index: Int?, value: String, _ use
         
       case .failure:
         return .setPropertyCompleted(false, "set \(property) to: \(value) at: \(index == nil ? "all" : String(index!))" )
-      }
-    }
-    .eraseToEffect()
-}
-
-public func runScript(_ script: RelayScript,_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
-  
-  let headers = [
-    "Connection": "close",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "X-CSRF": "x"
-  ]
-  let parameters = [["user_function": script.type.rawValue as Any]]
-  let postData = try! JSONSerialization.data(withJSONObject: parameters, options: [])
-  
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/script/start/")!)
-  request.setBasicAuth(username: user, password: pwd)
-  request.httpMethod = "POST"
-  request.allHTTPHeaderFields = headers
-  request.httpBody = postData as Data
-  
-  return URLSession.DataTaskPublisher(request: request, session: .shared)
-    .receive(on: DispatchQueue.main)
-    .catchToEffect()
-    .map { result in
-      switch result {
-      case .success(_):
-        return .runScriptCompleted(script.duration, true, script)
-        
-      case .failure:
-        return .runScriptCompleted(script.duration, false, script)
       }
     }
     .eraseToEffect()

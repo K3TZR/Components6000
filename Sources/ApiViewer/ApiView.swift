@@ -9,9 +9,9 @@ import SwiftUI
 import ComposableArchitecture
 
 import WanDiscovery
-import Login
-import ClientStatus
-import Picker
+import LoginView
+import ClientView
+import PickerView
 import LogViewer
 import RemoteViewer
 import Shared

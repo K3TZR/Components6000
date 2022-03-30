@@ -9,7 +9,7 @@ import Foundation
 import CocoaAsyncSocket
 import Combine
 
-import Login
+import LoginView
 import Shared
 
 

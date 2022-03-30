@@ -11,7 +11,7 @@ let package = Package(
   products: [
     .library(name: "Shared", targets: ["Shared"]),
     .library(name: "LanDiscovery", targets: ["LanDiscovery"]),
-    .library(name: "Picker", targets: ["Picker"]),
+    .library(name: "PickerView", targets: ["PickerView"]),
     .library(name: "ApiViewer", targets: ["ApiViewer"]),
     .library(name: "LogViewer", targets: ["LogViewer"]),
     .library(name: "TcpCommands", targets: ["TcpCommands"]),
@@ -20,9 +20,10 @@ let package = Package(
     .library(name: "SecureStorage", targets: ["SecureStorage"]),
     .library(name: "WanDiscovery", targets: ["WanDiscovery"]),
     .library(name: "Radio", targets: ["Radio"]),
-    .library(name: "ClientStatus", targets: ["ClientStatus"]),
+    .library(name: "ClientView", targets: ["ClientView"]),
     .library(name: "RemoteViewer", targets: ["RemoteViewer"]),
-    .library(name: "Login", targets: ["Login"]),
+    .library(name: "LoginView", targets: ["LoginView"]),
+    .library(name: "ProgressView", targets: ["ProgressView"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
@@ -32,7 +33,14 @@ let package = Package(
   ],
   targets: [
     .target(
-      name: "Login",
+      name: "ProgressView",
+      dependencies: [
+        "Shared",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
+    .target(
+      name: "LoginView",
       dependencies: [
         "Shared",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -42,12 +50,14 @@ let package = Package(
       name: "RemoteViewer",
       dependencies: [
         "Shared",
-        "Login",
+        "LoginView",
+        "SecureStorage",
+        "ProgressView",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
     .target(
-      name: "ClientStatus",
+      name: "ClientView",
       dependencies: [
         "Shared",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -73,7 +83,7 @@ let package = Package(
       name: "WanDiscovery",
       dependencies: [
         "Shared",
-        "Login",
+        "LoginView",
         "SecureStorage",
         .product(name: "JWTDecode", package: "JWTDecode.swift"),
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
@@ -88,8 +98,8 @@ let package = Package(
       name: "ApiViewer",
       dependencies: [
         "WanDiscovery",
-        "Picker",
-        "ClientStatus",
+        "PickerView",
+        "ClientView",
         "LanDiscovery",
         "TcpCommands",
         "UdpStreams",
@@ -117,11 +127,11 @@ let package = Package(
       ]
     ),
     .target(
-      name: "Picker",
+      name: "PickerView",
       dependencies: [
         "LanDiscovery",
         "WanDiscovery",
-        "ClientStatus",
+        "ClientView",
         "Shared",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
@@ -154,7 +164,7 @@ let package = Package(
     ),
     .testTarget(
       name: "PickerTests",
-      dependencies: ["Picker"]
+      dependencies: ["PickerView"]
     ),
     .testTarget(
       name: "ApiViewerTests",

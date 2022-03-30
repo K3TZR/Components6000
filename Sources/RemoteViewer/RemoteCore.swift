@@ -9,6 +9,9 @@ import Foundation
 import ComposableArchitecture
 import Combine
 
+import SecureStorage
+import LoginView
+import ProgressView
 import Shared
 
 // ----------------------------------------------------------------------------
@@ -40,24 +43,37 @@ public enum RelayProperty: String {
 
 public struct RemoteState: Equatable {
   
-  public init(_ heading: String = "Relay Status") {
+  public init(
+    _ heading: String = "Relay Status",
+    alertState: AlertState<RemoteAction>? = nil,
+    progressState: ProgressState? = nil,
+    relays: IdentifiedArrayOf<Relay> = initialRelays
+  )
+  {
     self.heading = heading
+    self.alertState = alertState
+    self.progressState = progressState
+    self.relays = relays
   }
-  public var alert: AlertState<RemoteAction>?
+  public var alertState: AlertState<RemoteAction>?
   public var forceUpdate = false
   public var heading: String
   public var relays = initialRelays
-  public var progressState: ProgressState? = nil
+  public var progressState: ProgressState?
+  public var secureStore: SecureStore?
+  public var loginState: LoginState?
+  public var user: String?
+  public var pwd: String?
+  public var loginSuccessful = false
 }
 
 public enum RemoteAction: Equatable {
   // initialization
   case onAppear
+  case finishInitialization
 
   // UI controls
   case allOff
-//  case cycleOn
-//  case cycleOff
   case getScripts
   case getRelays
   case runScript(RelayScript)
@@ -65,7 +81,8 @@ public enum RemoteAction: Equatable {
 
   // subview/sheet/alert related
   case alertDismissed
-  case progressAction(ProgressAction)   // placeholder, never issued
+  case loginAction(LoginAction)
+  case progressAction(ProgressAction)
   case relay(id: Relay.ID, action: RelayAction)
 
   // Effects related
@@ -85,6 +102,13 @@ public struct RemoteEnvironment {
 // MARK: - Reducer
 
 public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>.combine(
+  loginReducer
+    .optional()
+    .pullback(
+      state: \RemoteState.loginState,
+      action: /RemoteAction.loginAction,
+      environment: { _ in LoginEnvironment() }
+    ),
   progressReducer
     .optional()
     .pullback(
@@ -104,36 +128,48 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
       // MARK: - Initialization
       
     case .onAppear:
-      return getRelays( "admin", "ruwn1viwn_RUF_zolt" )
+      state.secureStore = SecureStore(service: "RemoteViewer")
+      if let user = state.secureStore?.get(account: "user"), let pwd = state.secureStore?.get(account: "pwd") {
+        state.user = user
+        state.pwd = pwd
+        return Effect(value: .finishInitialization)
+      
+      } else {
+        state.loginState = LoginState(heading: "Please Login")
+        return .none
+      }
+      
+    case .finishInitialization:
+      return getRelays( state.user!, state.pwd! )
       
       // ----------------------------------------------------------------------------
       // MARK: - RemoteView UI actions
       
     case .allOff:
-      state.progressState = ProgressState(title: "while all relays are switched off")
+      state.progressState = ProgressState(msg: "while all relays are switched off")
       return setProperty(.status, at: nil, value: "false", "admin", "ruwn1viwn_RUF_zolt" )
     
     case .getScripts:
-      state.progressState = ProgressState(title: "while scripts are downloaded")
+      state.progressState = ProgressState(msg: "while scripts are downloaded")
       return getScripts( "admin", "ruwn1viwn_RUF_zolt" )
 
     case .getRelays:
-      state.progressState = ProgressState(title: "while relays are fetched")
+      state.progressState = ProgressState(msg: "while relays are fetched")
       return getRelays( "admin", "ruwn1viwn_RUF_zolt" )
      
     case .runScript(let script):
-      state.progressState = ProgressState(title: script.msg, duration: script.duration)
+      state.progressState = ProgressState(msg: script.msg, duration: script.duration)
       return runScript( script, "admin", "ruwn1viwn_RUF_zolt" )
       
     case .setScripts:
-      state.progressState = ProgressState(title: "while scripts are uploaded")
+      state.progressState = ProgressState(msg: "while scripts are uploaded")
       return setScripts( scripts, "admin", "ruwn1viwn_RUF_zolt" )
 
       // ----------------------------------------------------------------------------
       // MARK: - Action sent when an Alert is closed
       
     case .alertDismissed:
-      state.alert = nil
+      state.alertState = nil
       return .none
       
       // ----------------------------------------------------------------------------
@@ -142,29 +178,31 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
     case .getPropertyCompleted(let success, let text):
       sleep(3)
       state.progressState = nil
-      if !success { state.alert = AlertState(title: TextState("GET failure: \(text)")) }
+      if !success { state.alertState = AlertState(title: TextState("GET failure: \(text)")) }
       return .none
             
     case .setPropertyCompleted(let success, let text):
       sleep(3)
       state.progressState = nil
-      if !success { state.alert = AlertState(title: TextState("POST failure: \(text)")) }
+      if !success { state.alertState = AlertState(title: TextState("POST failure: \(text)")) }
       return getRelays( "admin", "ruwn1viwn_RUF_zolt" )
       
     case .getRelaysCompleted(let success, let relays):
       state.progressState = nil
       if success {
+        state.loginSuccessful = true
         state.relays = relays
         state.forceUpdate.toggle()
       } else {
-        state.alert = AlertState(title: TextState("Relay load failure"))
+        state.loginSuccessful = false
+        state.alertState = AlertState(title: TextState("Relay load failure"))
       }
       return .none
       
     case .getScriptsCompleted(let success, let scripts):
       sleep(3)
       state.progressState = nil
-      if !success { state.alert = AlertState(title: TextState("Get Scripts failure"))}
+      if !success { state.alertState = AlertState(title: TextState("Get Scripts failure"))}
       return .none
       
     case .runScriptCompleted(let duration, let success, let script):
@@ -173,7 +211,7 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
       if success {
         return getRelays( "admin", "ruwn1viwn_RUF_zolt" )
       } else {
-        state.alert = AlertState(title: TextState("Run \(script.type.rawValue) Script failure"))
+        state.alertState = AlertState(title: TextState("Run \(script.type.rawValue) Script failure"))
       }
       return .none
 
@@ -184,7 +222,7 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
         return getRelays( "admin", "ruwn1viwn_RUF_zolt" )
       
       } else {
-        state.alert = AlertState(title: TextState("Set Scripts failure"))
+        state.alertState = AlertState(title: TextState("Set Scripts failure"))
         return .none
       }
       
@@ -192,12 +230,22 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
       // MARK: - Actions sent upstream by the RelayView (i.e. RelayView -> RemoteView)
 
     case .relay(let id, .nameChanged):
-      state.progressState = ProgressState(title: "while the name is changed")
-      return setProperty(.name, at: state.relays.index(id: id), value: state.relays[id: id]!.name, "admin", "ruwn1viwn_RUF_zolt")
+      if state.loginSuccessful {
+        state.progressState = ProgressState(msg: "while the name is changed")
+        return setProperty(.name, at: state.relays.index(id: id), value: state.relays[id: id]!.name, "admin", "ruwn1viwn_RUF_zolt")
+      } else {
+        state.loginState = LoginState(heading: "Please Login")
+        return .none
+      }
 
     case .relay(let id, .toggleStatus):
-      state.progressState = ProgressState(title: "while the state is changed")
-      return setProperty(.status, at: state.relays.index(id: id), value: state.relays[id: id]!.name, "admin", "ruwn1viwn_RUF_zolt")
+      if state.loginSuccessful {
+        state.progressState = ProgressState(msg: "while the state is changed")
+        return setProperty(.status, at: state.relays.index(id: id), value: state.relays[id: id]!.name, "admin", "ruwn1viwn_RUF_zolt")
+      } else {
+        state.loginState = LoginState(heading: "Please Login")
+        return .none
+      }
 
     case .relay(id: let id, action: _):
       // ignore all others
@@ -211,6 +259,25 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
       return .none
     
     case .progressAction(_):
+      // ignore all others
+      return .none
+      
+      // ----------------------------------------------------------------------------
+      // MARK: - Actions sent upstream by the LoginView (i.e. LoginView -> RemoteView)
+      
+    case .loginAction(.cancelButton):
+      state.loginState = nil
+      return .none
+
+    case .loginAction(.loginButton(let credentials)):
+      state.loginState = nil      
+      _ = state.secureStore?.set(account: "user", data: credentials.user)
+      _ = state.secureStore?.set(account: "pwd", data: credentials.pwd)
+      state.user = credentials.user
+      state.pwd = credentials.pwd
+      return Effect(value: .finishInitialization)
+    
+    case .loginAction(_):
       // ignore all others
       return .none
     }

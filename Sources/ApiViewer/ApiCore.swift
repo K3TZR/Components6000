@@ -12,16 +12,16 @@ import SwiftUI
 
 import LanDiscovery
 import WanDiscovery
-import Login
+import LoginView
 import LogViewer
-import Picker
+import PickerView
 import Radio
 import RemoteViewer
 import Shared
 import TcpCommands
 import UdpStreams
 import XCGWrapper
-import ClientStatus
+import ClientView
 
 import simd
 
@@ -305,14 +305,14 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         state.packetCollection?.removePackets(ofType: .local)
         state.wanListener = WanListener()
         if state.forceWanLogin || state.wanListener!.start(state.smartlinkEmail) == false {
-          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
+          state.loginState = LoginState(heading: "Smartlink Login required", user: state.smartlinkEmail)
         }
       case .both:
         state.lanListener = LanListener()
         state.lanListener!.start()
         state.wanListener = WanListener()
         if state.forceWanLogin || state.wanListener!.start(state.smartlinkEmail) == false {
-          state.loginState = LoginState(heading: "Smartlink Login required", email: state.smartlinkEmail)
+          state.loginState = LoginState(heading: "Smartlink Login required", user: state.smartlinkEmail)
         }
       case .none:
         state.packetCollection?.removePackets(ofType: .local)
@@ -493,7 +493,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       
     case .loginAction(.loginButton(let credentials)):
       state.loginState = nil
-      state.smartlinkEmail = credentials.email
+      state.smartlinkEmail = credentials.user
       if state.wanListener!.start(using: credentials) {
         state.forceWanLogin = false
       } else {

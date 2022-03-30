@@ -12,7 +12,7 @@ import AppKit
 
 import LanDiscovery
 import WanDiscovery
-import ClientStatus
+import ClientView
 import Shared
 
 // ----------------------------------------------------------------------------

@@ -10,7 +10,7 @@ import SwiftUI
 import Combine
 import JWTDecode
 
-import Login
+import LoginView
 import Shared
 import SecureStorage
 
@@ -165,7 +165,7 @@ final public class Authentication {
         // save the email & picture
         updateClaims(from: result[0])
         // save the Refresh Token
-        _ = _secureStore.set(account: loginResult.email, data: refreshToken)
+        _ = _secureStore.set(account: loginResult.user, data: refreshToken)
         // save Id Token
         _previousIdToken = result[0]
         return result[0]
@@ -258,7 +258,7 @@ final public class Authentication {
     dict[kKeyGrantType]     = kGrantType
     dict[kKeyPassword]      = loginResult.pwd
     dict[kKeyScope]         = kScope
-    dict[kKeyUserName]      = loginResult.email
+    dict[kKeyUserName]      = loginResult.user
     
     return serialize(dict)
   }

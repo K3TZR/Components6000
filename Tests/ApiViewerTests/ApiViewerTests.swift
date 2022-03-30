@@ -45,46 +45,46 @@ class ApiViewerTests: XCTestCase {
       $0.alert = AlertState(title: TextState("Smartlink login failed"))
     }
     
-    store.send(.toggleButton(\.isGui)) {                // isGui (default is "ON")
+    store.send(.toggle(\.isGui)) {                // isGui (default is "ON")
       $0.isGui = false
     }
-    store.send(.toggleButton(\.isGui)) {
+    store.send(.toggle(\.isGui)) {
       $0.isGui = true
     }
-    store.send(.toggleButton(\.showPings)) {            // showPings
+    store.send(.toggle(\.showPings)) {            // showPings
       $0.showPings = true
     }
-    store.send(.toggleButton(\.showPings)) {
+    store.send(.toggle(\.showPings)) {
       $0.showPings = false
     }
-    store.send(.toggleButton(\.showTimes)) {            // showTimes
+    store.send(.toggle(\.showTimes)) {            // showTimes
       $0.showTimes = true
     }
-    store.send(.toggleButton(\.showTimes)) {
+    store.send(.toggle(\.showTimes)) {
       $0.showTimes = false
     }
-    store.send(.toggleButton(\.clearOnConnect)) {       // clearOnConnect
+    store.send(.toggle(\.clearOnConnect)) {       // clearOnConnect
       $0.clearOnConnect = true
     }
-    store.send(.toggleButton(\.clearOnConnect)) {
+    store.send(.toggle(\.clearOnConnect)) {
       $0.clearOnConnect = false
     }
-    store.send(.toggleButton(\.clearOnDisconnect)) {    // clearOnDisconnect
+    store.send(.toggle(\.clearOnDisconnect)) {    // clearOnDisconnect
       $0.clearOnDisconnect = true
     }
-    store.send(.toggleButton(\.clearOnDisconnect)) {
+    store.send(.toggle(\.clearOnDisconnect)) {
       $0.clearOnDisconnect = false
     }
-    store.send(.toggleButton(\.clearOnSend)) {          // clearOnSend
+    store.send(.toggle(\.clearOnSend)) {          // clearOnSend
       $0.clearOnSend = true
     }
-    store.send(.toggleButton(\.clearOnSend)) {
+    store.send(.toggle(\.clearOnSend)) {
       $0.clearOnSend = false
     }
-    store.send(.toggleButton(\.reverseLog)) {           // reverseLog
+    store.send(.toggle(\.reverseLog)) {           // reverseLog
       $0.reverseLog = true
     }
-    store.send(.toggleButton(\.reverseLog)) {
+    store.send(.toggle(\.reverseLog)) {
       $0.reverseLog = false
     }
     store.send(.fontSizeStepper(8)) {                   // font size

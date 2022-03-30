@@ -10,7 +10,7 @@ import Combine
 import ComposableArchitecture
 
 import LanDiscovery
-import ClientStatus
+import ClientView
 import Shared
 
 // ----------------------------------------------------------------------------

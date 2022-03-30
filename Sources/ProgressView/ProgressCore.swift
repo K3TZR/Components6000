@@ -12,16 +12,20 @@ import Combine
 public struct ProgressState: Equatable {
   public init
   (
-    title: String? = nil,
-    duration: Float = 1.0
+    heading: String = "Please Wait",
+    msg: String? = nil,
+    duration: Float = 1.0,
+    interval: Float = 0.1
   )
   {
-    self.title = title
+    self.heading = heading
+    self.msg = msg
     self.duration = duration
   }
-  public var title: String?
+  public var heading: String
+  public var msg: String?
   public var duration: Float
-  public var progressValue: Float = 0.0
+  public var value: Float = 0.0
 }
 
 public enum ProgressAction: Equatable {
@@ -30,7 +34,9 @@ public enum ProgressAction: Equatable {
   case timerTicked
 }
 
-public struct ProgressEnvironment {}
+public struct ProgressEnvironment {
+  public init() {}
+}
 
 public let progressReducer = Reducer<ProgressState, ProgressAction, ProgressEnvironment> { state, action, _ in
   struct TimerId: Hashable {}
@@ -38,15 +44,15 @@ public let progressReducer = Reducer<ProgressState, ProgressAction, ProgressEnvi
     switch action {
     
     case .startTimer:
-      return Effect.timer(id: TimerId(), every: 0.5, on: DispatchQueue.main)
+      return Effect.timer(id: TimerId(), every: 0.1, on: DispatchQueue.main)
         .map { _ in .timerTicked }
       
     case .cancel:
      return .cancel(id: TimerId())
       
     case .timerTicked:
-      state.progressValue += (0.5/state.duration)
-      if state.progressValue >= 1.0 {
+      state.value += (0.1/state.duration)
+      if state.value >= 1.0 {
         return Effect(value: .cancel)
       }
       return .none

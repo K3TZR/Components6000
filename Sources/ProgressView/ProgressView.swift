@@ -18,16 +18,16 @@ public struct ProgressView: View {
     WithViewStore(self.store) { viewStore in
       VStack {
         Group {
-          Text("Please Wait")
+          Text(viewStore.heading)
           Spacer()
-          Text(viewStore.title ?? "")
+          Text(viewStore.msg ?? "")
         }
         .multilineTextAlignment(.center)
 
         Spacer()
-        Text("\(String(format: "%.0f", viewStore.duration)) seconds")
-        Spacer()
-        ProgressBar(value: viewStore.progressValue)
+        Text("\( String(format: "%.0f", viewStore.duration - (viewStore.value * viewStore.duration))) seconds")
+//        Spacer()
+        ProgressBar(value: viewStore.value)
         Spacer()
         Button("Cancel") { viewStore.send(.cancel) }
       }

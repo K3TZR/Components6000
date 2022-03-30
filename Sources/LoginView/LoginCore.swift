@@ -12,11 +12,11 @@ import ComposableArchitecture
 
 public struct LoginResult: Equatable {
   
-  public init(_ email: String, pwd: String) {
-    self.email = email
+  public init(_ user: String, pwd: String) {
+    self.user = user
     self.pwd = pwd
   }
-  public var email = ""
+  public var user = ""
   public var pwd = ""
 }
 
@@ -25,14 +25,25 @@ public struct LoginResult: Equatable {
 
 public struct LoginState: Equatable {
   
-  public init(heading: String = "Smartlink Login", email: String = "", pwd: String = "") {
-    self.email = email
+  public init(
+    heading: String = "Please Login",
+    user: String = "",
+    pwd: String = "",
+    userLabel: String = "User",
+    pwdLabel: String = "Pasword"
+  )
+  {
     self.heading = heading
+    self.user = user
     self.pwd = pwd
+    self.userLabel = userLabel
+    self.pwdLabel = pwdLabel
   }
-  @BindableState var email: String
-  @BindableState var pwd: String
   var heading: String
+  @BindableState var user: String
+  @BindableState var pwd: String
+  var userLabel: String
+  var pwdLabel: String
 }
 
 public enum LoginAction: BindableAction, Equatable {
@@ -54,25 +65,17 @@ public struct LoginEnvironment {
 public let loginReducer = Reducer<LoginState, LoginAction, LoginEnvironment>
   { state, action, environment in
     
-    switch action {
-//    case .binding(\.$email):
-//      print("email = \(state.email)")
+//    switch action {
+//
+//    case .cancelButton:
 //      return .none
 //
-//    case .binding(\.$pwd):
-//      print("pwd = \(state.pwd)")
+//    case .loginButton(let credentials):
 //      return .none
 //
-    case .cancelButton:
-      print("cancel button")
-      return .none
-
-    case .loginButton(let credentials):
-      return .none
-
-    case .binding(_):
-      return .none
-    }
-//    return .none
+//    case .binding(_):
+//      return .none
+//    }
+    return .none
   }
-  .binding()
+//  .binding()
