@@ -27,13 +27,13 @@ struct MeterSubscriptionId: Hashable {}
 
 func subscribeToPackets() -> Effect<ApiAction, Never> {
   Effect.merge(
-    PacketCollection.sharedInstance.packetPublisher
+    Discovered.sharedInstance.packetPublisher
       .receive(on: DispatchQueue.main)
       .map { update in .packetChangeReceived(update) }
       .eraseToEffect()
       .cancellable(id: PacketSubscriptionId()),
     
-    PacketCollection.sharedInstance.clientPublisher
+    Discovered.sharedInstance.clientPublisher
       .receive(on: DispatchQueue.main)
       .map { update in .clientChangeReceived(update) }
       .eraseToEffect()
@@ -43,7 +43,7 @@ func subscribeToPackets() -> Effect<ApiAction, Never> {
 
 func subscribeToWan() -> Effect<ApiAction, Never> {
   Effect(
-    PacketCollection.sharedInstance.wanStatusPublisher
+    Discovered.sharedInstance.wanStatusPublisher
       .receive(on: DispatchQueue.main)
       .map { status in .wanStatus(status) }
       .eraseToEffect()

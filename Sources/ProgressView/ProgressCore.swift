@@ -14,8 +14,7 @@ public struct ProgressState: Equatable {
   (
     heading: String = "Please Wait",
     msg: String? = nil,
-    duration: Float = 1.0,
-    interval: Float = 0.1
+    duration: Float? = nil
   )
   {
     self.heading = heading
@@ -24,13 +23,14 @@ public struct ProgressState: Equatable {
   }
   public var heading: String
   public var msg: String?
-  public var duration: Float
+  public var duration: Float?
   public var value: Float = 0.0
 }
 
 public enum ProgressAction: Equatable {
-  case startTimer
   case cancel
+  case completed
+  case startTimer
   case timerTicked
 }
 
@@ -41,21 +41,23 @@ public struct ProgressEnvironment {
 public let progressReducer = Reducer<ProgressState, ProgressAction, ProgressEnvironment> { state, action, _ in
   struct TimerId: Hashable {}
   
-    switch action {
+  switch action {
     
-    case .startTimer:
-      return Effect.timer(id: TimerId(), every: 0.1, on: DispatchQueue.main)
-        .map { _ in .timerTicked }
-      
-    case .cancel:
-     return .cancel(id: TimerId())
-      
-    case .timerTicked:
-      state.value += (0.1/state.duration)
-      if state.value >= 1.0 {
-        return Effect(value: .cancel)
-      }
-      return .none
-      
-    }
+  case .cancel:
+    return .cancel(id: TimerId())
+    
+  case .completed:
+    return .cancel(id: TimerId())
+    
+  case .startTimer:
+    return Effect.timer(id: TimerId(), every: 0.1, on: DispatchQueue.main)
+      .receive(on: DispatchQueue.main)
+      .catchToEffect()
+      .map { _ in .timerTicked }
+    
+  case .timerTicked:
+    state.value += (0.1/state.duration!)
+    if state.value >= 1.0 { return Effect(value: .completed) }
+    return .none
+  }
 }

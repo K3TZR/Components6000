@@ -265,12 +265,12 @@ public final class Radio: Equatable {
         self?.udpStatus(status)
       }
     
-    _cancellablePacketUpdate = PacketCollection.sharedInstance.packetPublisher
+    _cancellablePacketUpdate = Discovered.sharedInstance.packetPublisher
       .sink { [weak self] update in
         self?.packetUpdate(update)
       }
 
-    _cancellableClientUpdate = PacketCollection.sharedInstance.clientPublisher
+    _cancellableClientUpdate = Discovered.sharedInstance.clientPublisher
       .sink { [weak self] update in
         self?.clientUpdate(update)
       }
@@ -396,8 +396,6 @@ public final class Radio: Equatable {
   /// - Parameter vitaPacket:       a Vita packet
   public func vitaParser(_ vitaPacket: Vita) {
     
-    let _testMode = false
-    
     // Pass the stream to the appropriate object
     switch (vitaPacket.classCode) {
       
@@ -407,26 +405,35 @@ public final class Radio: Equatable {
       Meter.vitaProcessor(vitaPacket, radio: self)
       
     case .panadapter:
-      if let object = objects.panadapters[id: vitaPacket.streamId]          { object.vitaProcessor(vitaPacket, _testMode) }
-      
+//      if let object = objects.panadapters[id: vitaPacket.streamId]          { object.vitaProcessor(vitaPacket, _testerModeEnabled) }
+      objects.panadapters[id: vitaPacket.streamId]?.vitaProcessor(vitaPacket, _testerModeEnabled)
+
     case .waterfall:
-      if let object = objects.waterfalls[id: vitaPacket.streamId]           { object.vitaProcessor(vitaPacket, _testMode) }
-      
+//      if let object = objects.waterfalls[id: vitaPacket.streamId]           { object.vitaProcessor(vitaPacket, _testerModeEnabled) }
+      objects.waterfalls[id: vitaPacket.streamId]?.vitaProcessor(vitaPacket, _testerModeEnabled)
+
     case .daxAudio:
-      if let object = objects.daxRxAudioStreams[id: vitaPacket.streamId]    { object.vitaProcessor(vitaPacket)}
-      if let object = objects.daxMicAudioStreams[id: vitaPacket.streamId]   { object.vitaProcessor(vitaPacket) }
-      if let object = objects.remoteRxAudioStreams[id: vitaPacket.streamId] { object.vitaProcessor(vitaPacket) }
-      
+//      if let object = objects.daxRxAudioStreams[id: vitaPacket.streamId]    { object.vitaProcessor(vitaPacket)}
+//      if let object = objects.daxMicAudioStreams[id: vitaPacket.streamId]   { object.vitaProcessor(vitaPacket) }
+//      if let object = objects.remoteRxAudioStreams[id: vitaPacket.streamId] { object.vitaProcessor(vitaPacket) }
+      objects.daxRxAudioStreams[id: vitaPacket.streamId]?.vitaProcessor(vitaPacket)
+      objects.daxMicAudioStreams[id: vitaPacket.streamId]?.vitaProcessor(vitaPacket)
+      objects.remoteRxAudioStreams[id: vitaPacket.streamId]?.vitaProcessor(vitaPacket)
+
     case .daxReducedBw:
-      if let object = objects.daxRxAudioStreams[id: vitaPacket.streamId]    { object.vitaProcessor(vitaPacket) }
-      if let object = objects.daxMicAudioStreams[id: vitaPacket.streamId]   { object.vitaProcessor(vitaPacket) }
-      
+//      if let object = objects.daxRxAudioStreams[id: vitaPacket.streamId]    { object.vitaProcessor(vitaPacket) }
+//      if let object = objects.daxMicAudioStreams[id: vitaPacket.streamId]   { object.vitaProcessor(vitaPacket) }
+      objects.daxRxAudioStreams[id: vitaPacket.streamId]?.vitaProcessor(vitaPacket)
+      objects.daxMicAudioStreams[id: vitaPacket.streamId]?.vitaProcessor(vitaPacket)
+
     case .opus:
-      if let object = objects.remoteRxAudioStreams[id: vitaPacket.streamId] { object.vitaProcessor(vitaPacket) }
-      
+//      if let object = objects.remoteRxAudioStreams[id: vitaPacket.streamId] { object.vitaProcessor(vitaPacket) }
+      objects.remoteRxAudioStreams[id: vitaPacket.streamId]?.vitaProcessor(vitaPacket)
+
     case .daxIq24, .daxIq48, .daxIq96, .daxIq192:
-      if let object = objects.daxIqStreams[id: vitaPacket.streamId]         { object.vitaProcessor(vitaPacket) }
-      
+//      if let object = objects.daxIqStreams[id: vitaPacket.streamId]         { object.vitaProcessor(vitaPacket) }
+      objects.daxIqStreams[id: vitaPacket.streamId]?.vitaProcessor(vitaPacket)
+
     default:
       // log the error
       _log("Radio, unknown Vita class code: \(vitaPacket.classCode.description()) Stream Id = \(vitaPacket.streamId.hex)", .error, #function, #file, #line)
@@ -614,9 +621,10 @@ public final class Radio: Equatable {
     objects.slices.removeAll()
     objects.panadapters.removeAll()
     objects.waterfalls.removeAll()
-    objects.profiles.forEach {
-      $0.list.removeAll()
-    }
+    objects.profiles.removeAll()
+//    objects.profiles.forEach {
+//      $0.list.removeAll()
+//    }
     objects.equalizers.removeAll()
     objects.memories.removeAll()
     objects.meters.removeAll()

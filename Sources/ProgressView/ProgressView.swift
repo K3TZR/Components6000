@@ -25,13 +25,11 @@ public struct ProgressView: View {
         .multilineTextAlignment(.center)
 
         Spacer()
-        Text("\( String(format: "%.0f", viewStore.duration - (viewStore.value * viewStore.duration))) seconds")
-//        Spacer()
-        ProgressBar(value: viewStore.value)
+        if viewStore.duration != nil { ProgressBar(value: viewStore.value) }
         Spacer()
         Button("Cancel") { viewStore.send(.cancel) }
       }
-      .onAppear() { viewStore.send(.startTimer) }
+      .onAppear() { if viewStore.duration != nil { viewStore.send(.startTimer) } }
       .padding()
       .border(.red)
     }
@@ -50,10 +48,10 @@ public struct ProgressView_Previews: PreviewProvider {
     }
 }
 
-struct ProgressBar: View {
+public struct ProgressBar: View {
   var value: Float
   
-  var body: some View {
+  public var body: some View {
     GeometryReader { geometry in
       ZStack(alignment: .leading) {
         Rectangle().frame(width: geometry.size.width , height: geometry.size.height)

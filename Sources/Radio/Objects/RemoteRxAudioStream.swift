@@ -18,8 +18,9 @@ import Shared
 ///      periodically receive Audio in a UDP stream. They are collected in the
 ///      RemoteRxAudioStreams collection on the Radio object.
 ///
-public final class RemoteRxAudioStream: ObservableObject, Identifiable {
-  
+//public final class RemoteRxAudioStream: ObservableObject, Identifiable {
+public struct RemoteRxAudioStream: Identifiable {
+
   // ------------------------------------------------------------------------------
   // MARK: - Static properties
   
@@ -89,14 +90,16 @@ public final class RemoteRxAudioStream: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModelWithStream extension
 
-extension RemoteRxAudioStream: DynamicModelWithStream {
+//extension RemoteRxAudioStream: DynamicModelWithStream {
+extension RemoteRxAudioStream{
   /// Parse an RemoteRxAudioStream status message
   /// - Parameters:
   ///   - keyValues:          a KeyValuesArray
   ///   - radio:              the current Radio class
   ///   - queue:              a parse Queue for the object
   ///   - inUse:              false = "to be deleted"
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id =  properties[0].key.streamId {
       // is the object in use?
@@ -125,7 +128,7 @@ extension RemoteRxAudioStream: DynamicModelWithStream {
   
   ///  Parse RemoteRxAudioStream key/value pairs
   /// - Parameter properties: a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair
     for property in properties {
       // check for unknown Keys
@@ -156,7 +159,7 @@ extension RemoteRxAudioStream: DynamicModelWithStream {
   /// Receive RxRemoteAudioStream audio
   /// - Parameters:
   ///   - vita:               an Opus Vita struct
-  func vitaProcessor(_ vita: Vita) {
+  mutating func vitaProcessor(_ vita: Vita) {
     
     // FIXME: This assumes Opus encoded audio
     

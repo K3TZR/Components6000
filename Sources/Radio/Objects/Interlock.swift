@@ -15,7 +15,8 @@ import Shared
 ///      processing of interlocks. Interlock objects are added, removed and
 ///      updated by the incoming TCP messages.
 ///
-public final class Interlock: ObservableObject {
+//public final class Interlock: ObservableObject {
+public struct Interlock {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
 
@@ -102,10 +103,11 @@ public final class Interlock: ObservableObject {
 // ----------------------------------------------------------------------------
 // MARK: - StaticModel extension
 
-extension Interlock: StaticModel {
+//extension Interlock: StaticModel {
+extension Interlock {
   /// Parse an Interlock status message
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // NO, process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys

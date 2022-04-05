@@ -6,23 +6,22 @@
 //
 
 import XCTest
-import SecureStorage
 
 @testable import SecureStorage
 
 class SecureStorageTests: XCTestCase {
-  let account = "somebody@someplace.com"
+  let account = "someAccount"
   
-  let secureStore = SecureStore(service: "SecureStorageTests.testKeys")
+  let secureStore = SecureStore(service: "SomeServiceName")
   
   func testStorage() {
 
-    XCTAssert( secureStore.set(account: account, data: "a key value") == true )
-                   
-    XCTAssert( secureStore.get(account: account) == "a key value")
+    XCTAssert( secureStore.set(account: account, data: "abcdefghijklmnopqrstuvwxyz1234567890") == true )
+
+    XCTAssert( secureStore.get(account: account) == "abcdefghijklmnopqrstuvwxyz1234567890")
     
     XCTAssert( secureStore.delete(account: account) == true )
-    
+
     XCTAssert( secureStore.get(account: account) == nil)
 
   }

@@ -7,8 +7,9 @@
 
 import Foundation
 import ComposableArchitecture
+import CombineSchedulers
 
-func getRelays(_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
+func getRelays( _ state: RemoteState ) -> Effect<RemoteAction, Never> {
   let headers = [
     "Connection": "close",
     "Content-Type": "application/json",
@@ -16,7 +17,7 @@ func getRelays(_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
     "X-CSRF": "x"
   ]
   var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/")!)
-  request.setBasicAuth(username: user, password: pwd)
+  request.setBasicAuth(username: state.user, password: state.pwd!)
   request.httpMethod = "GET"
   request.allHTTPHeaderFields = headers
   
@@ -36,7 +37,7 @@ func getRelays(_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
     .eraseToEffect()
 }
 
-func getScripts(_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
+func getScripts(_ state: RemoteState) -> Effect<RemoteAction, Never> {
   let headers = [
     "Connection": "close",
     "Content-Type": "application/json",
@@ -44,7 +45,7 @@ func getScripts(_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
     "X-CSRF": "x"
   ]
   var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/script/source/")!)
-  request.setBasicAuth(username: user, password: pwd)
+  request.setBasicAuth(username: state.user, password: state.pwd!)
   request.httpMethod = "GET"
   request.allHTTPHeaderFields = headers
   
@@ -63,14 +64,14 @@ func getScripts(_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
     .eraseToEffect()
 }
 
-func setScripts(_ scripts: String, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
+func setScripts(_ state: RemoteState, scripts: String) -> Effect<RemoteAction, Never> {
   let headers = [
     "Connection": "close",
     "X-CSRF": "x"
   ]
   
   var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/script/source/")!)
-  request.setBasicAuth(username: user, password: pwd)
+  request.setBasicAuth(username: state.user, password: state.pwd!)
   request.allHTTPHeaderFields = headers
   request.httpMethod = "PUT"
   request.httpBody = Data(scripts.utf8)
@@ -90,7 +91,7 @@ func setScripts(_ scripts: String, _ user: String, _ pwd: String) -> Effect<Remo
     .eraseToEffect()
 }
 
-public func runScript(_ script: RelayScript,_ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
+public func runScript(_ state: RemoteState, script: RelayScript) -> Effect<RemoteAction, Never> {
   
   let headers = [
     "Connection": "close",
@@ -102,7 +103,7 @@ public func runScript(_ script: RelayScript,_ user: String, _ pwd: String) -> Ef
   let postData = try! JSONSerialization.data(withJSONObject: parameters, options: [])
   
   var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/script/start/")!)
-  request.setBasicAuth(username: user, password: pwd)
+  request.setBasicAuth(username: state.user, password: state.pwd!)
   request.httpMethod = "POST"
   request.allHTTPHeaderFields = headers
   request.httpBody = postData as Data
@@ -110,28 +111,32 @@ public func runScript(_ script: RelayScript,_ user: String, _ pwd: String) -> Ef
   return URLSession.DataTaskPublisher(request: request, session: .shared)
     .receive(on: DispatchQueue.main)
     .catchToEffect()
+    .delay(for: DispatchQueue.SchedulerTimeType.Stride(floatLiteral: Double(script.duration)), scheduler: DispatchQueue.main)
     .map { result in
       switch result {
       case .success(_):
-        return .runScriptCompleted(script.duration, true, script)
+        return .runScriptCompleted(true, script)
         
       case .failure:
-        return .runScriptCompleted(script.duration, false, script)
+        return .runScriptCompleted(false, script)
       }
     }
     .eraseToEffect()
 }
 
-func getProperty(_ property: RelayProperty, at index: Int?, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
+func getProperty(_ state: RemoteState, property: RelayProperty, at id: UUID?) -> Effect<RemoteAction, Never> {
+
+  let index = id == nil ? "all;" : String(state.relays.index(id: id!)!)
+
   let headers = [
     "Connection": "close",
     "Content-Type": "application/json",
     "Accept": "application/json",
     "X-CSRF": "x"
   ]
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/\(index == nil ? "all;" : String(index!))/\(property.rawValue)/")!)
+  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/\(index)/\(property.rawValue)/")!)
   
-  request.setBasicAuth(username: user, password: pwd)
+  request.setBasicAuth(username: state.user, password: state.pwd!)
   request.allHTTPHeaderFields = headers
   request.httpMethod = "GET"
   
@@ -145,20 +150,24 @@ func getProperty(_ property: RelayProperty, at index: Int?, _ user: String, _ pw
         return .getPropertyCompleted(true, String(decoding: output.data, as: UTF8.self))
         
       case .failure:
-        return .getPropertyCompleted(false, "\(property.rawValue) at index \(index == nil ? "all;" : String(index!))")
+        return .getPropertyCompleted(false, "\(property.rawValue) at index \(index)")
       }
     }
     .eraseToEffect()
 }
 
-func setProperty(_ property: RelayProperty, at index: Int?, value: String, _ user: String, _ pwd: String) -> Effect<RemoteAction, Never> {
+func setProperty(_ state: RemoteState, property: RelayProperty, at id: UUID?, value: String) -> Effect<RemoteAction, Never> {
+  
+  
+  let index = id == nil ? "all;" : String(state.relays.index(id: id!)!)
+  
   let headers = [
     "Connection": "close",
     "X-CSRF": "x"
   ]
   
-  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/\(index == nil ? "all;" : String(index!))/\(property.rawValue)/")!)
-  request.setBasicAuth(username: user, password: pwd)
+  var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/\(index)/\(property.rawValue)/")!)
+  request.setBasicAuth(username: state.user, password: state.pwd!)
   request.allHTTPHeaderFields = headers
   request.httpMethod = "PUT"
   request.httpBody = Data(value.utf8)
@@ -169,11 +178,20 @@ func setProperty(_ property: RelayProperty, at index: Int?, value: String, _ use
     .map { result in
       switch result {
       case .success(_):
-        return .setPropertyCompleted(true, "set \(property) to: \(value) at: \(index == nil ? "all" : String(index!))" )
+        return .setPropertyCompleted(true, "set \(property) to: \(value) at: \(index)" )
         
       case .failure:
-        return .setPropertyCompleted(false, "set \(property) to: \(value) at: \(index == nil ? "all" : String(index!))" )
+        return .setPropertyCompleted(false, "set \(property) to: \(value) at: \(index)" )
       }
     }
     .eraseToEffect()
+}
+
+extension URLRequest {
+  mutating func setBasicAuth(username: String, password: String) {
+    let encodedAuthInfo = String(format: "%@:%@", username, password)
+      .data(using: String.Encoding.utf8)!
+      .base64EncodedString()
+    addValue("Basic \(encodedAuthInfo)", forHTTPHeaderField: "Authorization")
+  }
 }

@@ -20,31 +20,32 @@ public struct LoginView: View {
   
   public var body: some View {
     WithViewStore(self.store) { viewStore in
-      VStack(spacing: 30) {
-        Text(viewStore.heading).font(.title)
+      VStack( spacing: 30 ) {
+        Text( viewStore.heading ).font( .title )
         Divider()
         
         HStack {
           VStack(alignment: .leading, spacing: 40) {
-            Text(viewStore.userLabel)
-            Text(viewStore.pwdLabel)
+            Text( viewStore.userLabel )
+            Text( viewStore.pwdLabel )
           }
           
           VStack(alignment: .leading, spacing: 40) {
-            TextField("", text: viewStore.binding(\.$user))
-            SecureField("", text: viewStore.binding(\.$pwd))
+            TextField( "", text: viewStore.binding(\.$user) )
+            SecureField( "", text: viewStore.binding(\.$pwd) )
           }
         }
         
-        HStack(spacing: 60) {
-          Button("Cancel") { viewStore.send(.cancelButton) }
-          .keyboardShortcut(.cancelAction)
+        HStack( spacing: 60 ) {
+          Button( "Cancel" ) { viewStore.send(.cancelButton) }
+          .keyboardShortcut( .cancelAction )
           
-          Button("Log in") { viewStore.send(.loginButton( LoginResult(viewStore.user, pwd: viewStore.pwd) )) }
-          .keyboardShortcut(.defaultAction)
+          Button( "Log in" ) { viewStore.send(.loginButton) }
+          .keyboardShortcut( .defaultAction )
+          .disabled( viewStore.user.isEmpty || viewStore.pwd.isEmpty )
         }
       }
-      .frame(minWidth: 400)
+      .frame( minWidth: 400 )
       .padding()
     }
   }
@@ -56,7 +57,7 @@ struct LoginView_Previews: PreviewProvider {
   static var previews: some View {
     LoginView(
       store: Store(
-        initialState: LoginState(),
+        initialState: LoginState(service: nil),
         reducer: loginReducer,
         environment: LoginEnvironment()
       )

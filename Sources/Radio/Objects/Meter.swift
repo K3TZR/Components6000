@@ -19,7 +19,8 @@ import Shared
 ///      stream containing multiple Meters. They are collected in the
 ///      meters collection on the Radio object.
 ///
-public final class Meter: ObservableObject, Identifiable, Equatable {
+//public final class Meter: ObservableObject, Identifiable, Equatable {
+public struct Meter: Identifiable, Equatable {
   public static func == (lhs: Meter, rhs: Meter) -> Bool {
     lhs.id == rhs.id
   }
@@ -131,14 +132,16 @@ public final class Meter: ObservableObject, Identifiable, Equatable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Meter: DynamicModel {
+//extension Meter: DynamicModel {
+extension Meter {
   /// Parse a Meter status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // is the object in use?
     if inUse {
       // YES, extract the Meter Number from the first KeyValues entry
@@ -148,26 +151,28 @@ extension Meter: DynamicModel {
       // the Meter Number is the 0th item
       if let id = components[0].objectId {
         // does the meter exist?
+        
         if Objects.sharedInstance.meters[id: id] == nil {
           // NO, create a new Meter & add it to the Meters collection
           Objects.sharedInstance.meters[id: id] = Meter(id)
         }
         // pass the key values to the Meter for parsing
-        Objects.sharedInstance.meters[id: id]!.parseProperties( properties )
+        Objects.sharedInstance.meters[id: id]?.parseProperties( properties )
       }
       
     } else {
       
       // NO, extract the Id
       if let id = properties[0].key.components(separatedBy: " ")[0].objectId {
-        Objects.sharedInstance.meters[id: id] = nil
+//        Objects.sharedInstance.meters[id: id] = nil
+        Objects.sharedInstance.meters.remove(id: id)
       }
     }
   }
   
   /// Parse Meter key/value pairs
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <n.key=value>
     for property in properties {
       // separate the Meter Number from the Key
@@ -205,7 +210,8 @@ extension Meter: DynamicModel {
   /// Process the Meter Vita struct
   /// - Parameters:
   ///   - vita:        a Vita struct
-  class func vitaProcessor(_ vita: Vita, radio: Radio) {
+//  class func vitaProcessor(_ vita: Vita, radio: Radio) {
+  static func vitaProcessor(_ vita: Vita, radio: Radio) {
     var meterIds = [UInt16]()
     
     if _metersAreStreaming == false {
@@ -262,7 +268,8 @@ extension Meter: DynamicModel {
             }
             // did it change?
             if adjNewValue != previousValue {
-              meter.value = adjNewValue
+//              meter.value = adjNewValue
+              Objects.sharedInstance.meters[id: id]?.value = adjNewValue
               meterPublisher.send(meter)
             }
           }

@@ -9,11 +9,11 @@ import XCTest
 import ComposableArchitecture
 import Combine
 
-import Discovery
-import Login
+import LanDiscovery
+import LoginView
 import Shared
 
-@testable import Discovery
+@testable import LanDiscovery
 
 class DiscoveryTests: XCTestCase {
   let discovery = Discovery.sharedInstance

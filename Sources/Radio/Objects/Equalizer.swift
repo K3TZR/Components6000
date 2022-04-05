@@ -20,7 +20,8 @@ import Shared
 ///            The "sc" version is the standard for API Version 1.4 and greater
 ///
 
-public final class Equalizer: ObservableObject, Identifiable {
+//public final class Equalizer: ObservableObject, Identifiable {
+public struct Equalizer: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
 
@@ -78,7 +79,8 @@ public final class Equalizer: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Equalizer: DynamicModel {
+//extension Equalizer: DynamicModel {
+extension Equalizer {
   /// Parse a Stream status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray
@@ -86,7 +88,8 @@ extension Equalizer: DynamicModel {
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
   ///
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     var equalizer: Equalizer?
 
     // get the Type
@@ -101,16 +104,17 @@ extension Equalizer: DynamicModel {
     default: LogProxy.sharedInstance.log("Radio: Unknown Equalizer type: \(type)", .warning, #function, #file, #line)
     }
     // if an equalizer was found
-    if let equalizer = equalizer {
+//    if let equalizer = equalizer {
+    if equalizer != nil {
       // pass the key values to the Equalizer for parsing (dropping the Type)
-      equalizer.parseProperties(Array(properties.dropFirst(1)) )
+      equalizer!.parseProperties(Array(properties.dropFirst(1)) )
     }
   }
 
   /// Parse Equalizer key/value pairs
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

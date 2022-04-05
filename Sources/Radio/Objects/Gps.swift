@@ -16,7 +16,8 @@ import Shared
 ///      processing of the internal Gps (if installed). Gps objects are added,
 ///      removed and updated by the incoming TCP messages.
 ///
-public final class Gps: ObservableObject {
+//public final class Gps: ObservableObject {
+public struct Gps {
   // ----------------------------------------------------------------------------
   // MARK: - Static properties
   
@@ -82,10 +83,11 @@ public final class Gps: ObservableObject {
 // ----------------------------------------------------------------------------
 // MARK: - StaticModel extension
 
-extension Gps: StaticModel {
+//extension Gps: StaticModel {
+extension Gps {
   /// Parse a Gps status message
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys

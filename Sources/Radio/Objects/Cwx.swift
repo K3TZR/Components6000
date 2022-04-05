@@ -16,7 +16,8 @@ import Shared
 ///      rendering of a Cwx. Cwx objects are added, removed and updated
 ///      by the incoming TCP messages.
 ///
-public final class Cwx: ObservableObject {
+//public final class Cwx: ObservableObject {
+public struct Cwx {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
@@ -238,13 +239,14 @@ public final class Cwx: ObservableObject {
 // ----------------------------------------------------------------------------
 // MARK: - StaticModel extension
 
-extension Cwx: StaticModel {
+//extension Cwx: StaticModel {
+extension Cwx {
   /// Parse Cwx key/value pairs, called by Radio
   ///   PropertiesParser protocol method, executes on the parseQ
   ///
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ properties: KeyValuesArray)  {
+  mutating func parseProperties(_ properties: KeyValuesArray)  {
     // process each key/value pair, <key=value>
     for property in properties {
       // is it a Macro?

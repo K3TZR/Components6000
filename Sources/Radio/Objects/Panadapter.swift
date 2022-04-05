@@ -21,8 +21,9 @@ import Shared
 ///       collection on the Radio object.
 ///
 
-public final class Panadapter: ObservableObject, Identifiable {
-  
+//public final class Panadapter: ObservableObject, Identifiable {
+public struct Panadapter: Identifiable {
+
   // ----------------------------------------------------------------------------
   // MARK: - Static properties
   
@@ -181,7 +182,7 @@ public final class Panadapter: ObservableObject, Identifiable {
   ///   - seqNum:         the Sequence Number of the original command
   ///   - responseValue:  the response value
   ///   - reply:          the reply
-  func rfGainReplyHandler(_ command: String, sequenceNumber: SequenceNumber, responseValue: String, reply: String) {
+  mutating func rfGainReplyHandler(_ command: String, sequenceNumber: SequenceNumber, responseValue: String, reply: String) {
     // Anything other than 0 is an error
     guard responseValue == Shared.kNoError else {
       // log it and ignore the Reply
@@ -270,7 +271,8 @@ extension Panadapter {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     //get the Id
     if let id =  properties[1].key.streamId {
       // is the object in use?
@@ -297,7 +299,7 @@ extension Panadapter {
   /// Parse Panadapter key/value pairs
   ///   executes on the mainQ
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     _suppress = true
     
     // process each key/value pair, <key=value>
@@ -364,7 +366,7 @@ extension Panadapter {
   ///
   /// - Parameters:
   ///   - vita:        a Vita struct
-  func vitaProcessor(_ vita: Vita, _ testMode: Bool = false) {
+  mutating func vitaProcessor(_ vita: Vita, _ testMode: Bool = false) {
     if _isStreaming == false {
       _isStreaming = true
       // log the start of the stream
@@ -386,29 +388,41 @@ extension Panadapter {
       // validate the packet (could be incomplete at startup)
       if frameBinCount == 0 { return }
       if startingBinNumber + segmentBinCount > frameBinCount { return }
-   
-      // is it the start of a frame?
-      if _expectedFrameNumber == -1 && startingBinNumber == 0 { _expectedFrameNumber = frameNumber }
-      
-      if _expectedFrameNumber == -1 {
-        // NO, ignore any partial frame
-        _log("Waterfall: incomplete frame = \(frameNumber), startingBin = \(startingBinNumber)", .debug, #function, #file, #line)
-        return
-      }
-      
+         
       // are we in the ApiTester?
       if testMode {
-        // YES, just check the stream values
-        if _expectedFrameNumber != frameNumber {
-          _log("Panadapter: missing frame(s), expected = \(_expectedFrameNumber), received = \(frameNumber), total drops = \(_droppedPackets)", .warning, #function, #file, #line)
-          _droppedPackets += (frameNumber - _expectedFrameNumber)
+        // YES, are we waiting for the start of a frame?
+        if _expectedFrameNumber == -1 {
+          // YES, is it the start of a frame?
+          if startingBinNumber == 0 {
+            // YES, START OF A FRAME
+            _expectedFrameNumber = frameNumber
+          } else {
+            // NO, NOT THE START OF A FRAME
+            return
+          }
         }
-        _accumulatedBins += segmentBinCount
-        
-        // increment the expected frame number if the entire frame has been accumulated
-        if _accumulatedBins == frameBinCount { _expectedFrameNumber += 1 ; _accumulatedBins = 0 }
-        
-        
+        // is it the expected frame?
+        if _expectedFrameNumber == frameNumber {
+          // IT IS THE EXPECTED FRAME, add its bins to the collection
+          _accumulatedBins += segmentBinCount
+          
+          // is the frame complete?
+          if _accumulatedBins == frameBinCount {
+            // YES, expect the next frame
+            _expectedFrameNumber += 1
+            _accumulatedBins = 0
+          }
+          
+        } else {
+          // NOT THE EXPECTED FRAME, wait for the next start of frame
+          _log("Waterfall: missing frame(s), expected = \(_expectedFrameNumber), received = \(frameNumber)", .warning, #function, #file, #line)
+          _expectedFrameNumber = -1
+          _accumulatedBins = 0
+          return
+        }
+
+
       } else {
         
         if _expectedFrameNumber != frameNumber {

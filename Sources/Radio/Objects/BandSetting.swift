@@ -16,7 +16,8 @@ import Shared
 ///      updated by the incoming TCP messages. They are collected in the bandSettings
 ///      collection on the Radio object.
 ///
-public final class BandSetting: ObservableObject, Identifiable {
+//public final class BandSetting: ObservableObject, Identifiable {
+public struct BandSetting: Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Published properties
 
@@ -66,7 +67,8 @@ public final class BandSetting: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension BandSetting: DynamicModel {
+//extension BandSetting: DynamicModel {
+extension BandSetting {
   /// Parse a BandSetting status message
   ///   StatusParser Protocol method, executes on the parseQ
   ///
@@ -76,7 +78,8 @@ extension BandSetting: DynamicModel {
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
   ///
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id = properties[0].key.objectId {
       // is the object in use?
@@ -107,7 +110,7 @@ extension BandSetting: DynamicModel {
   /// Parse BandSetting key/value pairs
   ///   PropertiesParser Protocol method, , executes on the parseQ
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

@@ -10,10 +10,10 @@ import ComposableArchitecture
 import Combine
 
 import Shared
-import Picker
-import Discovery
+import PickerView
+import LanDiscovery
 
-@testable import Picker
+@testable import PickerView
 
 class PickerTests: XCTestCase {
   let testScheduler = DispatchQueue.test

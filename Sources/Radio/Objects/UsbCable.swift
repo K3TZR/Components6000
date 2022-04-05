@@ -17,7 +17,8 @@ import Shared
 ///      are added, removed and updated by the incoming TCP messages. They are
 ///      collected in the usbCables collection on the Radio object.
 ///
-public final class UsbCable: ObservableObject, Identifiable {
+//public final class UsbCable: ObservableObject, Identifiable {
+public struct UsbCable: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
@@ -122,14 +123,16 @@ public final class UsbCable: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension UsbCable: DynamicModel {
+//extension UsbCable: DynamicModel {
+extension UsbCable {
   /// Parse a USB Cable status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     let id = properties[0].key
     
@@ -170,7 +173,7 @@ extension UsbCable: DynamicModel {
   ///
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // is the Status for a cable of this type?
     if cableType.rawValue == properties[0].value {
       // YES,

@@ -17,7 +17,8 @@ import Shared
 ///      updated by the incoming TCP messages. They are collected in the
 ///      slices collection on the Radio object.
 ///
-public final class Slice: ObservableObject , Identifiable {
+//public final class Slice: ObservableObject , Identifiable {
+public struct Slice: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Static properties
   
@@ -303,28 +304,28 @@ public final class Slice: ObservableObject , Identifiable {
   /// - Parameters:
   ///   - mode:       demod mode
   ///
-  func setupDefaultFilters(_ mode: String) {
+  mutating func setupDefaultFilters(_ mode: String) {
     if let modeValue = Mode(rawValue: mode) {
       switch modeValue {
         
       case .CW:
-        DispatchQueue.main.async { self.filterLow = 450 }
-        DispatchQueue.main.async { self.filterHigh = 750 }
+        filterLow = 450
+        filterHigh = 750
       case .RTTY:
-        DispatchQueue.main.async { self.filterLow = -285 }
-        DispatchQueue.main.async { self.filterHigh = 115 }
+        filterLow = -285
+        filterHigh = 115
       case .AM, .SAM:
-        DispatchQueue.main.async { self.filterLow = -3_000 }
-        DispatchQueue.main.async { self.filterHigh = 3_000 }
+        filterLow = -3_000
+        filterHigh = 3_000
       case .FM, .NFM, .DFM:
-        DispatchQueue.main.async { self.filterLow = -8_000 }
-        DispatchQueue.main.async { self.filterHigh = 8_000 }
+        filterLow = -8_000
+        filterHigh = 8_000
       case .LSB, .DIGL:
-        DispatchQueue.main.async { self.filterLow = -2_400 }
-        DispatchQueue.main.async { self.filterHigh = -300 }
+        filterLow = -2_400
+        filterHigh = -300
       case .USB, .DIGU:
-        DispatchQueue.main.async { self.filterLow = 300 }
-        DispatchQueue.main.async { self.filterHigh = 2_400 }
+        filterLow = 300
+        filterHigh = 2_400
       }
     }
   }
@@ -395,7 +396,8 @@ public final class Slice: ObservableObject , Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Slice: DynamicModel {
+//extension Slice: DynamicModel {
+extension Slice {
   /// Parse a Slice status message
   ///   Format: <sliceId> <key=value> <key=value> ...<key=value>
   ///
@@ -407,7 +409,8 @@ extension Slice: DynamicModel {
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
   ///
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id = properties[0].key.objectId {
       // is the object in use?
@@ -437,7 +440,7 @@ extension Slice: DynamicModel {
   
   /// Parse Slice key/value pairs    ///
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

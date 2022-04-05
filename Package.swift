@@ -158,26 +158,30 @@ let package = Package(
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),
-    .testTarget(
-      name: "DiscoveryTests",
-      dependencies: ["LanDiscovery"]
-    ),
-    .testTarget(
-      name: "PickerTests",
-      dependencies: ["PickerView"]
-    ),
-    .testTarget(
-      name: "ApiViewerTests",
-      dependencies: ["ApiViewer"]
-    ),
+//    .testTarget(
+//      name: "LoginViewTests",
+//      dependencies: ["LoginView"]
+//    ),
+//    .testTarget(
+//      name: "DiscoveryTests",
+//      dependencies: ["LanDiscovery"]
+//    ),
+//    .testTarget(
+//      name: "PickerTests",
+//      dependencies: ["PickerView"]
+//    ),
+//    .testTarget(
+//      name: "ApiViewerTests",
+//      dependencies: ["ApiViewer"]
+//    ),
     .testTarget(
       name: "SecureStorageTests",
       dependencies: ["SecureStorage"]
     ),
-    .testTarget(
-      name: "TcpCommandsTests",
-      dependencies: ["TcpCommands", "LanDiscovery"]
-    ),
+//    .testTarget(
+//      name: "TcpCommandsTests",
+//      dependencies: ["TcpCommands", "LanDiscovery"]
+//    ),
     .testTarget(
       name: "LoggingTests",
       dependencies: [
@@ -186,9 +190,9 @@ let package = Package(
         "LogViewer",
       ]
     ),
-    .testTarget(
-      name: "RadioTests",
-      dependencies: ["Radio"]
-    ),
+//    .testTarget(
+//      name: "RadioTests",
+//      dependencies: ["Radio"]
+//    ),
   ]
 )

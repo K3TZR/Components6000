@@ -9,8 +9,8 @@ import XCTest
 import ComposableArchitecture
 
 import ApiViewer
-import Discovery
-import Login
+import LanDiscovery
+import LoginView
 import Picker
 import XCGWrapper
 import Shared

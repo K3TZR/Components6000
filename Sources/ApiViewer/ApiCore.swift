@@ -18,6 +18,7 @@ import PickerView
 import Radio
 import RemoteViewer
 import Shared
+import SecureStorage
 import TcpCommands
 import UdpStreams
 import XCGWrapper
@@ -164,7 +165,7 @@ public struct ApiState: Equatable {
   public var alert: AlertState<ApiAction>?
   public var clearNow = false
   public var commandToSend = ""
-  public var packetCollection: PacketCollection?
+  public var packetCollection: Discovered?
   public var lanListener: LanListener?
   public var wanListener: WanListener?
   public var filteredMessages = IdentifiedArrayOf<TcpMessage>()
@@ -175,7 +176,6 @@ public struct ApiState: Equatable {
   public var radio: Radio?
   public var reverseLog = false
   public var tcp = Tcp()
-  public var viewType: ViewType = .api
   
   public var cancellables = Set<AnyCancellable>()
   public var forceUpdate = false
@@ -190,17 +190,14 @@ public enum ApiAction: Equatable {
   case onAppear
 
   // UI controls
-  case apiViewButton
   case clearDefaultButton
   case clearNowButton
   case commandTextField(String)
   case connectionModePicker(ConnectionMode)
   case fontSizeStepper(CGFloat)
-  case logViewButton
   case messagesPicker(MessagesFilter)
   case messagesFilterTextField(String)
   case objectsPicker(ObjectsFilter)
-  case remoteViewButton
   case sendButton
   case startStopButton
   case toggle(WritableKeyPath<ApiState, Bool>)
@@ -222,7 +219,6 @@ public enum ApiAction: Equatable {
   case packetChangeReceived(PacketUpdate)
   case tcpMessage(TcpMessage)
   case wanStatus(WanStatus)
-
 }
 
 public struct ApiEnvironment {
@@ -275,7 +271,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // if the first time, start various effects
       if state.packetCollection == nil {
         // instantiate the collection
-        state.packetCollection = PacketCollection.sharedInstance
+        state.packetCollection = Discovered.sharedInstance
         // instantiate the Logger,
         _ = environment.logger(LogProxy.sharedInstance.logPublisher, .debug)
         // start subscriptions
@@ -284,7 +280,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
           subscribeToWan(),
           subscribeToSent(state.tcp),
           subscribeToReceived(state.tcp),
-          subscribeToLogAlerts(),
+//          subscribeToLogAlerts(),
           Effect(value: .finishInitialization))
       }
       return .none
@@ -305,14 +301,14 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         state.packetCollection?.removePackets(ofType: .local)
         state.wanListener = WanListener()
         if state.forceWanLogin || state.wanListener!.start(state.smartlinkEmail) == false {
-          state.loginState = LoginState(heading: "Smartlink Login required", user: state.smartlinkEmail)
+          state.loginState = LoginState(heading: "Smartlink Login required", service: "ApiViewer")
         }
       case .both:
         state.lanListener = LanListener()
         state.lanListener!.start()
         state.wanListener = WanListener()
         if state.forceWanLogin || state.wanListener!.start(state.smartlinkEmail) == false {
-          state.loginState = LoginState(heading: "Smartlink Login required", user: state.smartlinkEmail)
+          state.loginState = LoginState(heading: "Smartlink Login required", service: "ApiViewer")
         }
       case .none:
         state.packetCollection?.removePackets(ofType: .local)
@@ -325,10 +321,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
 
       // ----------------------------------------------------------------------------
       // MARK: - ApiView UI actions
-      
-    case .apiViewButton:
-      state.viewType = .api
-      return .none
       
     case .clearDefaultButton:
       state.defaultConnection = nil
@@ -349,10 +341,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
 
     case .fontSizeStepper(let size):
       state.fontSize = size
-      return .none
-      
-    case .logViewButton:
-      state.viewType = .log
       return .none
       
     case .messagesPicker(let filter):
@@ -377,10 +365,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       case (_, .core), (_, .meters):            return subscribeToMeters()
       default:                                  return .none
       }
-      
-    case .remoteViewButton:
-      state.viewType = .remote
-      return .none
       
     case .sendButton:
       _ = state.tcp.send(state.commandToSend)
@@ -491,16 +475,24 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       state.loginState = nil
       return .none
       
-    case .loginAction(.loginButton(let credentials)):
+    case .loginAction(.loginButton):
       state.loginState = nil
-      state.smartlinkEmail = credentials.user
-      if state.wanListener!.start(using: credentials) {
-        state.forceWanLogin = false
-      } else {
-        state.alert = AlertState(title: TextState("Smartlink login failed"))
+      
+      let secureStore = SecureStore(service: "ApiViewer")
+      if let user = secureStore.get(account: "user"), let pwd = secureStore.get(account: "pwd") {
+        state.smartlinkEmail = user
+        if state.wanListener!.start(using: LoginResult(user, pwd: pwd)) {
+          state.forceWanLogin = false
+        } else {
+          state.alert = AlertState(title: TextState("Smartlink login failed"))
+        }
       }
       return .none
       
+    case .loginAction(_):
+      // ignored
+      return .none
+
       // ----------------------------------------------------------------------------
       // MARK: - Action sent when an Alert is closed
       
@@ -522,8 +514,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       // exit any sheet states
       state.pickerState = nil
       state.loginState = nil
-      // return to the primary view
-      state.viewType = .api
       // alert the user
       state.alert = .init(title: TextState(
                               """
@@ -586,11 +576,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         state.alert = AlertState(title: TextState("Failed to connect to Radio \(selection.packet.nickname)"))
       }
       return .none
-    
-    case .loginAction(.binding(_)):
-      print("other binding")
-      return .none
-    
+        
     case .packetChangeReceived(_):
       return .none
     

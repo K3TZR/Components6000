@@ -35,7 +35,8 @@ public struct LogView: View {
         Divider().background(Color(.red))
         LogFooter(store: store)
       }
-      .frame(minWidth: 700)
+
+      .onAppear() { viewStore.send(.onAppear(viewStore.logLevel)) }
       
       .alert(
         item: viewStore.binding(
@@ -44,9 +45,9 @@ public struct LogView: View {
         ),
         content: { Alert(title: Text($0.title)) }
       )
-
-      .onAppear() { viewStore.send(.onAppear(viewStore.logLevel)) }
     }
+    .frame(minWidth: 700, maxWidth: .infinity, alignment: .leading)
+    .padding()
   }
 }
 

@@ -17,7 +17,8 @@ import Shared
 ///      updated by the incoming TCP messages. They are collected in the profiles
 ///      collection on the Radio object.
 ///
-public final class Profile: ObservableObject, Identifiable {
+//public final class Profile: ObservableObject, Identifiable {
+public struct Profile: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Static properties
   
@@ -81,8 +82,9 @@ public final class Profile: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Profile: DynamicModel {
-  
+//extension Profile: DynamicModel {
+extension Profile {
+
   /// Parse a Profile status message
   /// - Parameters:
   ///   - keyValues:          a KeyValuesArray
@@ -90,7 +92,8 @@ extension Profile: DynamicModel {
   ///   - queue:              a parse Queue for the object
   ///   - inUse:              false = "to be deleted"
   ///
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     let components = properties[0].key.split(separator: " ")
     
     // get the Id
@@ -120,7 +123,7 @@ extension Profile: DynamicModel {
   ///
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // check for unknown Keys
     guard let token = ProfileTokens(rawValue: properties[0].key) else {
       // log it and ignore the Key

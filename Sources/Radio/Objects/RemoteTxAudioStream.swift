@@ -18,7 +18,8 @@ import Shared
 ///      periodically send Audio in a UDP stream. They are collected in the
 ///      RemoteTxAudioStreams collection on the Radio object.
 ///
-public final class RemoteTxAudioStream: ObservableObject, Identifiable {
+//public final class RemoteTxAudioStream: ObservableObject, Identifiable {
+public struct RemoteTxAudioStream: Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Static properties
   
@@ -75,7 +76,7 @@ public final class RemoteTxAudioStream: ObservableObject, Identifiable {
   /// - Parameters:
   ///   - buffer:             array of encoded audio samples
   /// - Returns:              success / failure
-  public func sendTxAudio(radio: Radio, buffer: [UInt8], samples: Int) {
+  public mutating func sendTxAudio(radio: Radio, buffer: [UInt8], samples: Int) {
     guard _objects.interlock.state == "TRANSMITTING" else { return }
     
     // FIXME: This assumes Opus encoded audio
@@ -118,14 +119,16 @@ public final class RemoteTxAudioStream: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension RemoteTxAudioStream: DynamicModel {
+//extension RemoteTxAudioStream: DynamicModel {
+extension RemoteTxAudioStream {
   /// Parse an RemoteTxAudioStream status message
   /// - Parameters:
   ///   - keyValues:          a KeyValuesArray
   ///   - radio:              the current Radio class
   ///   - queue:              a parse Queue for the object
   ///   - inUse:              false = "to be deleted"
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id =  properties[0].key.streamId {
       // is the object in use?
@@ -153,7 +156,7 @@ extension RemoteTxAudioStream: DynamicModel {
   
   ///  Parse RemoteTxAudioStream key/value pairs
   /// - Parameter properties: a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair
     for property in properties {
       // check for unknown Keys

@@ -18,7 +18,7 @@ struct TestSubscriptionId: Hashable {}
 
 func subscribeToTest() -> Effect<PickerAction, Never> {
   Effect(
-    PacketCollection.sharedInstance.testPublisher
+    Discovered.sharedInstance.testPublisher
       .receive(on: DispatchQueue.main)
       .map { result in .testResult(result) }
       .eraseToEffect()

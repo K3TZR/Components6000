@@ -16,7 +16,8 @@ import Shared
 ///      processing of the Transmit-related activities. Transmit objects are added,
 ///      removed and updated by the incoming TCP messages.
 ///
-public final class Transmit: ObservableObject {
+//public final class Transmit: ObservableObject {
+public struct Transmit {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
@@ -170,10 +171,11 @@ public final class Transmit: ObservableObject {
 // ----------------------------------------------------------------------------
 // MARK: - StaticModel extension
 
-extension Transmit: StaticModel {
+//extension Transmit: StaticModel {
+extension Transmit {
   /// Parse a Transmit status message
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys

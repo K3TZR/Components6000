@@ -17,7 +17,8 @@ import Shared
 ///       tnfs collection on the Radio object.
 ///
 
-public final class Tnf: Identifiable, ObservableObject {
+//public final class Tnf: Identifiable, ObservableObject {
+public struct Tnf: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Static properties
 
@@ -26,7 +27,7 @@ public final class Tnf: Identifiable, ObservableObject {
   static let kWidthMax: Hz = 6_000
 
   // ----------------------------------------------------------------------------
-  // MARK: - Published properties
+  // MARK: - Public properties
 
   public internal(set) var id: TnfId
 
@@ -71,7 +72,8 @@ public final class Tnf: Identifiable, ObservableObject {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Tnf: DynamicModel {
+//extension Tnf: DynamicModel {
+extension Tnf {
   /// Parse a Tnf status message
   ///   StatusParser Protocol method, executes on the parseQ
   ///
@@ -103,7 +105,7 @@ extension Tnf: DynamicModel {
   ///   PropertiesParser Protocol method, executes on the parseQ
   ///
   /// - Parameter properties:       a KeyValues
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

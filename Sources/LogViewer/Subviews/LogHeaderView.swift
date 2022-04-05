@@ -25,7 +25,8 @@ struct LogHeader: View {
           ForEach(LogLevel.allCases, id: \.self) {
             Text($0.rawValue)
           }
-        }.disabled(viewStore.logUrl == nil)
+        }
+//          .disabled(viewStore.logUrl == nil)
           .frame(width: 175)
 
         Spacer()
@@ -35,7 +36,8 @@ struct LogHeader: View {
           ForEach(LogFilter.allCases, id: \.self) {
             Text($0.rawValue)
           }
-        }.disabled(viewStore.logUrl == nil)
+        }
+//          .disabled(viewStore.logUrl == nil)
           .frame(width: 175)
 
         TextField("Filter text", text: viewStore.binding(
@@ -45,7 +47,8 @@ struct LogHeader: View {
         //                .modifier(ClearButton(boundText: $logManager.filterByText))
 
         Spacer()
-        Toggle("Show Timestamps", isOn: viewStore.binding(get: \.showTimestamps, send: .timestampsButton)).disabled(viewStore.logUrl == nil)
+        Toggle("Show Timestamps", isOn: viewStore.binding(get: \.showTimestamps, send: .timestampsButton))
+//          .disabled(viewStore.logUrl == nil)
       }
     }
   }

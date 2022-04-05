@@ -19,10 +19,18 @@ struct LogBodyView: View {
     WithViewStore(self.store) { viewStore in
       ScrollView([.horizontal, .vertical]) {
         VStack(alignment: .leading) {
-          ForEach(viewStore.logMessages) { entry in
-            Text(entry.text)
-              .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
-              .foregroundColor(entry.color)
+          if viewStore.reversed {
+            ForEach(Array(viewStore.logMessages.enumerated().reversed()), id: \.offset) { index, element in
+              Text(element.text)
+                .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
+                .foregroundColor(element.color)
+            }
+          } else {
+            ForEach(Array(viewStore.logMessages.enumerated()), id: \.offset) { index, element in
+              Text(element.text)
+                .font(.system(size: viewStore.fontSize, weight: .regular, design: .monospaced))
+                .foregroundColor(element.color)
+            }
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

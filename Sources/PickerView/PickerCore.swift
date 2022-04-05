@@ -25,7 +25,7 @@ import Shared
 public struct PickerState: Equatable {
   public init(connectionType: ConnectionType = .gui,
               defaultSelection: PickerSelection? = nil,
-              packetCollection: PacketCollection = PacketCollection.sharedInstance,
+              packetCollection: Discovered = Discovered.sharedInstance,
               pickerSelection: PickerSelection? = nil,
               testResult: SmartlinkTestResult? = nil)
   {
@@ -41,7 +41,7 @@ public struct PickerState: Equatable {
   public var connectionType: ConnectionType
   public var defaultSelection: PickerSelection?
   public var forceUpdate = false
-  public var packetCollection: PacketCollection
+  public var packetCollection: Discovered
   public var pickerSelection: PickerSelection?
   public var testResult: SmartlinkTestResult?
 }

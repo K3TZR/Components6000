@@ -46,8 +46,8 @@ final public class LanListener: NSObject, ObservableObject {
   private let _udpQ = DispatchQueue(label: "LanListener" + ".udpQ")
   private var _udpSocket: GCDAsyncUdpSocket!
   private var _packets: IdentifiedArrayOf<Packet> {
-    get { PacketCollection.sharedInstance.packets }
-    set { PacketCollection.sharedInstance.packets = newValue}}
+    get { Discovered.sharedInstance.packets }
+    set { Discovered.sharedInstance.packets = newValue}}
 
   let _log = LogProxy.sharedInstance.log
 
@@ -145,6 +145,6 @@ extension LanListener: GCDAsyncUdpSocketDelegate {
     guard let packet = parseVita(vita) else { return }
     
     // YES, process it
-    PacketCollection.sharedInstance.processPacket(packet)
+    Discovered.sharedInstance.processPacket(packet)
   }
 }

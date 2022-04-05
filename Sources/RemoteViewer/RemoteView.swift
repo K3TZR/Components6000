@@ -48,7 +48,8 @@ public struct RemoteView: View {
         }
       )
     }
-    .padding(.horizontal)
+    .frame(minHeight: 400)
+    .padding()
   }
 }
 

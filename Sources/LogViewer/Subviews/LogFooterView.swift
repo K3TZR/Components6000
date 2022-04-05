@@ -25,11 +25,16 @@ struct LogFooter: View {
         Text(String(format: "%2.0f", viewStore.fontSize)).frame(alignment: .leading)
 
         Spacer()
+        Button("Reverse") { viewStore.send(.reverseButton) }
+
+        Spacer()
         Button("Email") { viewStore.send(.emailButton) }
 
         Spacer()
         HStack (spacing: 20) {
-          Button("Refresh") { viewStore.send(.refreshButton) }.disabled(viewStore.logUrl == nil)
+          Button("Refresh") { viewStore.send(.refreshButton) }
+            .disabled(viewStore.logUrl == nil)
+          Toggle("Auto Refresh", isOn: viewStore.binding(get: \.autoRefresh, send: .autoRefreshButton))
           Button("Load") { viewStore.send(.loadButton) }
           Button("Save") { viewStore.send(.saveButton) }
         }

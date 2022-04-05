@@ -46,7 +46,13 @@ public struct Packet: Identifiable, Equatable, Hashable {
   public var lastSeen: Date
   public var source: PacketSource
   public var isPortForwardOn = false
-  public var guiClients = IdentifiedArrayOf<GuiClient>()
+
+  public var guiClients: IdentifiedArrayOf<GuiClient> {
+    get { objectQ.sync { _guiClients } }
+    set { objectQ.sync(flags: .barrier) { _guiClients = newValue }}}
+
+
+
   public var localInterfaceIP = ""
   public var requiresHolePunch = false
   public var negotiatedHolePunchPort = 0
@@ -89,6 +95,9 @@ public struct Packet: Identifiable, Equatable, Hashable {
 //  public var radioLicenseId = ""                  //  X     X   ignored
 //  public var requiresAdditionalLicense = false    //  X     X   ignored
 //  public var wanConnected = false                 //  X         ignored
+
+  private let objectQ = DispatchQueue(label: "Packets" + ".objectQ", attributes: [.concurrent])
+  private var _guiClients = IdentifiedArrayOf<GuiClient>()
 
   // ----------------------------------------------------------------------------
   // MARK: - Private enums

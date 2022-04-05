@@ -9,8 +9,8 @@ import Foundation
 import Combine
 import IdentifiedCollections
 
-public final class PacketCollection: Equatable, ObservableObject {
-  public static func == (lhs: PacketCollection, rhs: PacketCollection) -> Bool {
+public final class Discovered: Equatable, ObservableObject {
+  public static func == (lhs: Discovered, rhs: Discovered) -> Bool {
     lhs === rhs
   }
 
@@ -22,10 +22,13 @@ public final class PacketCollection: Equatable, ObservableObject {
   public var testPublisher = PassthroughSubject<SmartlinkTestResult, Never>()
   public var wanStatusPublisher = PassthroughSubject<WanStatus, Never>()
   
-  // ----------------------------------------------------------------------------
-  // MARK: - Public properties
+  private let objectQ = DispatchQueue(label: "Packets" + ".objectQ", attributes: [.concurrent])
+  public var packets: IdentifiedArrayOf<Packet> {
+    get { objectQ.sync { _packets } }
+    set { objectQ.sync(flags: .barrier) { _packets = newValue }}}
+
+  private var _packets = IdentifiedArrayOf<Packet>()
   
-  public var packets = IdentifiedArrayOf<Packet>()
   public var stations = IdentifiedArrayOf<Packet>()
 
   // ----------------------------------------------------------------------------
@@ -36,7 +39,7 @@ public final class PacketCollection: Equatable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Singleton
   
-  public static var sharedInstance = PacketCollection()
+  public static var sharedInstance = Discovered()
   private init() {}
 
   // ----------------------------------------------------------------------------
@@ -86,7 +89,12 @@ public final class PacketCollection: Equatable, ObservableObject {
     _log("PacketCollection: \(newPacket.source.rawValue) packet added, \(newPacket.serial)", .debug, #function, #file, #line)
 
     // find, publish & log client additions
-    findClientAdditions(in: newPacket)
+
+    
+    // FIXME: ??????
+    
+    
+    //    findClientAdditions(in: newPacket)
   }
 
   public func removePackets(ofType source: PacketSource) {
@@ -98,22 +106,29 @@ public final class PacketCollection: Equatable, ObservableObject {
   // ----------------------------------------------------------------------------
   // MARK: - Private methods
   
-  private func findClientAdditions(in newPacket: Packet, from oldPacket: Packet? = nil) {
-    
-    for guiClient in newPacket.guiClients {
+  private func findClientAdditions(in receivedPacket: Packet, from oldPacket: Packet? = nil) {
+    // for each guiClient in the receivedPacket
+    for guiClient in receivedPacket.guiClients {
+      // if no oldPacket  OR  oldPacket does not contain this guiClient
       if oldPacket == nil || oldPacket?.guiClients[id: guiClient.id] == nil {
         
-        // publish & log
-        clientPublisher.send(ClientUpdate(.added, client: guiClient, source: newPacket.source))
-        _log("PacketCollection: \(newPacket.source.rawValue) guiClient added, \(guiClient.station)", .debug, #function, #file, #line)
+        // publish & log new guiClient
+        clientPublisher.send(ClientUpdate(.added, client: guiClient, source: receivedPacket.source))
+        _log("PacketCollection: \(receivedPacket.source.rawValue) guiClient added, \(guiClient.station)", .debug, #function, #file, #line)
+  
+        // FIXME: ?????
         
-        let newStation = Packet(source: newPacket.source)
-        var packetCopy = newPacket
-        packetCopy.id = newStation.id
-        stations[id: newStation.id] = packetCopy
-
-        stations[id: newStation.id]?.guiClientStations = guiClient.station
-        stations[id: newStation.id]?.guiClients = [guiClient]
+//        // create a newPacket with the same source (smartlink OR local)
+//        let newPacket = Packet(source: receivedPacket.source)
+//        // make a mutable copy of the receivedPacket
+//        var mutableReceivedPacket = receivedPacket
+//        // make the receivedPackets's id equal the newly created packet's id
+//        mutableReceivedPacket.id = newPacket.id
+//
+//        // populate the Stations array
+//        stations[id: newPacket.id] = mutableReceivedPacket
+//        stations[id: newPacket.id]?.guiClientStations = guiClient.station
+//        stations[id: newPacket.id]?.guiClients = [guiClient]
       }
     }
   }

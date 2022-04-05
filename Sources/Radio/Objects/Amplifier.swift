@@ -18,7 +18,8 @@ import Shared
 ///       collection on the Radio object.
 ///
 
-public final class Amplifier: ObservableObject, Identifiable {
+//public final class Amplifier: ObservableObject, Identifiable {
+public struct Amplifier: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
@@ -138,7 +139,8 @@ extension Amplifier {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the handle
     if let id = properties[0].key.handle {
       // is the object in use
@@ -170,7 +172,7 @@ extension Amplifier {
   ///
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys

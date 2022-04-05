@@ -16,7 +16,8 @@ import Shared
 ///      processing of installed Waveform functions. Waveform objects are added,
 ///      removed and updated by the incoming TCP messages.
 ///
-public final class Waveform: ObservableObject {
+//public final class Waveform: ObservableObject {
+public struct Waveform {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
@@ -38,7 +39,8 @@ public final class Waveform: ObservableObject {
 // ----------------------------------------------------------------------------
 // MARK: - StaticModel extension
 
-extension Waveform: StaticModel {
+//extension Waveform: StaticModel {
+extension Waveform {
   /// Parse a Waveform status message
   ///   format: <key=value> <key=value> ...<key=value>
   ///
@@ -46,7 +48,7 @@ extension Waveform: StaticModel {
   ///
   /// - Parameter properties:       a KeyValuesArray
   ///
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys
@@ -58,7 +60,7 @@ extension Waveform: StaticModel {
       // Known tokens, in alphabetical order
       switch token {
         
-      case .waveformList: DispatchQueue.main.async {self.waveformList = property.value }
+      case .waveformList: waveformList = property.value
       }
     }
   }

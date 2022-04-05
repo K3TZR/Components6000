@@ -16,7 +16,8 @@ import Shared
 ///      processing of the Antenna Tuning Unit (if installed). Atu objects are
 ///      added, removed and updated by the incoming TCP messages.
 ///
-public final class Atu: ObservableObject {
+//public final class Atu: ObservableObject {
+public struct Atu {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
@@ -86,10 +87,11 @@ public final class Atu: ObservableObject {
 // ----------------------------------------------------------------------------
 // MARK: - StaticModel extension
 
-extension Atu: StaticModel {
+//extension Atu: StaticModel {
+extension Atu {
   /// Parse an Atu status message
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys

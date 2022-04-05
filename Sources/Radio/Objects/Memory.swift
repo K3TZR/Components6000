@@ -18,7 +18,8 @@ import Shared
 ///       memories collection on the Radio object.
 ///
 
-public final class Memory: ObservableObject, Identifiable {
+//public final class Memory: ObservableObject, Identifiable {
+public struct Memory: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
@@ -184,14 +185,16 @@ public final class Memory: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension Memory: DynamicModel {
+//extension Memory: DynamicModel {
+extension Memory {
   /// Parse a Memory status message
   /// - Parameters:
   ///   - properties:     a KeyValuesArray
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id = properties[0].key.objectId {
       // is the object in use?
@@ -221,7 +224,7 @@ extension Memory: DynamicModel {
   
   /// Parse Memory key/value pairs
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray)  {
+  mutating func parseProperties(_ properties: KeyValuesArray)  {
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys

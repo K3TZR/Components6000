@@ -16,8 +16,9 @@ import Shared
 ///      processing of the Wan-related activities. Wan objects are added,
 ///      removed and updated by the incoming TCP messages.
 ///
-public final class Wan : StaticModel {
-  
+//public final class Wan : StaticModel {
+public struct Wan {
+
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
   
@@ -44,7 +45,7 @@ public final class Wan : StaticModel {
 
   /// Parse a Wan status message
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // Check for Unknown Keys

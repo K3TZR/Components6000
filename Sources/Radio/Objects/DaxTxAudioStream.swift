@@ -18,7 +18,8 @@ import Shared
 ///      objects periodically send Tx Audio in a UDP stream. They are collected in
 ///      the DaxTxAudioStreams collection on the Radio object.
 ///
-public final class DaxTxAudioStream: ObservableObject, Identifiable {
+//public final class DaxTxAudioStream: ObservableObject, Identifiable {
+public struct DaxTxAudioStream: Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Published properties
   
@@ -78,7 +79,7 @@ public final class DaxTxAudioStream: ObservableObject, Identifiable {
   ///   - right:                  array of right samples
   ///   - samples:                number of samples
   /// - Returns:                  success
-  public func sendTXAudio(radio: Radio, left: [Float], right: [Float], samples: Int, sendReducedBW: Bool = false) -> Bool {
+  public mutating func sendTXAudio(radio: Radio, left: [Float], right: [Float], samples: Int, sendReducedBW: Bool = false) -> Bool {
     var samplesSent = 0
     var samplesToSend = 0
     
@@ -190,14 +191,16 @@ public final class DaxTxAudioStream: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModel extension
 
-extension DaxTxAudioStream: DynamicModel {
+//extension DaxTxAudioStream: DynamicModel {
+extension DaxTxAudioStream {
   /// Parse a TxAudioStream status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id =  properties[0].key.streamId {
       // is the object in use?
@@ -225,7 +228,7 @@ extension DaxTxAudioStream: DynamicModel {
   
   /// Parse TX Audio Stream key/value pairs
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown keys

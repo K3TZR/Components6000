@@ -18,7 +18,8 @@ import Shared
 ///      objects periodically receive Audio in a UDP stream. They are collected
 ///      in the daxRxAudioStreams collection on the Radio object.
 ///
-public final class DaxRxAudioStream: ObservableObject, Identifiable {
+//public final class DaxRxAudioStream: ObservableObject, Identifiable {
+public struct DaxRxAudioStream: Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Published properties
   
@@ -85,14 +86,16 @@ public final class DaxRxAudioStream: ObservableObject, Identifiable {
 // ----------------------------------------------------------------------------
 // MARK: - DynamicModelWithStream extension
 
-extension DaxRxAudioStream: DynamicModelWithStream {
+//extension DaxRxAudioStream: DynamicModelWithStream {
+extension DaxRxAudioStream {
   /// Parse an AudioStream status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // get the Id
     if let id =  properties[0].key.streamId {
       // is the object in use?
@@ -120,7 +123,7 @@ extension DaxRxAudioStream: DynamicModelWithStream {
   
   /// Parse Audio Stream key/value pairs
   /// - Parameter properties:       a KeyValuesArray
-  func parseProperties(_ properties: KeyValuesArray) {
+  mutating func parseProperties(_ properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown keys
@@ -166,7 +169,7 @@ extension DaxRxAudioStream: DynamicModelWithStream {
   /// - Parameters:
   ///   - vita:       a Vita struct
   ///
-  func vitaProcessor(_ vita: Vita) {
+  mutating func vitaProcessor(_ vita: Vita) {
     if _isStreaming == false {
       _isStreaming = true
       // log the start of the stream

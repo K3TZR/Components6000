@@ -6,21 +6,23 @@
 //
 
 import ComposableArchitecture
-import Shared
 import SwiftUI
+
+import Shared
 
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums
 
-public struct LogLine: Identifiable, Equatable {
+public struct LogLine: Equatable {
 
-  public init(uuid: UUID, text: String, color: Color = .primary) {
-    self.uuid = uuid
+  public init(text: String, color: Color = .primary) {
+//  public init(uuid: UUID, text: String, color: Color = .primary) {
+//    self.uuid = uuid
     self.text = text
     self.color = color
   }
-  public var id: UUID { uuid }
-  public var uuid: UUID
+//  public var id: UUID { uuid }
+//  public var uuid: UUID
   public var text: String
   public var color: Color
 }
@@ -46,11 +48,11 @@ public struct LogState: Equatable {
     fontSize: CGFloat = 12
   )
   {
-    self.fontSize = fontSize
     self.logLevel = logLevel
     self.filterBy = filterBy
     self.filterByText = filterByText
     self.showTimestamps = showTimestamps
+    self.fontSize = fontSize
   }
   // State held in User Defaults
   public var filterBy: LogFilter { didSet { UserDefaults.standard.set(filterBy.rawValue, forKey: "filterBy") } }
@@ -62,13 +64,15 @@ public struct LogState: Equatable {
   public var alert: AlertView?
   public var logUrl: URL?
   public var fontSize: CGFloat = 12
-  public var logMessages = IdentifiedArrayOf<LogLine>()
-  public var forceUpdate = false
+  public var logMessages = [LogLine]()
+  public var reversed = false
+  public var autoRefresh = false
 }
 
 public enum LogAction: Equatable {
   // UI actions
   case alertDismissed
+  case autoRefreshButton
   case clearButton
   case emailButton
   case filterBy(LogFilter)
@@ -78,8 +82,11 @@ public enum LogAction: Equatable {
   case logLevel(LogLevel)
   case onAppear(LogLevel)
   case refreshButton
+  case reverseButton
   case saveButton
+  case timerTicked
   case timestampsButton
+  case refreshResultReceived([LogLine])
 }
 
 public struct LogEnvironment {
@@ -100,7 +107,9 @@ public struct LogEnvironment {
 
 public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
   state, action, environment in
-  
+
+  struct TimerId: Hashable {}
+
   switch action {
     // ----------------------------------------------------------------------------
     // MARK: - Initialization
@@ -108,11 +117,21 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
   case .onAppear(let logLevel):
     let info = getBundleInfo()
     state.logUrl = URL.appSupport.appendingPathComponent(info.domain + "." + info.appName + "/Logs/" + info.appName + ".log" )
-    state.logMessages = refreshLog(state, environment)
-    return .none
+    return refreshLog(state, environment)
 
     // ----------------------------------------------------------------------------
     // MARK: - UI actions
+    
+  case .autoRefreshButton:
+    state.autoRefresh.toggle()
+    if state.autoRefresh {
+      return Effect.timer(id: TimerId(), every: 0.1, on: DispatchQueue.main)
+        .receive(on: DispatchQueue.main)
+        .catchToEffect()
+        .map { _ in .timerTicked }
+    } else {
+      return .cancel(id: TimerId())
+    }
     
   case .clearButton:
     state.logMessages.removeAll()
@@ -124,13 +143,16 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     
   case .filterBy(let filter):
     state.filterBy = filter
-    state.logMessages = refreshLog(state, environment)
-    return .none
+
+    return refreshLog(state, environment)
 
   case .filterByText(let text):
     state.filterByText = text
-    state.logMessages = refreshLog(state, environment)
-    return .none
+    if state.filterBy != .none {
+      return refreshLog(state, environment)
+    } else {
+      return .none
+    }
 
   case let .fontSize(value):
     state.fontSize = value
@@ -140,19 +162,22 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     if let url = showOpenPanel() {
       state.logUrl = url
       state.logMessages.removeAll()
-      state.logMessages = refreshLog(state, environment)
+      return refreshLog(state, environment)
+    } else {
+      return .none
     }
-    return .none
     
   case .logLevel(let level):
     state.logLevel = level
-    state.logMessages = refreshLog(state, environment)
-    return .none
+    return refreshLog(state, environment)
 
   case .refreshButton:
-    state.logMessages = refreshLog(state, environment)
-    return .none
-    
+    return refreshLog(state, environment)
+
+  case .reverseButton:
+    state.reversed.toggle()
+    return refreshLog(state, environment)
+
   case .saveButton:
     if let saveURL = showSavePanel() {
       let textArray = state.logMessages.map { $0.text }
@@ -161,40 +186,46 @@ public let logReducer = Reducer<LogState, LogAction, LogEnvironment> {
     }
     return .none
     
+  case .timerTicked:
+    return refreshLog(state, environment)
+    
   case .timestampsButton:
     state.showTimestamps.toggle()
-    state.logMessages = refreshLog(state, environment)
-    return .none
-    
+    return refreshLog(state, environment)
+
     // ----------------------------------------------------------------------------
     // MARK: - Action sent when an Alert is closed
     
   case .alertDismissed:
     state.alert = nil
     return .none
+
+  case .refreshResultReceived(let logMessages):
+    
+    state.logMessages = logMessages
+    return .none
   }
 }
-//  .debug("LOGVIEWER ")
+//  .debug("-----> LOGVIEWER ")
 
 // ----------------------------------------------------------------------------
 // MARK: - Helper functions
 
-func refreshLog(_ state: LogState, _ environment: LogEnvironment) -> IdentifiedArrayOf<LogLine> {
-  if state.logUrl == nil {
-    fatalError("logUrl is nil")
-  }
+
+
+func refreshLog(_ state: LogState,  _ environment: LogEnvironment) -> Effect<LogAction, Never>  {
+  guard state.logUrl != nil else { fatalError("logUrl is nil") }
   
-  if let messages = readLogFile(at: state.logUrl!, environment: environment ) {
-    return filterLog(messages, level: state.logLevel, filter: state.filterBy, filterText: state.filterByText, showTimeStamps: state.showTimestamps)
-  }
-  return IdentifiedArrayOf<LogLine>()
+  let messages = readLogFile(at: state.logUrl!, environment: environment )
+    
+  return Effect(value: .refreshResultReceived(filterLog(messages, level: state.logLevel, filter: state.filterBy, filterText: state.filterByText, showTimeStamps: state.showTimestamps)))
 }
 
 /// Read a Log file
 /// - Parameter url:    the URL of the file
 /// - Returns:          an array of log entries
-func readLogFile(at url: URL, environment: LogEnvironment) -> IdentifiedArrayOf<LogLine>? {
-  var messages = IdentifiedArrayOf<LogLine>()
+func readLogFile(at url: URL, environment: LogEnvironment) -> [LogLine] {
+  var messages = [LogLine]()
   
   do {
     // get the contents of the file
@@ -202,12 +233,12 @@ func readLogFile(at url: URL, environment: LogEnvironment) -> IdentifiedArrayOf<
     // parse it into lines
     let lines = logString.components(separatedBy: "\n").dropLast()
     for line in lines {
-      messages.append(LogLine(uuid: environment.uuid(), text: line, color: logLineColor(line)))
+      messages.append(LogLine(text: line, color: logLineColor(line)))
     }
     return messages
     
   } catch {
-    return nil
+    return messages
   }
 }
 
@@ -219,9 +250,9 @@ func readLogFile(at url: URL, environment: LogEnvironment) -> IdentifiedArrayOf<
 ///   - filterText:     the filter text
 ///   - showTimes:      whether to show timestamps
 /// - Returns:          the filtered array of Log entries
-func filterLog(_ messages: IdentifiedArrayOf<LogLine>, level: LogLevel, filter: LogFilter, filterText: String = "", showTimeStamps: Bool = true) -> IdentifiedArrayOf<LogLine> {
-  var lines = IdentifiedArrayOf<LogLine>()
-  var limitedLines = IdentifiedArrayOf<LogLine>()
+func filterLog(_ messages: [LogLine], level: LogLevel, filter: LogFilter, filterText: String = "", showTimeStamps: Bool = true) -> [LogLine] {
+  var lines = [LogLine]()
+  var limitedLines = [LogLine]()
 
   // filter the log entries
   switch level {
@@ -239,11 +270,8 @@ func filterLog(_ messages: IdentifiedArrayOf<LogLine>, level: LogLevel, filter: 
   }
 
   if !showTimeStamps {
-    for line in limitedLines {
-//      let startIndex = line.text.firstIndex(of: "[") ?? line.text.startIndex
-//      limitedLines[id: line.id]?.text = String(line.text[startIndex..<line.text.endIndex])
-      
-      limitedLines[id: line.id]?.text = String(line.text.suffix(from: line.text.firstIndex(of: "[") ?? line.text.startIndex))
+    for (i, line) in limitedLines.enumerated() {
+      limitedLines[i].text = String(line.text.suffix(from: line.text.firstIndex(of: "[") ?? line.text.startIndex))
     }
   }
   return limitedLines
