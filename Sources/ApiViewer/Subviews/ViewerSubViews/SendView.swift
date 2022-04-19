@@ -7,6 +7,7 @@
 
 import SwiftUI
 import ComposableArchitecture
+import Radio
 
 // ----------------------------------------------------------------------------
 // MARK: - View
@@ -22,6 +23,8 @@ struct SendView: View {
       HStack(spacing: 25) {
         Group {
           Button("Send") { viewStore.send(.sendButton) }
+//          Button("Send") { viewStore.radio!.removeTnf(1) }
+//          Button("Send") { viewStore.radio!.requestTnf(at: 14300000) }
           .keyboardShortcut(.defaultAction)
 
           HStack(spacing: 0) {

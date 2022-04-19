@@ -15,6 +15,7 @@ extension Radio {
   /// Parse  Command messages from the Radio
   /// - Parameter msg:        the Message String
   func receivedMessage(_ msg: TcpMessage) {
+//  func receivedMessage(_ msg: TcpMessage) async {
     // get all except the first character
     let suffix = String(msg.text.dropFirst())
     
@@ -24,6 +25,7 @@ extension Radio {
     case "H", "h":  connectionHandle = suffix.handle ; _log("Radio: connectionHandle = \(connectionHandle?.hex ?? "nil")", .debug, #function, #file, #line)
     case "M", "m":  parseMessage( msg.text.dropFirst() )
     case "R", "r":  parseReply( msg.text.dropFirst() )
+//    case "S", "s":  await parseStatus( msg.text.dropFirst() )
     case "S", "s":  parseStatus( msg.text.dropFirst() )
     case "V", "v":  hardwareVersion = suffix ; _log("Radio: hardwareVersion = \(hardwareVersion ?? "unknown")", .debug, #function, #file, #line)
     default:        _log("Radio: unexpected message = \(msg)", .warning, #function, #file, #line)
@@ -90,6 +92,7 @@ extension Radio {
   /// - Parameters:
   ///   - commandSuffix:      a Command Suffix
   func parseStatus(_ commandSuffix: Substring) {
+//  func parseStatus(_ commandSuffix: Substring) async {
     // separate it into its components ( [0] = <apiHandle>, [1] = <remainder> )
     let components = commandSuffix.components(separatedBy: "|")
     
@@ -125,13 +128,23 @@ extension Radio {
     case .gps:            objects.gps.parseProperties(remainder.keyValuesArray(delimiter: "#") )
     case .interlock:      parseInterlock(remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
     case .memory:         Memory.parseStatus(remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
-    case .meter:          Meter.parseStatus(remainder.keyValuesArray(delimiter: "#"), !remainder.contains(Shared.kRemoved))
+    case .meter:
+      Task {
+        await MeterCollection.shared.parseStatus(remainder.keyValuesArray(delimiter: "#"), !remainder.contains(Shared.kRemoved))
+      }
     case .mixer:          _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
     case .profile:        Profile.parseStatus(remainder.keyValuesArray(delimiter: "="))
     case .radio:          parseProperties(remainder.keyValuesArray())
-    case .slice:          Slice.parseStatus(remainder.keyValuesArray(), !remainder.contains(Shared.kNotInUse))
+    case .slice:
+      Task {
+        await SliceCollection.shared.parseStatus(remainder.keyValuesArray(), !remainder.contains(Shared.kNotInUse))
+      }
     case .stream:         parseStream(remainder)
-    case .tnf:            Tnf.parseStatus(remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
+    case .tnf:
+      Task {
+        await TnfCollection.shared.parseStatus(remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
+      }
+//    case .tnf:            Tnf.parseStatus(remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
     case .transmit:       parseTransmit(remainder.keyValuesArray(), !remainder.contains(Shared.kRemoved))
     case .turf:           _log("Radio, unprocessed \(msgType) message: \(remainder)", .warning, #function, #file, #line)
     case .usbCable:       UsbCable.parseStatus(remainder.keyValuesArray())
@@ -174,8 +187,14 @@ extension Radio {
   private func parseDisplay(_ keyValues: KeyValuesArray, _ inUse: Bool = true) {
     switch keyValues[0].key {
       
-    case DisplayTokens.panadapter.rawValue:  Panadapter.parseStatus(keyValues, inUse)
-    case DisplayTokens.waterfall.rawValue:   Waterfall.parseStatus(keyValues, inUse)
+    case DisplayTokens.panadapter.rawValue:
+      Task {
+        await PanadapterCollection.shared.parseStatus(keyValues, inUse)
+      }
+    case DisplayTokens.waterfall.rawValue:
+      Task {
+        await WaterfallCollection.shared.parseStatus(keyValues, inUse)
+      }
       
     default:  _log("Radio, unknown display type: \(keyValues[0].key)", .warning, #function, #file, #line)
     }

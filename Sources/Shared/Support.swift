@@ -32,7 +32,7 @@ public typealias GuiClientId = String
 public typealias MemoryId = ObjectId
 public typealias MeterId = ObjectId
 public typealias ObjectId = UInt16
-public typealias PanadapterStreamId = StreamId
+public typealias PanadapterId = StreamId
 public typealias ProfileId = String
 public typealias RadioId = String
 public typealias RemoteRxStreamId = StreamId
@@ -41,7 +41,7 @@ public typealias SliceId = ObjectId
 public typealias StreamId = UInt32
 public typealias TnfId = ObjectId
 public typealias UsbCableId = String
-public typealias WaterfallStreamId = StreamId
+public typealias WaterfallId = StreamId
 public typealias XvtrId = ObjectId
 
 // other

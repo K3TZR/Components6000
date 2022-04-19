@@ -13,7 +13,7 @@ import Shared
 
 struct SliceView: View {
   let store: Store<ApiState, ApiAction>
-  let panadapterId: PanadapterStreamId
+  let panadapterId: PanadapterId
   let showMeters: Bool
   
   func valueColor(_ value: Float, _ low: Float, _ high: Float) -> Color {
@@ -24,7 +24,7 @@ struct SliceView: View {
   
   var body: some View {
     WithViewStore(store.actionless) { viewStore in
-      ForEach(viewStore.objects.slices) { slice in
+      ForEach(viewStore.viewModel.slices) { slice in
         if slice.panadapterId == panadapterId {
           HStack(spacing: 20) {
             Text("Slice").frame(width: 100, alignment: .trailing)

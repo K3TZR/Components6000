@@ -18,7 +18,7 @@ struct PanadapterView: View {
   
   var body: some View {
     WithViewStore(store.actionless) { viewStore in
-      ForEach(viewStore.objects.panadapters) { panadapter in
+      ForEach(viewStore.viewModel.panadapters) { panadapter in
         if panadapter.clientHandle == handle {
           HStack(spacing: 20) {
             Text("Panadapter").frame(width: 100, alignment: .trailing)

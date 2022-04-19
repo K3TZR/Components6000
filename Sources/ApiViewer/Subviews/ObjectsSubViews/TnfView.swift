@@ -16,12 +16,12 @@ struct TnfView: View {
   var body: some View {
     WithViewStore(store.actionless) { viewStore in
       if viewStore.radio != nil {
-        let tnfs = Array(Objects.sharedInstance.tnfs)
+//        let tnfs = Array(viewStore.viewModel.tnfs)
 
-        ForEach(tnfs) { tnf in
+        ForEach(Array(viewStore.viewModel.tnfs)) { tnf in
           HStack(spacing: 20) {
             Text("Tnf").frame(width: 100, alignment: .trailing)
-            Text(tnf.id.hex)
+            Text(String(format: "%d", tnf.id))
             Text("Frequency \(tnf.frequency)")
             Text("Width \(tnf.width)")
             Text("Depth \(tnf.depth)")

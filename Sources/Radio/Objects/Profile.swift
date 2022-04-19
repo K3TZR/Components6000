@@ -110,7 +110,7 @@ extension Profile {
     adjustedProperties[0].key = String(components[1])
     
     // does the object exist?
-    if  Objects.sharedInstance.profiles[id: id] == nil {
+    if Objects.sharedInstance.profiles[id: id] == nil {
       // NO, create a new Profile & add it to the Profiles collection
       Objects.sharedInstance.profiles[id: id] = Profile(id)
     }

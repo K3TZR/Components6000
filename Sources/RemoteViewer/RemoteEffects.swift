@@ -37,6 +37,38 @@ func getRelays( _ state: RemoteState ) -> Effect<RemoteAction, Never> {
     .eraseToEffect()
 }
 
+
+
+
+
+
+// EXPERIMENTAL ASYNC VERSION
+func getRelaysAsync( _ state: RemoteState ) -> Effect<RemoteAction, Never> {
+  return Effect.task { () -> RemoteAction in
+    let headers = [
+      "Connection": "close",
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "X-CSRF": "x"
+    ]
+    var request = URLRequest(url: URL(string: "https://192.168.1.220/restapi/relay/outlets/")!)
+    request.setBasicAuth(username: state.user, password: state.pwd!)
+    request.httpMethod = "GET"
+    request.allHTTPHeaderFields = headers
+
+    let (data, response) = try! await URLSession.shared.data(for: request)
+    print( try! JSONDecoder().decode( IdentifiedArrayOf<Relay>.self, from: data) )
+    return RemoteAction.getRelaysCompleted(true,  try! JSONDecoder().decode( IdentifiedArrayOf<Relay>.self, from: data) )
+  }
+  .receive(on: DispatchQueue.main)
+  .eraseToEffect()
+}
+  
+
+
+
+
+
 func getScripts(_ state: RemoteState) -> Effect<RemoteAction, Never> {
   let headers = [
     "Connection": "close",

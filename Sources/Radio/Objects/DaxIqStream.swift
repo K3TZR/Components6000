@@ -31,7 +31,7 @@ public struct DaxIqStream: Identifiable {
   public internal(set) var ip = ""
   public internal(set) var isActive = false
   var _isStreaming = false
-  public internal(set) var pan: PanadapterStreamId = 0
+  public internal(set) var pan: PanadapterId = 0
   public internal(set) var rate = 0
   
   // ------------------------------------------------------------------------------

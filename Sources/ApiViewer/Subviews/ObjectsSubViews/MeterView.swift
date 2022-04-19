@@ -25,7 +25,7 @@ struct MeterView: View {
     
     WithViewStore(store) { viewStore in
       VStack(alignment: .leading) {
-        ForEach(viewStore.objects.meters ) { meter in
+        ForEach(viewStore.viewModel.meters ) { meter in
           if sliceId == nil || sliceId != nil && meter.source == "slc" && UInt16(meter.group) == sliceId {
             HStack(spacing: 0) {
               Text("Meter").padding(.leading, sliceId == nil ? 20: 40)

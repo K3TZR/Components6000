@@ -6,7 +6,7 @@ let package = Package(
   name: "Components6000",
   platforms: [
     .iOS(.v15),
-    .macOS(.v11),
+    .macOS(.v12),
   ],
   products: [
     .library(name: "Shared", targets: ["Shared"]),

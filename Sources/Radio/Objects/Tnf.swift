@@ -18,18 +18,23 @@ import Shared
 ///
 
 //public final class Tnf: Identifiable, ObservableObject {
-public struct Tnf: Identifiable {
+public struct Tnf: Identifiable, Equatable {
+  public static func == (lhs: Tnf, rhs: Tnf) -> Bool {
+    lhs.id == rhs.id
+  }
+  
   // ----------------------------------------------------------------------------
   // MARK: - Static properties
 
-  static let kWidthMin: Hz = 5
-  static let kWidthDefault: Hz = 100
-  static let kWidthMax: Hz = 6_000
+//  static let kWidthMin: Hz = 5
+//  static let kWidthDefault: Hz = 100
+//  static let kWidthMax: Hz = 6_000
 
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
 
   public internal(set) var id: TnfId
+  public internal(set) var initialized = false
 
   public internal(set) var depth: UInt = 0
   public internal(set) var frequency: Hz = 0
@@ -48,18 +53,18 @@ public struct Tnf: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Internal types
 
-  enum TnfTokens : String {
-    case depth
-    case frequency = "freq"
-    case permanent
-    case width
-  }
+//  enum TnfTokens : String {
+//    case depth
+//    case frequency = "freq"
+//    case permanent
+//    case width
+//  }
 
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
 
-  private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
+//  private var _initialized = false
+//  private let _log = LogProxy.sharedInstance.log
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
@@ -73,7 +78,7 @@ public struct Tnf: Identifiable {
 // MARK: - DynamicModel extension
 
 //extension Tnf: DynamicModel {
-extension Tnf {
+//extension Tnf {
   /// Parse a Tnf status message
   ///   StatusParser Protocol method, executes on the parseQ
   ///
@@ -82,55 +87,59 @@ extension Tnf {
   ///   - radio:          the current Radio class
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
-  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
-    // Note: Tnf does not send status on removal
-
-    // get the Id
-    if let id = properties[0].key.objectId {
-      // is the object in use?
-      if inUse {
-        // YES, does it exist?
-        if Objects.sharedInstance.tnfs[id: id] == nil {
-
-          // NO, create a new Tnf & add it to the Tnfs collection
-          Objects.sharedInstance.tnfs[id: id] = Tnf(id)
-        }
-        // pass the remaining key values to the Tnf for parsing
-        Objects.sharedInstance.tnfs[id: id]!.parseProperties(Array(properties.dropFirst(1)) )
-      }
-    }
-  }
+//  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+////  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) async {
+//    // Note: Tnf does not send status on removal
+//
+//    // get the Id
+//    if let id = properties[0].key.objectId {
+//      // is the object in use?
+//      if inUse {
+//        // YES, does it exist?
+//        if Objects.sharedInstance.tnfs[id: id] == nil {
+////        if await Actors.sharedInstance.tnfs[id: id] == nil {
+//
+//          // NO, create a new Tnf & add it to the Tnfs collection
+//          Objects.sharedInstance.tnfs[id: id] = Tnf(id)
+////          await Actors.sharedInstance.addObject(Tnf(id))
+//        }
+//        // pass the remaining key values to the Tnf for parsing
+//        Objects.sharedInstance.tnfs[id: id]!.parseProperties(Array(properties.dropFirst(1)) )
+////        await Actors.sharedInstance.parseTnfProperties( id, Array(properties.dropFirst(1)) )
+//      }
+//    }
+//  }
 
   /// Parse Tnf key/value pairs
   ///   PropertiesParser Protocol method, executes on the parseQ
   ///
   /// - Parameter properties:       a KeyValues
-  mutating func parseProperties(_ properties: KeyValuesArray) {
-    // process each key/value pair, <key=value>
-    for property in properties {
-      // check for unknown Keys
-      guard let token = TnfTokens(rawValue: property.key) else {
-        // log it and ignore the Key
-        _log("Tnf, unknown token: \(property.key) = \(property.value)", .warning, #function, #file, #line)
-        continue
-      }
-      // known keys, in alphabetical order
-      switch token {
-
-      case .depth:      depth = property.value.uValue
-      case .frequency:  frequency = property.value.mhzToHz
-      case .permanent:  permanent = property.value.bValue
-      case .width:      width = property.value.mhzToHz
-      }
-      // is the Tnf initialized?
-      if !_initialized && frequency != 0 {
-        // YES, the Radio (hardware) has acknowledged this Tnf
-        _initialized = true
-
-        // notify all observers
-        _log("Tnf, added: id = \(id), frequency = \(frequency)", .debug, #function, #file, #line)
-//        NC.post(.tnfHasBeenAdded, object: self as Any?)
-      }
-    }
-  }
-}
+//  mutating func parseProperties(_ properties: KeyValuesArray) {
+//    // process each key/value pair, <key=value>
+//    for property in properties {
+//      // check for unknown Keys
+//      guard let token = TnfTokens(rawValue: property.key) else {
+//        // log it and ignore the Key
+//        _log("Tnf, unknown token: \(property.key) = \(property.value)", .warning, #function, #file, #line)
+//        continue
+//      }
+//      // known keys, in alphabetical order
+//      switch token {
+//
+//      case .depth:      depth = property.value.uValue
+//      case .frequency:  frequency = property.value.mhzToHz
+//      case .permanent:  permanent = property.value.bValue
+//      case .width:      width = property.value.mhzToHz
+//      }
+//      // is the Tnf initialized?
+//      if !_initialized && frequency != 0 {
+//        // YES, the Radio (hardware) has acknowledged this Tnf
+//        _initialized = true
+//
+//        // notify all observers
+//        _log("Tnf, added: id = \(id), frequency = \(frequency)", .debug, #function, #file, #line)
+////        NC.post(.tnfHasBeenAdded, object: self as Any?)
+//      }
+//    }
+//  }
+//}

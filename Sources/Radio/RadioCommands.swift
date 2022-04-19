@@ -400,7 +400,7 @@ extension Radio {
   //        }
   //    }
   //
-  public func findAllSlices(on id: PanadapterStreamId) -> IdentifiedArrayOf<Slice>? {
+  public func findAllSlices(on id: PanadapterId) -> IdentifiedArrayOf<Slice>? {
     // find the Slices on the Panadapter (if any)
     let filteredSlices = objects.slices.filter { $0.panadapterId == id }
     guard filteredSlices.count >= 1 else { return nil }
@@ -408,7 +408,7 @@ extension Radio {
     return filteredSlices
   }
   
-  public func findSlice(on id: PanadapterStreamId, at freq: Hz, width: Int) -> Slice? {
+  public func findSlice(on id: PanadapterId, at freq: Hz, width: Int) -> Slice? {
     // find the Slices on the Panadapter (if any)
     if let filteredSlices = findAllSlices(on: id) {
       
@@ -497,11 +497,12 @@ extension Radio {
   /// - Parameters:
   ///   _ id:                            a TnfId
   ///   - callback:     ReplyHandler (optional)
-  public func removeTnf(id: TnfId, callback: ReplyHandler? = nil) {
+  public func removeTnf(_ id: TnfId, callback: ReplyHandler? = nil) {
     send("tnf remove " + " \(id)", replyTo: callback)
     
     // remove it immediately (Tnf does not send status on removal)
-    objects.tnfs[id: id] = nil
+//    objects.tnfs[id: id] = nil
+    ViewModel.shared.removeObject(id)
     
     _log("Tnf, removed: id = \(id)", .debug, #function, #file, #line)
   }
@@ -511,7 +512,7 @@ extension Radio {
   
   public func findTnf(at freq: Hz, minWidth: Hz) -> Tnf? {
     // return the Tnfs within the specified Frequency / minimum width (if any)
-    let filteredTnfs = objects.tnfs.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
+    let filteredTnfs = ViewModel.shared.tnfs.filter { freq >= ($0.frequency - Hz(max(minWidth, $0.width/2))) && freq <= ($0.frequency + Hz(max(minWidth, $0.width/2))) }
     guard filteredTnfs.count >= 1 else { return nil }
     
     // return the first one

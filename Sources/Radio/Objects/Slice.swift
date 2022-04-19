@@ -29,7 +29,8 @@ public struct Slice: Identifiable {
   // MARK: - Published properties
   
   public internal(set) var id: SliceId
-  
+  public internal(set) var initialized: Bool = false
+
   public internal(set) var autoPan: Bool = false
   public internal(set) var clientHandle: Handle = 0
   public internal(set) var daxClients: Int = 0
@@ -42,7 +43,7 @@ public struct Slice: Identifiable {
   public internal(set) var modeList = ""
   public internal(set) var nr2: Int = 0
   public internal(set) var owner: Int = 0
-  public internal(set) var panadapterId: PanadapterStreamId = 0
+  public internal(set) var panadapterId: PanadapterId = 0
   public internal(set) var postDemodBypassEnabled: Bool = false
   public internal(set) var postDemodHigh: Int = 0
   public internal(set) var postDemodLow: Int = 0

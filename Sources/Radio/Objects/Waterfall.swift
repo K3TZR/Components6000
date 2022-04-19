@@ -25,8 +25,9 @@ public struct Waterfall: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  public internal(set) var id: WaterfallStreamId
-  
+  public internal(set) var id: WaterfallId
+  public internal(set) var initialized: Bool = false
+
   public internal(set) var autoBlackEnabled = false
   public internal(set) var autoBlackLevel: UInt32 = 0
   public internal(set) var blackLevel = 0
@@ -36,7 +37,7 @@ public struct Waterfall: Identifiable {
   public internal(set) var gradientIndex = 0
   var _isStreaming = false
   public internal(set) var lineDuration = 0
-  public internal(set) var panadapterId: PanadapterStreamId?
+  public internal(set) var panadapterId: PanadapterId?
   
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
@@ -48,36 +49,36 @@ public struct Waterfall: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
   
-  enum WaterfallTokens : String {
-    case clientHandle         = "client_handle"   // New Api only
-    
-    // on Waterfall
-    case autoBlackEnabled     = "auto_black"
-    case blackLevel           = "black_level"
-    case colorGain            = "color_gain"
-    case gradientIndex        = "gradient_index"
-    case lineDuration         = "line_duration"
-    
-    // unused here
-    case available
-    case band
-    case bandZoomEnabled      = "band_zoom"
-    case bandwidth
-    case capacity
-    case center
-    case daxIq                = "daxiq"
-    case daxIqChannel         = "daxiq_channel"
-    case daxIqRate            = "daxiq_rate"
-    case loopA                = "loopa"
-    case loopB                = "loopb"
-    case panadapterId         = "panadapter"
-    case rfGain               = "rfgain"
-    case rxAnt                = "rxant"
-    case segmentZoomEnabled   = "segment_zoom"
-    case wide
-    case xPixels              = "x_pixels"
-    case xvtr
-  }
+//  enum WaterfallTokens : String {
+//    case clientHandle         = "client_handle"   // New Api only
+//    
+//    // on Waterfall
+//    case autoBlackEnabled     = "auto_black"
+//    case blackLevel           = "black_level"
+//    case colorGain            = "color_gain"
+//    case gradientIndex        = "gradient_index"
+//    case lineDuration         = "line_duration"
+//    
+//    // unused here
+//    case available
+//    case band
+//    case bandZoomEnabled      = "band_zoom"
+//    case bandwidth
+//    case capacity
+//    case center
+//    case daxIq                = "daxiq"
+//    case daxIqChannel         = "daxiq_channel"
+//    case daxIqRate            = "daxiq_rate"
+//    case loopA                = "loopa"
+//    case loopB                = "loopb"
+//    case panadapterId         = "panadapter"
+//    case rfGain               = "rfgain"
+//    case rxAnt                = "rxant"
+//    case segmentZoomEnabled   = "segment_zoom"
+//    case wide
+//    case xPixels              = "x_pixels"
+//    case xvtr
+//  }
   private struct PayloadHeader {  // struct to mimic payload layout
     var firstBinFreq: UInt64    // 8 bytes
     var binBandwidth: UInt64    // 8 bytes
@@ -102,7 +103,7 @@ public struct Waterfall: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
-  public init(_ id: WaterfallStreamId) {
+  public init(_ id: WaterfallId) {
     self.id = id
     
     // allocate two dataframes
@@ -127,81 +128,81 @@ extension Waterfall {
   ///   - inUse:          false = "to be deleted"
   ///
 //  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
-  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
-    // get the Id
-    if let id = properties[1].key.streamId {
-      // is the object in use?
-      if inUse {
-        // YES, does it exist?
-        if Objects.sharedInstance.waterfalls[id: id] == nil {
-          // Create a Waterfall & add it to the Waterfalls collection
-          Objects.sharedInstance.waterfalls[id: id] = Waterfall(id)
-        }
-        // pass the key values to the Waterfall for parsing (dropping the Type and Id)
-        Objects.sharedInstance.waterfalls[id: id]!.parseProperties(Array(properties.dropFirst(2)))
-        
-      } else {
-        // does it exist?
-        if Objects.sharedInstance.waterfalls[id: id] != nil {
-          // YES, remove the Panadapter & Waterfall, notify all observers
-          if let panId = Objects.sharedInstance.waterfalls[id: id]!.panadapterId {
-            
-            Objects.sharedInstance.panadapters[id: panId] = nil
-            
-            LogProxy.sharedInstance.log("Panadapter, removed: id = \(panId.hex)", .debug, #function, #file, #line)
-            //            NC.post(.panadapterHasBeenRemoved, object: id as Any?)
-            
-            //            NC.post(.waterfallWillBeRemoved, object: radio.waterfalls[id] as Any?)
-            
-            Objects.sharedInstance.waterfalls[id: id] = nil
-            
-            LogProxy.sharedInstance.log("Waterfall, removed: id = \(id.hex)", .debug, #function, #file, #line)
-            //            NC.post(.waterfallHasBeenRemoved, object: id as Any?)
-          }
-        }
-      }
-    }
-  }
+//  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//    // get the Id
+//    if let id = properties[1].key.streamId {
+//      // is the object in use?
+//      if inUse {
+//        // YES, does it exist?
+//        if Objects.sharedInstance.waterfalls[id: id] == nil {
+//          // Create a Waterfall & add it to the Waterfalls collection
+//          Objects.sharedInstance.waterfalls[id: id] = Waterfall(id)
+//        }
+//        // pass the key values to the Waterfall for parsing (dropping the Type and Id)
+//        Objects.sharedInstance.waterfalls[id: id]!.parseProperties(Array(properties.dropFirst(2)))
+//        
+//      } else {
+//        // does it exist?
+//        if Objects.sharedInstance.waterfalls[id: id] != nil {
+//          // YES, remove the Panadapter & Waterfall, notify all observers
+//          if let panId = Objects.sharedInstance.waterfalls[id: id]!.panadapterId {
+//            
+//            Objects.sharedInstance.panadapters[id: panId] = nil
+//            
+//            LogProxy.sharedInstance.log("Panadapter, removed: id = \(panId.hex)", .debug, #function, #file, #line)
+//            //            NC.post(.panadapterHasBeenRemoved, object: id as Any?)
+//            
+//            //            NC.post(.waterfallWillBeRemoved, object: radio.waterfalls[id] as Any?)
+//            
+//            Objects.sharedInstance.waterfalls[id: id] = nil
+//            
+//            LogProxy.sharedInstance.log("Waterfall, removed: id = \(id.hex)", .debug, #function, #file, #line)
+//            //            NC.post(.waterfallHasBeenRemoved, object: id as Any?)
+//          }
+//        }
+//      }
+//    }
+//  }
   
   /// Parse Waterfall key/value pairs
   ///   PropertiesParser protocol method, executes on the parseQ
   ///
   /// - Parameter properties:       a KeyValuesArray
   ///
-  mutating func parseProperties(_ properties: KeyValuesArray) {
-    // process each key/value pair, <key=value>
-    for property in properties {
-      // check for unknown Keys
-      guard let token = WaterfallTokens(rawValue: property.key) else {
-        // log it and ignore the Key
-        _log("Waterfall, unknown token: \(property.key) = \(property.value)", .warning, #function, #file, #line)
-        continue
-      }
-      // Known keys, in alphabetical order
-      switch token {
-        
-      case .autoBlackEnabled:   autoBlackEnabled = property.value.bValue
-      case .blackLevel:         blackLevel = property.value.iValue
-      case .clientHandle:       clientHandle = property.value.handle ?? 0
-      case .colorGain:          colorGain = property.value.iValue
-      case .gradientIndex:      gradientIndex = property.value.iValue
-      case .lineDuration:       lineDuration = property.value.iValue
-      case .panadapterId:       panadapterId = property.value.streamId ?? 0
-        // the following are ignored here
-      case .available, .band, .bandwidth, .bandZoomEnabled, .capacity, .center, .daxIq, .daxIqChannel,
-          .daxIqRate, .loopA, .loopB, .rfGain, .rxAnt, .segmentZoomEnabled, .wide, .xPixels, .xvtr:  break
-      }
-    }
-    // is the waterfall initialized?
-    if !_initialized && panadapterId != 0 {
-      // YES, the Radio (hardware) has acknowledged this Waterfall
-      _initialized = true
-      
-      // notify all observers
-      _log("Waterfall, added: id = \(id.hex), handle = \(clientHandle.hex)", .debug, #function, #file, #line)
-      //      NC.post(.waterfallHasBeenAdded, object: self as Any?)
-    }
-  }
+//  mutating func parseProperties(_ properties: KeyValuesArray) {
+//    // process each key/value pair, <key=value>
+//    for property in properties {
+//      // check for unknown Keys
+//      guard let token = WaterfallTokens(rawValue: property.key) else {
+//        // log it and ignore the Key
+//        _log("Waterfall, unknown token: \(property.key) = \(property.value)", .warning, #function, #file, #line)
+//        continue
+//      }
+//      // Known keys, in alphabetical order
+//      switch token {
+//        
+//      case .autoBlackEnabled:   autoBlackEnabled = property.value.bValue
+//      case .blackLevel:         blackLevel = property.value.iValue
+//      case .clientHandle:       clientHandle = property.value.handle ?? 0
+//      case .colorGain:          colorGain = property.value.iValue
+//      case .gradientIndex:      gradientIndex = property.value.iValue
+//      case .lineDuration:       lineDuration = property.value.iValue
+//      case .panadapterId:       panadapterId = property.value.streamId ?? 0
+//        // the following are ignored here
+//      case .available, .band, .bandwidth, .bandZoomEnabled, .capacity, .center, .daxIq, .daxIqChannel,
+//          .daxIqRate, .loopA, .loopB, .rfGain, .rxAnt, .segmentZoomEnabled, .wide, .xPixels, .xvtr:  break
+//      }
+//    }
+//    // is the waterfall initialized?
+//    if !_initialized && panadapterId != 0 {
+//      // YES, the Radio (hardware) has acknowledged this Waterfall
+//      _initialized = true
+//      
+//      // notify all observers
+//      _log("Waterfall, added: id = \(id.hex), handle = \(clientHandle.hex)", .debug, #function, #file, #line)
+//      //      NC.post(.waterfallHasBeenAdded, object: self as Any?)
+//    }
+//  }
   
   /// Process the Waterfall Vita struct
   ///

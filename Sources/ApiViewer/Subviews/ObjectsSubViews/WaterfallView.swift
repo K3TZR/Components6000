@@ -13,12 +13,12 @@ import Shared
 
 struct WaterfallView: View {
   let store: Store<ApiState, ApiAction>
-  let panadapterId: PanadapterStreamId
+  let panadapterId: PanadapterId
   
   var body: some View {
     WithViewStore(store.actionless) { viewStore in
       
-      ForEach(viewStore.objects.waterfalls) { waterfall in
+      ForEach(Array(viewStore.viewModel.waterfalls)) { waterfall in
         if waterfall.panadapterId == panadapterId {
           HStack(spacing: 20) {
             Text("Waterfall").frame(width: 100, alignment: .trailing)

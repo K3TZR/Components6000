@@ -32,8 +32,9 @@ public struct Panadapter: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
-  public internal(set) var id: PanadapterStreamId
-  
+  public internal(set) var id: PanadapterId
+  public internal(set) var initialized: Bool = false
+
   public internal(set) var antList = [String]()
   public internal(set) var clientHandle: Handle = 0
   public internal(set) var dbmValues = [LegendValue]()
@@ -97,47 +98,47 @@ public struct Panadapter: Identifiable {
   // ----------------------------------------------------------------------------
   // MARK: - Internal types
   
-  enum PanadapterTokens : String {
-    // on Panadapter
-    case antList                    = "ant_list"
-    case average
-    case band
-    case bandwidth
-    case bandZoomEnabled            = "band_zoom"
-    case center
-    case clientHandle               = "client_handle"
-    case daxIq                      = "daxiq"
-    case daxIqChannel               = "daxiq_channel"
-    case fps
-    case loopAEnabled               = "loopa"
-    case loopBEnabled               = "loopb"
-    case maxBw                      = "max_bw"
-    case maxDbm                     = "max_dbm"
-    case minBw                      = "min_bw"
-    case minDbm                     = "min_dbm"
-    case preamp                     = "pre"
-    case rfGain                     = "rfgain"
-    case rxAnt                      = "rxant"
-    case segmentZoomEnabled         = "segment_zoom"
-    case waterfallId                = "waterfall"
-    case weightedAverageEnabled     = "weighted_average"
-    case wide
-    case wnbEnabled                 = "wnb"
-    case wnbLevel                   = "wnb_level"
-    case wnbUpdating                = "wnb_updating"
-    case xPixels                    = "x_pixels"
-    case xvtrLabel                  = "xvtr"
-    case yPixels                    = "y_pixels"
-    // ignored by Panadapter
-    case available
-    case capacity
-    case daxIqRate                  = "daxiq_rate"
-    // not sent in status messages
-    case n1mmSpectrumEnable         = "n1mm_spectrum_enable"
-    case n1mmAddress                = "n1mm_address"
-    case n1mmPort                   = "n1mm_port"
-    case n1mmRadio                  = "n1mm_radio"
-  }
+//  enum PanadapterTokens : String {
+//    // on Panadapter
+//    case antList                    = "ant_list"
+//    case average
+//    case band
+//    case bandwidth
+//    case bandZoomEnabled            = "band_zoom"
+//    case center
+//    case clientHandle               = "client_handle"
+//    case daxIq                      = "daxiq"
+//    case daxIqChannel               = "daxiq_channel"
+//    case fps
+//    case loopAEnabled               = "loopa"
+//    case loopBEnabled               = "loopb"
+//    case maxBw                      = "max_bw"
+//    case maxDbm                     = "max_dbm"
+//    case minBw                      = "min_bw"
+//    case minDbm                     = "min_dbm"
+//    case preamp                     = "pre"
+//    case rfGain                     = "rfgain"
+//    case rxAnt                      = "rxant"
+//    case segmentZoomEnabled         = "segment_zoom"
+//    case waterfallId                = "waterfall"
+//    case weightedAverageEnabled     = "weighted_average"
+//    case wide
+//    case wnbEnabled                 = "wnb"
+//    case wnbLevel                   = "wnb_level"
+//    case wnbUpdating                = "wnb_updating"
+//    case xPixels                    = "x_pixels"
+//    case xvtrLabel                  = "xvtr"
+//    case yPixels                    = "y_pixels"
+//    // ignored by Panadapter
+//    case available
+//    case capacity
+//    case daxIqRate                  = "daxiq_rate"
+//    // not sent in status messages
+//    case n1mmSpectrumEnable         = "n1mm_spectrum_enable"
+//    case n1mmAddress                = "n1mm_address"
+//    case n1mmPort                   = "n1mm_port"
+//    case n1mmRadio                  = "n1mm_radio"
+//  }
   private struct PayloadHeader {      // struct to mimic payload layout
     var startingBinNumber: UInt16
     var segmentBinCount: UInt16
@@ -165,7 +166,7 @@ public struct Panadapter: Identifiable {
   // ------------------------------------------------------------------------------
   // MARK: - Initialization
   
-  public init(_ id: PanadapterStreamId) {
+  public init(_ id: PanadapterId) {
     self.id = id
     
     // allocate dataframes
@@ -272,93 +273,93 @@ extension Panadapter {
   ///   - queue:          a parse Queue for the object
   ///   - inUse:          false = "to be deleted"
 //  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
-  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
-    //get the Id
-    if let id =  properties[1].key.streamId {
-      // is the object in use?
-      if inUse {
-        // YES, does it exist?
-        if Objects.sharedInstance.panadapters[id: id] == nil {
-          // create a new object & add it to the collection
-          Objects.sharedInstance.panadapters[id: id] = Panadapter(id)
-        }
-        // pass the remaining key values for parsing
-        Objects.sharedInstance.panadapters[id: id]!.parseProperties(Array(properties.dropFirst(2)) )
-        
-      } else {
-        // does it exist?
-        if Objects.sharedInstance.panadapters[id: id] != nil {
-          // YES, notify all observers
-          //          NC.post(.panadapterWillBeRemoved, object: self as Any?)
-        }
-      }
-    }
-    //        }
-  }
+//  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//    //get the Id
+//    if let id =  properties[1].key.streamId {
+//      // is the object in use?
+//      if inUse {
+//        // YES, does it exist?
+//        if Objects.sharedInstance.panadapters[id: id] == nil {
+//          // create a new object & add it to the collection
+//          Objects.sharedInstance.panadapters[id: id] = Panadapter(id)
+//        }
+//        // pass the remaining key values for parsing
+//        Objects.sharedInstance.panadapters[id: id]!.parseProperties(Array(properties.dropFirst(2)) )
+//
+//      } else {
+//        // does it exist?
+//        if Objects.sharedInstance.panadapters[id: id] != nil {
+//          // YES, notify all observers
+//          //          NC.post(.panadapterWillBeRemoved, object: self as Any?)
+//        }
+//      }
+//    }
+//    //        }
+//  }
   
   /// Parse Panadapter key/value pairs
   ///   executes on the mainQ
   /// - Parameter properties:       a KeyValuesArray
-  mutating func parseProperties(_ properties: KeyValuesArray) {
-    _suppress = true
-    
-    // process each key/value pair, <key=value>
-    for property in properties {
-      // check for unknown Keys
-      guard let token = PanadapterTokens(rawValue: property.key) else {
-        // log it and ignore the Key
-        _log("Panadapter: unknown token, \(property.key) = \(property.value)", .warning, #function, #file, #line)
-        continue
-      }
-      // Known keys, in alphabetical order
-      switch token {
-      case .antList:                antList = property.value.list
-      case .average:                average = property.value.iValue
-      case .band:                   band = property.value
-      case .bandwidth:
-        bandwidth = property.value.mhzToHz
-        freqValues = calcFreqValues()
-      case .bandZoomEnabled:        bandZoomEnabled = property.value.bValue
-      case .center:
-        center = property.value.mhzToHz
-        dbmValues = calcDbmValues()
-        freqValues = calcFreqValues()
-      case .clientHandle:           clientHandle = property.value.handle ?? 0
-      case .daxIq:                  daxIqChannel = property.value.iValue
-      case .daxIqChannel:           daxIqChannel = property.value.iValue
-      case .fps:                    fps = property.value.iValue
-      case .loopAEnabled:           loopAEnabled = property.value.bValue
-      case .loopBEnabled:           loopBEnabled = property.value.bValue
-      case .maxBw:                  maxBw = property.value.mhzToHz
-      case .maxDbm:                 maxDbm = property.value.cgValue
-      case .minBw:                  minBw = property.value.mhzToHz
-      case .minDbm:                 minDbm = property.value.cgValue
-      case .preamp:                 preamp = property.value
-      case .rfGain:                 rfGain = property.value.iValue
-      case .rxAnt:                  rxAnt = property.value
-      case .segmentZoomEnabled:     segmentZoomEnabled = property.value.bValue
-      case .waterfallId:            waterfallId = property.value.streamId ?? 0
-      case .wide:                   wide = property.value.bValue
-      case .weightedAverageEnabled: weightedAverageEnabled = property.value.bValue
-      case .wnbEnabled:             wnbEnabled = property.value.bValue
-      case .wnbLevel:               wnbLevel = property.value.iValue
-      case .wnbUpdating:            wnbUpdating = property.value.bValue
-      case .xvtrLabel:              xvtrLabel = property.value
-      case .available, .capacity, .daxIqRate, .xPixels, .yPixels:     break // ignored by Panadapter
-      case .n1mmSpectrumEnable, .n1mmAddress, .n1mmPort, .n1mmRadio:  break // not sent in status messages
-      }
-    }
-    // is the Panadapter initialized?∫
-    if !_initialized && center != 0 && bandwidth != 0 && (minDbm != 0.0 || maxDbm != 0.0) {
-      // YES, the Radio (hardware) has acknowledged this Panadapter
-      _initialized = true
-      
-      // notify all observers
-      _log("Panadapter: added, id = \(id.hex) center = \(center.hzToMhz), bandwidth = \(bandwidth.hzToMhz)", .debug, #function, #file, #line)
-      //      NC.post(.panadapterHasBeenAdded, object: self as Any?)
-    }
-    _suppress = false
-  }
+//  mutating func parseProperties(_ properties: KeyValuesArray) {
+//    _suppress = true
+//    
+//    // process each key/value pair, <key=value>
+//    for property in properties {
+//      // check for unknown Keys
+//      guard let token = PanadapterTokens(rawValue: property.key) else {
+//        // log it and ignore the Key
+//        _log("Panadapter: unknown token, \(property.key) = \(property.value)", .warning, #function, #file, #line)
+//        continue
+//      }
+//      // Known keys, in alphabetical order
+//      switch token {
+//      case .antList:                antList = property.value.list
+//      case .average:                average = property.value.iValue
+//      case .band:                   band = property.value
+//      case .bandwidth:
+//        bandwidth = property.value.mhzToHz
+//        freqValues = calcFreqValues()
+//      case .bandZoomEnabled:        bandZoomEnabled = property.value.bValue
+//      case .center:
+//        center = property.value.mhzToHz
+//        dbmValues = calcDbmValues()
+//        freqValues = calcFreqValues()
+//      case .clientHandle:           clientHandle = property.value.handle ?? 0
+//      case .daxIq:                  daxIqChannel = property.value.iValue
+//      case .daxIqChannel:           daxIqChannel = property.value.iValue
+//      case .fps:                    fps = property.value.iValue
+//      case .loopAEnabled:           loopAEnabled = property.value.bValue
+//      case .loopBEnabled:           loopBEnabled = property.value.bValue
+//      case .maxBw:                  maxBw = property.value.mhzToHz
+//      case .maxDbm:                 maxDbm = property.value.cgValue
+//      case .minBw:                  minBw = property.value.mhzToHz
+//      case .minDbm:                 minDbm = property.value.cgValue
+//      case .preamp:                 preamp = property.value
+//      case .rfGain:                 rfGain = property.value.iValue
+//      case .rxAnt:                  rxAnt = property.value
+//      case .segmentZoomEnabled:     segmentZoomEnabled = property.value.bValue
+//      case .waterfallId:            waterfallId = property.value.streamId ?? 0
+//      case .wide:                   wide = property.value.bValue
+//      case .weightedAverageEnabled: weightedAverageEnabled = property.value.bValue
+//      case .wnbEnabled:             wnbEnabled = property.value.bValue
+//      case .wnbLevel:               wnbLevel = property.value.iValue
+//      case .wnbUpdating:            wnbUpdating = property.value.bValue
+//      case .xvtrLabel:              xvtrLabel = property.value
+//      case .available, .capacity, .daxIqRate, .xPixels, .yPixels:     break // ignored by Panadapter
+//      case .n1mmSpectrumEnable, .n1mmAddress, .n1mmPort, .n1mmRadio:  break // not sent in status messages
+//      }
+//    }
+//    // is the Panadapter initialized?∫
+//    if !_initialized && center != 0 && bandwidth != 0 && (minDbm != 0.0 || maxDbm != 0.0) {
+//      // YES, the Radio (hardware) has acknowledged this Panadapter
+//      _initialized = true
+//      
+//      // notify all observers
+//      _log("Panadapter: added, id = \(id.hex) center = \(center.hzToMhz), bandwidth = \(bandwidth.hzToMhz)", .debug, #function, #file, #line)
+//      //      NC.post(.panadapterHasBeenAdded, object: self as Any?)
+//    }
+//    _suppress = false
+//  }
   
   /// Process the Panadapter Vita struct
   ///      The payload of the incoming Vita struct is converted to a PanadapterFrame and

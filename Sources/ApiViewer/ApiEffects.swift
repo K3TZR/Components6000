@@ -113,7 +113,7 @@ func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
 
 func subscribeToMeters() -> Effect<ApiAction, Never> {
   // subscribe to the publisher of received TcpMessages
-  Meter.meterPublisher
+  MeterCollection.meterPublisher
     .receive(on: DispatchQueue.main)
     // limit updates to 1 per second
     .throttle(for: 1.0, scheduler: RunLoop.main, latest: true)

@@ -28,16 +28,17 @@ public struct Meter: Identifiable, Equatable {
   // ----------------------------------------------------------------------------
   // MARK: - Static properties
   
-  static let kDbDbmDbfsSwrDenom: Float = 128.0  // denominator for Db, Dbm, Dbfs, Swr
-  static let kDegDenom: Float = 64.0   // denominator for Degc, Degf
-  
-  public static var meterPublisher = PassthroughSubject<Meter, Never>()
+//  static let kDbDbmDbfsSwrDenom: Float = 128.0  // denominator for Db, Dbm, Dbfs, Swr
+//  static let kDegDenom: Float = 64.0   // denominator for Degc, Degf
+//  
+//  public static var meterPublisher = PassthroughSubject<Meter, Never>()
   
   // ----------------------------------------------------------------------------
   // MARK: - Published properties
   
   public internal(set) var id: MeterId
-  
+  public internal(set) var initialized: Bool = false
+
   public internal(set) var desc = ""
   public internal(set) var fps = 0
   public internal(set) var high: Float = 0
@@ -59,20 +60,20 @@ public struct Meter: Identifiable, Equatable {
     case radio      = "rad"
     case amplifier  = "amp"
   }
-  public enum Units : String {
-    case none
-    case amps
-    case db
-    case dbfs
-    case dbm
-    case degc
-    case degf
-    case percent
-    case rpm
-    case swr
-    case volts
-    case watts
-  }
+//  public enum Units : String {
+//    case none
+//    case amps
+//    case db
+//    case dbfs
+//    case dbm
+//    case degc
+//    case degf
+//    case percent
+//    case rpm
+//    case swr
+//    case volts
+//    case watts
+//  }
   public enum ShortName : String, CaseIterable {
     case codecOutput            = "codec"
     case microphoneAverage      = "mic"
@@ -103,25 +104,25 @@ public struct Meter: Identifiable, Equatable {
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
   
-  enum MeterTokens : String {
-    case desc
-    case fps
-    case high       = "hi"
-    case low
-    case name       = "nam"
-    case group      = "num"
-    case source     = "src"
-    case units      = "unit"
-  }
+//  enum MeterTokens : String {
+//    case desc
+//    case fps
+//    case high       = "hi"
+//    case low
+//    case name       = "nam"
+//    case group      = "num"
+//    case source     = "src"
+//    case units      = "unit"
+//  }
   
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
-  private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
-  private var _voltsAmpsDenom: Float = 256.0  // denominator for voltage/amperage after API version 1.10
-  
-  static private var _metersAreStreaming = false
+//  private var _initialized = false
+//  private let _log = LogProxy.sharedInstance.log
+//  private var _voltsAmpsDenom: Float = 256.0  // denominator for voltage/amperage after API version 1.10
+//
+//  static private var _metersAreStreaming = false
   
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
@@ -133,148 +134,144 @@ public struct Meter: Identifiable, Equatable {
 // MARK: - DynamicModel extension
 
 //extension Meter: DynamicModel {
-extension Meter {
-  /// Parse a Meter status message
-  /// - Parameters:
-  ///   - keyValues:      a KeyValuesArray
-  ///   - radio:          the current Radio class
-  ///   - queue:          a parse Queue for the object
-  ///   - inUse:          false = "to be deleted"
-//  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
-  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
-    // is the object in use?
-    if inUse {
-      // YES, extract the Meter Number from the first KeyValues entry
-      let components = properties[0].key.components(separatedBy: ".")
-      if components.count != 2 {return }
-      
-      // the Meter Number is the 0th item
-      if let id = components[0].objectId {
-        // does the meter exist?
-        
-        if Objects.sharedInstance.meters[id: id] == nil {
-          // NO, create a new Meter & add it to the Meters collection
-          Objects.sharedInstance.meters[id: id] = Meter(id)
-        }
-        // pass the key values to the Meter for parsing
-        Objects.sharedInstance.meters[id: id]?.parseProperties( properties )
-      }
-      
-    } else {
-      
-      // NO, extract the Id
-      if let id = properties[0].key.components(separatedBy: " ")[0].objectId {
-//        Objects.sharedInstance.meters[id: id] = nil
-        Objects.sharedInstance.meters.remove(id: id)
-      }
-    }
-  }
+//extension Meter {
+//  /// Parse a Meter status message
+//  /// - Parameters:
+//  ///   - keyValues:      a KeyValuesArray
+//  ///   - radio:          the current Radio class
+//  ///   - queue:          a parse Queue for the object
+//  ///   - inUse:          false = "to be deleted"
+////  class func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//  static func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
+//    // is the object in use?
+//    if inUse {
+//      // YES, extract the Meter Number from the first KeyValues entry
+//      let components = properties[0].key.components(separatedBy: ".")
+//      if components.count != 2 {return }
+//
+//      // the Meter Number is the 0th item
+//      if let id = components[0].objectId {
+//        // does the meter exist?
+//
+//        if Objects.sharedInstance.meters[id: id] == nil {
+//          // NO, create a new Meter & add it to the Meters collection
+//          Objects.sharedInstance.meters[id: id] = Meter(id)
+//        }
+//        // pass the key values to the Meter for parsing
+//        Objects.sharedInstance.meters[id: id]?.parseProperties( properties )
+//      }
+//
+//    } else {
+//
+//      // NO, extract the Id
+//      if let id = properties[0].key.components(separatedBy: " ")[0].objectId {
+////        Objects.sharedInstance.meters[id: id] = nil
+//        Objects.sharedInstance.meters.remove(id: id)
+//      }
+//    }
+//  }
   
   /// Parse Meter key/value pairs
   /// - Parameter properties:       a KeyValuesArray
-  mutating func parseProperties(_ properties: KeyValuesArray) {
-    // process each key/value pair, <n.key=value>
-    for property in properties {
-      // separate the Meter Number from the Key
-      let numberAndKey = property.key.components(separatedBy: ".")
-      
-      // get the Key
-      let key = numberAndKey[1]
-      
-      // check for unknown Keys
-      guard let token = MeterTokens(rawValue: key) else {
-        // log it and ignore the Key
-        _log("Meter, unknown token: \(property.key) = \(property.value)", .warning, #function, #file, #line)
-        continue
-      }
-      // known Keys, in alphabetical order
-      switch token {
-        
-      case .desc:     desc = property.value
-      case .fps:      fps = property.value.iValue
-      case .high:     high = property.value.fValue
-      case .low:      low = property.value.fValue
-      case .name:     name = property.value.lowercased()
-      case .group:    group = property.value
-      case .source:   source = property.value.lowercased()
-      case .units:    units = property.value.lowercased()
-      }
-    }
-    if !_initialized && group != "" && units != "" {
-      // the Radio (hardware) has acknowledged this Meter
-      _initialized = true
-      _log("Meter, added: id = \(id), \(name), source = \(source), group = \(group)", .debug, #function, #file, #line)
-    }
-  }
+//  mutating func parseProperties(_ properties: KeyValuesArray) {
+//    // process each key/value pair, <n.key=value>
+//    for property in properties {
+//      // separate the Meter Number from the Key
+//      let numberAndKey = property.key.components(separatedBy: ".")
+//
+//      // get the Key
+//      let key = numberAndKey[1]
+//
+//      // check for unknown Keys
+//      guard let token = MeterTokens(rawValue: key) else {
+//        // log it and ignore the Key
+//        _log("Meter, unknown token: \(property.key) = \(property.value)", .warning, #function, #file, #line)
+//        continue
+//      }
+//      // known Keys, in alphabetical order
+//      switch token {
+//
+//      case .desc:     desc = property.value
+//      case .fps:      fps = property.value.iValue
+//      case .high:     high = property.value.fValue
+//      case .low:      low = property.value.fValue
+//      case .name:     name = property.value.lowercased()
+//      case .group:    group = property.value
+//      case .source:   source = property.value.lowercased()
+//      case .units:    units = property.value.lowercased()
+//      }
+//    }
+//    if !_initialized && group != "" && units != "" {
+//      // the Radio (hardware) has acknowledged this Meter
+//      _initialized = true
+//      _log("Meter, added: id = \(id), \(name), source = \(source), group = \(group)", .debug, #function, #file, #line)
+//    }
+//  }
   
-  /// Process the Meter Vita struct
+  /// Process the Vita struct containing Meter data
   /// - Parameters:
   ///   - vita:        a Vita struct
 //  class func vitaProcessor(_ vita: Vita, radio: Radio) {
-  static func vitaProcessor(_ vita: Vita, radio: Radio) {
-    var meterIds = [UInt16]()
-    
-    if _metersAreStreaming == false {
-      _metersAreStreaming = true
-      // log the start of the stream
-      LogProxy.sharedInstance.log("Meter: stream started, \(vita.streamId.hex)", .info, #function, #file, #line)
-    }
-    
-    // NOTE:  there is a bug in the Radio (as of v2.2.8) that sends
-    //        multiple copies of meters, this code ignores the duplicates
-    
-    vita.payloadData.withUnsafeBytes { (payloadPtr) in
-      // four bytes per Meter
-      let numberOfMeters = Int(vita.payloadSize / 4)
-      
-      // pointer to the first Meter number / Meter value pair
-      let ptr16 = payloadPtr.bindMemory(to: UInt16.self)
-      
-      // for each meter in the Meters packet
-      for i in 0..<numberOfMeters {
-        // get the Meter id and the Meter value
-        let id: UInt16 = CFSwapInt16BigToHost(ptr16[2 * i])
-        let value: UInt16 = CFSwapInt16BigToHost(ptr16[(2 * i) + 1])
-        
-        // is this a duplicate?
-        if !meterIds.contains(id) {
-          // NO, add it to the list
-          meterIds.append(id)
-          
-          // find the meter (if present) & update it
-          //        if let meter = Api.sharedInstance.radio?.meters[String(format: "%i", number)] {
-          if let meter = Objects.sharedInstance.meters[id: id] {
-            //          meter.streamHandler( value)
-            let newValue = Int16(bitPattern: value)
-            let previousValue = meter.value
-            
-            // check for unknown Units
-            guard let token = Units(rawValue: meter.units) else {
-              //      // log it and ignore it
-              //      _log("Meter \(desc) \(description) \(group) \(name) \(source): unknown units - \(units))", .warning, #function, #file, #line)
-              return
-            }
-            var adjNewValue: Float = 0.0
-            switch token {
-              
-            case .db, .dbm, .dbfs, .swr:        adjNewValue = Float(exactly: newValue)! / kDbDbmDbfsSwrDenom
-              
-            case .volts, .amps:
-              adjNewValue = Float(exactly: newValue)! / 256.0
-              
-            case .degc, .degf:                  adjNewValue = Float(exactly: newValue)! / kDegDenom
-              
-            case .rpm, .watts, .percent, .none: adjNewValue = Float(exactly: newValue)!
-            }
-            // did it change?
-            if adjNewValue != previousValue {
-//              meter.value = adjNewValue
-              Objects.sharedInstance.meters[id: id]?.value = adjNewValue
-              meterPublisher.send(meter)
-            }
-          }
-        }
-      }
-    }
-  }
-}
+//  static func vitaProcessor(_ vita: Vita, radio: Radio) {
+//    var meterIds = [UInt16]()
+//
+//    if _metersAreStreaming == false {
+//      _metersAreStreaming = true
+//      // log the start of the stream
+//      LogProxy.sharedInstance.log("Meter: stream started, \(vita.streamId.hex)", .info, #function, #file, #line)
+//    }
+//
+//    // NOTE:  there is a bug in the Radio (as of v2.2.8) that sends
+//    //        multiple copies of meters, this code ignores the duplicates
+//
+//    vita.payloadData.withUnsafeBytes { (payloadPtr) in
+//      // four bytes per Meter
+//      let numberOfMeters = Int(vita.payloadSize / 4)
+//
+//      // pointer to the first Meter number / Meter value pair
+//      let ptr16 = payloadPtr.bindMemory(to: UInt16.self)
+//
+//      // for each meter in the Meters packet
+//      for i in 0..<numberOfMeters {
+//        // get the Meter id and the Meter value
+//        let id: UInt16 = CFSwapInt16BigToHost(ptr16[2 * i])
+//        let value: UInt16 = CFSwapInt16BigToHost(ptr16[(2 * i) + 1])
+//
+//        // is this a duplicate?
+//        if !meterIds.contains(id) {
+//          // NO, add it to the list
+//          meterIds.append(id)
+//
+//          // find the meter (if present) & update it
+//          Task {
+//            if let meter = await MeterCollection.shared.meters[id: id] {
+//              //          meter.streamHandler( value)
+//              let newValue = Int16(bitPattern: value)
+//              let previousValue = meter.value
+//
+//              // check for unknown Units
+//              guard let token = Units(rawValue: meter.units) else {
+//                //      // log it and ignore it
+//                //      _log("Meter \(desc) \(description) \(group) \(name) \(source): unknown units - \(units))", .warning, #function, #file, #line)
+//                return
+//              }
+//              var adjNewValue: Float = 0.0
+//              switch token {
+//
+//              case .db, .dbm, .dbfs, .swr:        adjNewValue = Float(exactly: newValue)! / kDbDbmDbfsSwrDenom
+//              case .volts, .amps:                 adjNewValue = Float(exactly: newValue)! / 256.0
+//              case .degc, .degf:                  adjNewValue = Float(exactly: newValue)! / kDegDenom
+//              case .rpm, .watts, .percent, .none: adjNewValue = Float(exactly: newValue)!
+//              }
+//              // did it change?
+//              if adjNewValue != previousValue {
+//                await MeterCollection.shared.setValue(id, value: adjNewValue)
+//              }
+//              meterPublisher.send(meter)
+//            }
+//          }
+//        }
+//      }
+//    }
+//  }
+//}

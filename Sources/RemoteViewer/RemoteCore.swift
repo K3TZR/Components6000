@@ -151,8 +151,9 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
 
     case .getRelays:
       state.progressState = ProgressState(msg: "while relays are fetched")
-      return getRelays( state )
-     
+//      return getRelays( state )
+      return getRelaysAsync( state )
+
     case .runScript(let script):
       state.progressState = ProgressState(msg: script.msg, duration: script.duration)
       return runScript( state, script: script)
@@ -232,7 +233,7 @@ public let remoteReducer = Reducer<RemoteState, RemoteAction, RemoteEnvironment>
     case .relay(let id, .toggleStatus):
       if state.loginSuccessful {
         state.progressState = ProgressState(msg: "while the state is changed")
-        return setProperty( state, property: .status, at: id, value: state.relays[id: id]!.name)
+        return setProperty( state, property: .status, at: id, value: state.relays[id: id]!.status ? "false" : "true")
       } else {
         state.loginState = LoginState(heading: "Please Login", user: state.user, service: "RemoteViewer")
         return .none

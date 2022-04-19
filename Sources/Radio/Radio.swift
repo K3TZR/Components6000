@@ -243,8 +243,11 @@ public final class Radio: Equatable {
     // subscribe to the publisher of TcpCommands received messages
     _cancellableCommandData = command.receivedPublisher
       .receive(on: _parseQ)
-      .sink { [weak self] msg in
-        self?.receivedMessage(msg)
+      .sink { msg in
+        self.receivedMessage(msg)
+//        Task {
+//          await self.receivedMessage(msg)
+//        }
       }
     
     _cancellableCommandStatus = command.statusPublisher
@@ -402,7 +405,7 @@ public final class Radio: Equatable {
     case .meter:
       // unlike other streams, the Meter stream contains multiple Meters
       // and is processed by a class method on the Meter object
-      Meter.vitaProcessor(vitaPacket, radio: self)
+      MeterCollection.vitaProcessor(vitaPacket)
       
     case .panadapter:
 //      if let object = objects.panadapters[id: vitaPacket.streamId]          { object.vitaProcessor(vitaPacket, _testerModeEnabled) }

@@ -117,7 +117,7 @@ public struct ApiState: Equatable {
     clearOnConnect: Bool = UserDefaults.standard.bool(forKey: "clearOnConnect"),
     clearOnDisconnect: Bool  = UserDefaults.standard.bool(forKey: "clearOnDisconnect"),
     clearOnSend: Bool  = UserDefaults.standard.bool(forKey: "clearOnSend"),
-    connectionMode: ConnectionMode = ConnectionMode(rawValue: UserDefaults.standard.string(forKey: "connectionMode") ?? "both") ?? .both,
+    connectionMode: ConnectionMode = ConnectionMode(rawValue: UserDefaults.standard.string(forKey: "connectionMode") ?? "local") ?? .local,
     defaultConnection: DefaultConnection? = getDefaultConnection(),
     fontSize: CGFloat = UserDefaults.standard.double(forKey: "fontSize") == 0 ? 12 : UserDefaults.standard.double(forKey: "fontSize"),
     isGui: Bool = UserDefaults.standard.bool(forKey: "isGui"),
@@ -183,6 +183,8 @@ public struct ApiState: Equatable {
   public var objects = Objects.sharedInstance
   public var clientState: ClientState?
   public var pendingWanSelection: PickerSelection?
+  
+  public var viewModel = ViewModel.shared
 }
 
 public enum ApiAction: Equatable {
