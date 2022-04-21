@@ -14,19 +14,16 @@ import Shared
 public actor SliceCollection {
   // ----------------------------------------------------------------------------
   // MARK: - Singleton
-
+  
   public static let shared = SliceCollection()
   private init() {}
-
+  
   // ----------------------------------------------------------------------------
   // MARK: - Public properties
-
+  
   public var slices: IdentifiedArrayOf<Slice> = []
   
-  // ----------------------------------------------------------------------------
-  // MARK: - Internal properties
-  
-  enum SliceTokens : String {
+  public enum SliceToken: String {
     case active
     case agcMode                    = "agc_mode"
     case agcOffLevel                = "agc_off_level"
@@ -104,15 +101,15 @@ public actor SliceCollection {
     case xitEnabled                 = "xit_on"
     case xitOffset                  = "xit_freq"
   }
-
+  
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
-
+  
   private let _log = LogProxy.sharedInstance.log
-
+  
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
-
+  
   /// Parse a Slice status message
   /// - Parameters:
   ///   - keyValues:      a KeyValuesArray
@@ -141,23 +138,91 @@ public actor SliceCollection {
     }
   }
   
+  public func setProperty(radio: Radio, _ id: SliceId, property: SliceToken, value: Any) {
+    switch property {
+    case .active:                   sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .agcMode:                  sendCommand(radio, id, property, value)
+    case .agcOffLevel:              sendCommand(radio, id, property, value)
+    case .agcThreshold:             sendCommand(radio, id, property, value)
+    case .anfEnabled:               sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .anfLevel:                 sendCommand(radio, id, property, value)
+    case .apfEnabled:               sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .apfLevel:                 sendCommand(radio, id, property, value)
+    case .audioGain:                sendCommand(radio, id, .audioLevel, Int(value as! Double))
+    case .audioLevel:               sendCommand(radio, id, property, value)
+    case .audioMute:                sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .audioPan:                 sendCommand(radio, id, property, Int(value as! Double))
+    case .daxChannel:               sendCommand(radio, id, property, value)
+    case .daxTxEnabled:             sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .dfmPreDeEmphasisEnabled:  sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .digitalLowerOffset:       sendCommand(radio, id, property, value)
+    case .digitalUpperOffset:       sendCommand(radio, id, property, value)
+    case .diversityEnabled:         sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .filterHigh:               sendFilterCommand(radio, id, low: slices[id: id]!.filterLow, high: value)
+    case .filterLow:                sendFilterCommand(radio, id, low: value, high: slices[id: id]!.filterHigh)
+    case .fmDeviation:              sendCommand(radio, id, property, value)
+    case .fmRepeaterOffset:         sendCommand(radio, id, property, value)
+    case .fmToneBurstEnabled:       sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .fmToneFreq:               sendCommand(radio, id, property, value)
+    case .fmToneMode:               sendCommand(radio, id, property, value)
+    case .frequency:                sendTuneCommand(radio, id, (value as! Hz).hzToMhz, autoPan: slices[id: id]!.autoPan)
+    case .locked:                   sendLockCommand(radio, id, (value as! Bool) ? "lock" : "unlock")
+    case .loopAEnabled:             sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .loopBEnabled:             sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .mode:                     sendCommand(radio, id, property, value)
+    case .nbEnabled:                sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .nbLevel:                  sendCommand(radio, id, property, value)
+    case .nrEnabled:                sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .nrLevel:                  sendCommand(radio, id, property, value)
+    case .playbackEnabled:          sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .postDemodBypassEnabled:   sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .qskEnabled:               sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .recordEnabled:            sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .repeaterOffsetDirection:  sendCommand(radio, id, property, value)
+    case .rfGain:                   sendCommand(radio, id, property, value)
+    case .ritEnabled:               sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .ritOffset:                sendCommand(radio, id, property, value)
+    case .rttyMark:                 sendCommand(radio, id, property, value)
+    case .rttyShift:                sendCommand(radio, id, property, value)
+    case .rxAnt:                    sendCommand(radio, id, property, value)
+    case .sampleRate:               sendCommand(radio, id, property, value)
+    case .squelchEnabled:           sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .squelchLevel:             sendCommand(radio, id, property, value)
+    case .step:                     sendCommand(radio, id, property, value)
+    case .stepList:                 sendCommand(radio, id, property, value)
+    case .txEnabled:                sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .txAnt:                    sendCommand(radio, id, property, value)
+    case .txOffsetFreq:             sendCommand(radio, id, property, value)
+    case .wnbEnabled:               sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .wnbLevel:                 sendCommand(radio, id, property, value)
+    case .xitEnabled:               sendCommand(radio, id, property, (value as! Bool).as1or0)
+    case .xitOffset:                sendCommand(radio, id, property, value)
+    
+    case .clientHandle,.daxClients,.detached:                   break
+    case .diversityChild,.diversityIndex,.diversityParent:      break
+    case .ghost,.inUse,.modeList,.nr2,.owner:                   break
+    case .panadapterId,.postDemodHigh,.postDemodLow:            break
+    case .recordTime,.rxAntList,.sliceLetter,.txAntList,.wide:  break
+    }
+  }
+  
   /// Remove the specified Slice
   /// - Parameter id:     a SliceId
   public func remove(_ id: SliceId) {
     slices.remove(id: id)
     updateViewModel()
   }
-
+  
   // ----------------------------------------------------------------------------
   // MARK: - Private methods
-
+  
   /// Parse Slice key/value pairs    ///
   /// - Parameter properties:       a KeyValuesArray
   private func parseProperties(_ id: SliceId, properties: KeyValuesArray) {
     // process each key/value pair, <key=value>
     for property in properties {
       // check for unknown Keys
-      guard let token = SliceTokens(rawValue: property.key) else {
+      guard let token = SliceToken(rawValue: property.key) else {
         // log it and ignore the Key
         _log("Slice \(id) unknown token: \(property.key) = \(property.value)", .warning, #function, #file, #line)
         continue
@@ -181,7 +246,7 @@ public actor SliceCollection {
       case .daxChannel:
         if slices[id: id]!.daxChannel != 0 && property.value.iValue == 0 {
           // remove this slice from the AudioStream it was using
-//          if let daxRxAudioStream = radio.findDaxRxAudioStream(with: daxChannel) { daxRxAudioStream.slice = nil }
+          //          if let daxRxAudioStream = radio.findDaxRxAudioStream(with: daxChannel) { daxRxAudioStream.slice = nil }
         }
         slices[id: id]!.daxChannel = property.value.iValue
       case .daxTxEnabled:             slices[id: id]!.daxTxEnabled = property.value.bValue
@@ -265,4 +330,41 @@ public actor SliceCollection {
       ViewModel.shared.slices = slices
     }
   }
+  
+  /// Send a command to Set a Slice property
+  /// - Parameters:
+  ///   - radio:      a Radio instance
+  ///   - id:         the Id for the specified Slice
+  ///   - token:      the parse token
+  ///   - value:      the new value
+  private func sendCommand(_ radio: Radio, _ id: SliceId, _ token: SliceToken, _ value: Any) {
+    radio.send("slice set " + "\(id) " + token.rawValue + "=\(value)")
+  }
+  
+//  private func audioGainCmd(_ radio: Radio, _ id: SliceId, _ value: Double) {
+//    radio.send("slice set " + "\(id) audio_level" + "=\(Int(value))")
+//  }
+  
+//  private func audioMuteCmd(_ radio: Radio, _ id: SliceId,_ value: Bool) {
+//    radio.send("slice set \(id) " + "audio_mute" + "=\(value.as1or0)")
+//  }
+  
+//  private func audioPanCmd(_ radio: Radio, _ id: SliceId, _ value: Double) {
+//    radio.send("slice set \(id) " + "audio_pan" + "=\(Int(value))")
+//  }
+  
+  private func sendFilterCommand(_ radio: Radio, _ id: SliceId, low: Any, high: Any) {
+    radio.send("filt \(id) " + "\(low) \(high)")
+  }
+  
+  public func sendTuneCommand(_ radio: Radio, _ id: SliceId, _ value: Any, autoPan: Bool = false) {
+    radio.send("slice tune " + "\(id) \(value) " + "autopan" + "=\(autoPan.as1or0)")
+  }
+  /// Set a Slice Lock property on the Radio
+  /// - Parameters:
+  ///   - value:      the new value (lock / unlock)
+  public func sendLockCommand(_ radio: Radio, _ id: SliceId, _ lockState: String) {
+    radio.send("slice " + lockState + " \(id)")
+  }
+
 }

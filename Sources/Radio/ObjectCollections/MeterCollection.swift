@@ -11,6 +11,12 @@ import IdentifiedCollections
 
 import Shared
 
+/// Meter Collection implementation
+///
+///      Meter objects are added / removed by the incoming TCP messages.
+///      Meter values are periodically updated by a UDP stream.
+///
+
 @globalActor
 public actor MeterCollection {
   
@@ -64,7 +70,7 @@ public actor MeterCollection {
   
   /// Parse a Meter status message
   /// - Parameters:
-  ///   - properties:     a KeyValuesArray of Tnf properties
+  ///   - properties:     a KeyValuesArray of Meter properties
   ///   - inUse:          false = "to be deleted"
   public func parseStatus(_ properties: KeyValuesArray, _ inUse: Bool = true) {
     // is the object in use?
@@ -92,7 +98,11 @@ public actor MeterCollection {
       }
     }
   }
-
+  
+  /// Set the value of a Meter
+  /// - Parameters:
+  ///   - id:         the MeterId of the specified meter
+  ///   - value:      the current value
   public func setValue(_ id: MeterId, value: Float) {
     meters[id: id]!.value = value
     updateViewModel()

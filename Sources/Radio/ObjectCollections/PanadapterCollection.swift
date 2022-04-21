@@ -145,40 +145,40 @@ public actor PanadapterCollection {
     }
   }
 
-  public func getProperty( _ id: PanadapterId, _ property: PanadapterToken) -> Any? {
-    switch property {
-    case .antList:                return panadapters[id: id]?.antList as Any
-    case .average:                return panadapters[id: id]?.average as Any
-    case .band:                   return panadapters[id: id]?.band as Any
-    case .bandwidth:              return panadapters[id: id]?.bandwidth as Any
-    case .bandZoomEnabled:        return panadapters[id: id]?.bandZoomEnabled as Any
-    case .center:                 return panadapters[id: id]?.center as Any
-    case .clientHandle:           return panadapters[id: id]?.clientHandle as Any
-    case .daxIq:                  return panadapters[id: id]?.daxIqChannel as Any
-    case .daxIqChannel:           return panadapters[id: id]?.daxIqChannel as Any
-    case .fps:                    return panadapters[id: id]?.fps as Any
-    case .loopAEnabled:           return panadapters[id: id]?.loopAEnabled as Any
-    case .loopBEnabled:           return panadapters[id: id]?.loopBEnabled as Any
-    case .maxBw:                  return panadapters[id: id]?.maxBw as Any
-    case .maxDbm:                 return panadapters[id: id]?.maxDbm as Any
-    case .minBw:                  return panadapters[id: id]?.minBw as Any
-    case .minDbm:                 return panadapters[id: id]?.minDbm as Any
-    case .preamp:                 return panadapters[id: id]?.preamp as Any
-    case .rfGain:                 return panadapters[id: id]?.rfGain as Any
-    case .rxAnt:                  return panadapters[id: id]?.rxAnt as Any
-    case .segmentZoomEnabled:     return panadapters[id: id]?.segmentZoomEnabled as Any
-    case .waterfallId:            return panadapters[id: id]?.waterfallId as Any
-    case .wide:                   return panadapters[id: id]?.wide as Any
-    case .weightedAverageEnabled: return panadapters[id: id]?.weightedAverageEnabled as Any
-    case .wnbEnabled:             return panadapters[id: id]?.wnbEnabled as Any
-    case .wnbLevel:               return panadapters[id: id]?.wnbLevel as Any
-    case .wnbUpdating:            return panadapters[id: id]?.wnbUpdating as Any
-    case .xvtrLabel:              return panadapters[id: id]?.xvtrLabel as Any
-    
-    case .available, .capacity, .daxIqRate, .xPixels, .yPixels:     return nil // ignored by Panadapter
-    case .n1mmSpectrumEnable, .n1mmAddress, .n1mmPort, .n1mmRadio:  return nil // not sent in status messages
-    }
-  }
+//  public func getProperty( _ id: PanadapterId, _ property: PanadapterToken) -> Any? {
+//    switch property {
+//    case .antList:                return panadapters[id: id]?.antList as Any
+//    case .average:                return panadapters[id: id]?.average as Any
+//    case .band:                   return panadapters[id: id]?.band as Any
+//    case .bandwidth:              return panadapters[id: id]?.bandwidth as Any
+//    case .bandZoomEnabled:        return panadapters[id: id]?.bandZoomEnabled as Any
+//    case .center:                 return panadapters[id: id]?.center as Any
+//    case .clientHandle:           return panadapters[id: id]?.clientHandle as Any
+//    case .daxIq:                  return panadapters[id: id]?.daxIqChannel as Any
+//    case .daxIqChannel:           return panadapters[id: id]?.daxIqChannel as Any
+//    case .fps:                    return panadapters[id: id]?.fps as Any
+//    case .loopAEnabled:           return panadapters[id: id]?.loopAEnabled as Any
+//    case .loopBEnabled:           return panadapters[id: id]?.loopBEnabled as Any
+//    case .maxBw:                  return panadapters[id: id]?.maxBw as Any
+//    case .maxDbm:                 return panadapters[id: id]?.maxDbm as Any
+//    case .minBw:                  return panadapters[id: id]?.minBw as Any
+//    case .minDbm:                 return panadapters[id: id]?.minDbm as Any
+//    case .preamp:                 return panadapters[id: id]?.preamp as Any
+//    case .rfGain:                 return panadapters[id: id]?.rfGain as Any
+//    case .rxAnt:                  return panadapters[id: id]?.rxAnt as Any
+//    case .segmentZoomEnabled:     return panadapters[id: id]?.segmentZoomEnabled as Any
+//    case .waterfallId:            return panadapters[id: id]?.waterfallId as Any
+//    case .wide:                   return panadapters[id: id]?.wide as Any
+//    case .weightedAverageEnabled: return panadapters[id: id]?.weightedAverageEnabled as Any
+//    case .wnbEnabled:             return panadapters[id: id]?.wnbEnabled as Any
+//    case .wnbLevel:               return panadapters[id: id]?.wnbLevel as Any
+//    case .wnbUpdating:            return panadapters[id: id]?.wnbUpdating as Any
+//    case .xvtrLabel:              return panadapters[id: id]?.xvtrLabel as Any
+//    
+//    case .available, .capacity, .daxIqRate, .xPixels, .yPixels:     return nil // ignored by Panadapter
+//    case .n1mmSpectrumEnable, .n1mmAddress, .n1mmPort, .n1mmRadio:  return nil // not sent in status messages
+//    }
+//  }
 
   /// Remove the specified Panadapter
   /// - Parameter id:     a TnfId

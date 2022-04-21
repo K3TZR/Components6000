@@ -562,8 +562,8 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
                           connectionType: state.isGui ? .gui : .nonGui,
                           command: state.tcp,
                           stream: Udp(),
-                          stationName: "Api6000",
-                          programName: "Api6000",
+                          stationName: "Sdr6000",
+                          programName: "Sdr6000",
                           disconnectHandle: selection.disconnectHandle,
                           testerModeEnabled: true)
       // try to connect

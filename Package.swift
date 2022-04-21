@@ -24,6 +24,7 @@ let package = Package(
     .library(name: "RemoteViewer", targets: ["RemoteViewer"]),
     .library(name: "LoginView", targets: ["LoginView"]),
     .library(name: "ProgressView", targets: ["ProgressView"]),
+    .library(name: "SdrViewer", targets: ["SdrViewer"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
@@ -32,6 +33,13 @@ let package = Package(
     .package(url: "https://github.com/DaveWoodCom/XCGLogger.git", from: "7.0.1"),
   ],
   targets: [
+    .target(
+      name: "SdrViewer",
+      dependencies: [
+        "Shared",
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+      ]
+    ),
     .target(
       name: "ProgressView",
       dependencies: [

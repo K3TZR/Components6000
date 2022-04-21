@@ -69,14 +69,14 @@ public actor TnfCollection {
     }
   }
 
-  public func getProperty( _ id: TnfId, property: TnfToken) -> Any? {    
-    switch property {
-    case .depth:       return tnfs[id: id]?.depth as Any
-    case .frequency:   return tnfs[id: id]?.frequency as Any
-    case .permanent:   return tnfs[id: id]?.permanent as Any
-    case .width:       return tnfs[id: id]?.width as Any
-    }
-  }
+//  public func getProperty( _ id: TnfId, property: TnfToken) -> Any? {    
+//    switch property {
+//    case .depth:       return tnfs[id: id]?.depth as Any
+//    case .frequency:   return tnfs[id: id]?.frequency as Any
+//    case .permanent:   return tnfs[id: id]?.permanent as Any
+//    case .width:       return tnfs[id: id]?.width as Any
+//    }
+//  }
 
   /// Remove the specified Tnf
   /// - Parameter id:     a TnfId

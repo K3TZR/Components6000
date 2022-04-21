@@ -114,20 +114,20 @@ public actor WaterfallCollection {
     }
   }
 
-  public func getProperty( _ id: WaterfallId, property: WaterfallToken) -> Any? {
-    switch property {
-    case .autoBlackEnabled:   return waterfalls[id: id]?.autoBlackEnabled as Any
-    case .blackLevel:         return waterfalls[id: id]?.blackLevel as Any
-    case .clientHandle:       return waterfalls[id: id]?.clientHandle as Any
-    case .colorGain:          return waterfalls[id: id]?.colorGain as Any
-    case .gradientIndex:      return waterfalls[id: id]?.gradientIndex as Any
-    case .lineDuration:       return waterfalls[id: id]?.lineDuration as Any
-    case .panadapterId:       return waterfalls[id: id]!.panadapterId as Any
-      // the following are ignored here
-    case .available, .band, .bandwidth, .bandZoomEnabled, .capacity, .center, .daxIq, .daxIqChannel,
-        .daxIqRate, .loopA, .loopB, .rfGain, .rxAnt, .segmentZoomEnabled, .wide, .xPixels, .xvtr:  return nil
-    }
-  }
+//  public func getProperty( _ id: WaterfallId, property: WaterfallToken) -> Any? {
+//    switch property {
+//    case .autoBlackEnabled:   return waterfalls[id: id]?.autoBlackEnabled as Any
+//    case .blackLevel:         return waterfalls[id: id]?.blackLevel as Any
+//    case .clientHandle:       return waterfalls[id: id]?.clientHandle as Any
+//    case .colorGain:          return waterfalls[id: id]?.colorGain as Any
+//    case .gradientIndex:      return waterfalls[id: id]?.gradientIndex as Any
+//    case .lineDuration:       return waterfalls[id: id]?.lineDuration as Any
+//    case .panadapterId:       return waterfalls[id: id]!.panadapterId as Any
+//      // the following are ignored here
+//    case .available, .band, .bandwidth, .bandZoomEnabled, .capacity, .center, .daxIq, .daxIqChannel,
+//        .daxIqRate, .loopA, .loopB, .rfGain, .rxAnt, .segmentZoomEnabled, .wide, .xPixels, .xvtr:  return nil
+//    }
+//  }
 
   /// Remove the specified Waterfall
   /// - Parameter id:     a TnfId

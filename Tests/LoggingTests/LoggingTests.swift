@@ -177,7 +177,7 @@ class LoggingTests: XCTestCase {
 //
 //    let env = LogEnvironment(uuid: UUID.incrementing)
 //    let store = TestStore(
-//      initialState: LogState(logUrl: URL(string:  "/Users/douglasadams/Library/Containers/net.k3tzr.Api6000/Data/Library/Application%20Support/net.k3tzr.Api6000/Logs/Api6000.log")!,
+//      initialState: LogState(logUrl: URL(string:  "/Users/douglasadams/Library/Containers/net.k3tzr.Sdr6000/Data/Library/Application%20Support/net.k3tzr.Sdr6000/Logs/Sdr6000.log")!,
 //                             logLevel: .debug,
 //                             filterBy: .none,
 //                             filterByText: "",
