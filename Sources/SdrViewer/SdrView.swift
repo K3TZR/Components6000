@@ -9,24 +9,54 @@ import SwiftUI
 
 public struct SdrView: View {
   
+  @AppStorage(wrappedValue: false, "sideBarLeft") var sideBarLeft: Bool
+  @AppStorage(wrappedValue: false, "sideBarRight") var sideBarRight: Bool
+  @State var leftWidth: CGFloat = 75
+  @State var rightWidth: CGFloat = 260
+  @State var totalWidthMin: CGFloat = 500
+  
   public init() {}
   
   public var body: some View {
-    Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+    VStack {
+      HStack {
+        if sideBarLeft {
+          LeftSideView()
+            .frame(minWidth: leftWidth, maxWidth: leftWidth)
+          Divider()
+        }
+        VSplitView {
+          PanadapterContainerView()
+          WaterfallContainerView()
+        }.frame(minWidth: totalWidthMin - leftWidth - rightWidth,  maxWidth: .infinity, minHeight: 430)
+        if sideBarRight {
+          Divider()
+          RightSideView()
+            .frame(minWidth: rightWidth, maxWidth: rightWidth)
+        }
+      }
+      BottomButtonsView()
+    }
+    .frame(minWidth: totalWidthMin, maxWidth: .infinity)
+    
+    
       .toolbar {
         ToolbarItemGroup(placement: .navigation) {
           Image(systemName: "sidebar.left")
             .font(.system(size: 24, weight: .regular))
+            .onTapGesture(perform: {
+                sideBarLeft.toggle()
+            })
         }
         ToolbarItemGroup(placement: .principal) {
           Button("Connect") {}
             .keyboardShortcut(.defaultAction)
           
-          Button("Pan") {  }
-          Button("Tnf") { }
-          Button("Marker") { }
-          Button("Rcvd Audio") { }
-          Button("Xmit Audio") { }
+          Button("Pan") {}
+          Button("Tnf") {}
+          Button("Marker") {}
+          Button("Rcvd Audio") {}
+          Button("Xmit Audio") {}
         }
         ToolbarItemGroup(placement: .principal) {
           Image(systemName: "speaker.wave.2.circle")
@@ -38,11 +68,25 @@ public struct SdrView: View {
           Slider(value: .constant(75), in: 0...100, step: 1)
             .frame(width: 100)
           Spacer()
+          Button("Log View") { WindowChoice.LogViewer.open() }
           Image(systemName: "sidebar.right")
             .font(.system(size: 24, weight: .regular))
+            .onTapGesture(perform: {
+                sideBarRight.toggle()
+            })
         }
       }
+  }
+}
 
+
+enum WindowChoice: String, CaseIterable {
+  case LogViewer = "LogViewer"
+  
+  func open() {
+    if let url = URL(string: "Sdr6000://\(self.rawValue)") {
+      NSWorkspace.shared.open(url)
+    }
   }
 }
 

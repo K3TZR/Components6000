@@ -50,8 +50,9 @@ struct TopButtonsView: View {
         Spacer()
         Toggle("Force Smartlink Login", isOn: viewStore.binding(get: \.forceWanLogin, send: .toggle(\.forceWanLogin)))
         .disabled(viewStore.connectionMode == .local || viewStore.connectionMode == .none)
-        Button("Clear Default") { viewStore.send(.clearDefaultButton) }
-        .disabled(viewStore.defaultConnection == nil)
+//        Button("Clear Default") { viewStore.send(.clearDefaultButton) }
+//        .disabled(viewStore.defaultConnection == nil)
+        Toggle("Use Default", isOn: viewStore.binding(get: \.useDefault, send: .toggle(\.useDefault)))
       }
     }
   }

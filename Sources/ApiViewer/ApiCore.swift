@@ -127,7 +127,8 @@ public struct ApiState: Equatable {
     radio: Radio? = nil,
     showPings: Bool = UserDefaults.standard.bool(forKey: "showPings"),
     showTimes: Bool = UserDefaults.standard.bool(forKey: "showTimes"),
-    smartlinkEmail: String = UserDefaults.standard.string(forKey: "smartlinkEmail") ?? ""
+    smartlinkEmail: String = UserDefaults.standard.string(forKey: "smartlinkEmail") ?? "",
+    useDefault: Bool = UserDefaults.standard.bool(forKey: "useDefault")
   )
   {
     self.clearOnConnect = clearOnConnect
@@ -144,6 +145,7 @@ public struct ApiState: Equatable {
     self.showPings = showPings
     self.showTimes = showTimes
     self.smartlinkEmail = smartlinkEmail
+    self.useDefault = useDefault
   }
 
   // State held in User Defaults
@@ -160,7 +162,8 @@ public struct ApiState: Equatable {
   public var showPings: Bool { didSet { UserDefaults.standard.set(showPings, forKey: "showPings") } }
   public var showTimes: Bool { didSet { UserDefaults.standard.set(showTimes, forKey: "showTimes") } }
   public var smartlinkEmail: String { didSet { UserDefaults.standard.set(smartlinkEmail, forKey: "smartlinkEmail") } }
-  
+  public var useDefault: Bool { didSet { UserDefaults.standard.set(useDefault, forKey: "useDefault") } }
+
   // normal state
   public var alert: AlertState<ApiAction>?
   public var clearNow = false
@@ -185,6 +188,7 @@ public struct ApiState: Equatable {
   public var pendingWanSelection: PickerSelection?
   
   public var viewModel = ViewModel.shared
+  public var defaultSelection: PickerSelection?
 }
 
 public enum ApiAction: Equatable {
@@ -377,7 +381,11 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       if state.radio == nil {
         // NOT connected, check for a default
         // is there a default?
-        if let selection = hasDefault(state) {
+        state.defaultSelection = hasDefault(state)
+        
+        print("-----> Default found: \(String(describing: state.defaultSelection?.packet.nickname))")
+        
+        if state.useDefault, let selection = state.defaultSelection {
           // YES, is it Wan?
           if selection.packet.source == .smartlink {
             // YES, reply will generate a wanStatus action
@@ -392,7 +400,7 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
           
         } else {
           // NO, or failed to find a match, open the Picker
-          state.pickerState = PickerState(connectionType: state.isGui ? .gui : .nonGui)
+          state.pickerState = PickerState(connectionType: state.isGui ? .gui : .nonGui, defaultSelection: state.defaultSelection)
           return .none
         }
         
@@ -445,6 +453,10 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
       } else {
         state.defaultConnection = nil
       }
+      state.defaultSelection = selection
+      
+      print("-----> Default set: \(String(describing: state.defaultSelection?.packet.nickname))")
+      
       return .none
       
     case .pickerAction(.testButton(let selection)):
