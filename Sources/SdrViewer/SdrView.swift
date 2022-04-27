@@ -9,8 +9,8 @@ import SwiftUI
 
 public struct SdrView: View {
   
-  @AppStorage(wrappedValue: false, "sideBarLeft") var sideBarLeft: Bool
-  @AppStorage(wrappedValue: false, "sideBarRight") var sideBarRight: Bool
+  @AppStorage(wrappedValue: false, "leftSideView") var leftSideView: Bool
+  @AppStorage(wrappedValue: false, "rightSideView") var rightSideView: Bool
   @State var leftWidth: CGFloat = 75
   @State var rightWidth: CGFloat = 260
   @State var totalWidthMin: CGFloat = 500
@@ -20,7 +20,7 @@ public struct SdrView: View {
   public var body: some View {
     VStack {
       HStack {
-        if sideBarLeft {
+        if leftSideView {
           LeftSideView()
             .frame(minWidth: leftWidth, maxWidth: leftWidth)
           Divider()
@@ -29,7 +29,7 @@ public struct SdrView: View {
           PanadapterContainerView()
           WaterfallContainerView()
         }.frame(minWidth: totalWidthMin - leftWidth - rightWidth,  maxWidth: .infinity, minHeight: 430)
-        if sideBarRight {
+        if rightSideView {
           Divider()
           RightSideView()
             .frame(minWidth: rightWidth, maxWidth: rightWidth)
@@ -45,7 +45,7 @@ public struct SdrView: View {
           Image(systemName: "sidebar.left")
             .font(.system(size: 24, weight: .regular))
             .onTapGesture(perform: {
-                sideBarLeft.toggle()
+              leftSideView.toggle()
             })
         }
         ToolbarItemGroup(placement: .principal) {
@@ -72,7 +72,7 @@ public struct SdrView: View {
           Image(systemName: "sidebar.right")
             .font(.system(size: 24, weight: .regular))
             .onTapGesture(perform: {
-                sideBarRight.toggle()
+              rightSideView.toggle()
             })
         }
       }
