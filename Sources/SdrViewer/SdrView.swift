@@ -19,7 +19,7 @@ public struct SdrView: View {
   
   public var body: some View {
     VStack {
-      HStack {
+      HStack(spacing: 0) {
         if leftSideView {
           LeftSideView()
             .frame(minWidth: leftWidth, maxWidth: leftWidth)
@@ -40,42 +40,42 @@ public struct SdrView: View {
     .frame(minWidth: totalWidthMin, maxWidth: .infinity)
     
     
-      .toolbar {
-        ToolbarItemGroup(placement: .navigation) {
-          Image(systemName: "sidebar.left")
-            .font(.system(size: 24, weight: .regular))
-            .onTapGesture(perform: {
-              leftSideView.toggle()
-            })
-        }
-        ToolbarItemGroup(placement: .principal) {
-          Button("Connect") {}
-            .keyboardShortcut(.defaultAction)
-          
-          Button("Pan") {}
-          Button("Tnf") {}
-          Button("Marker") {}
-          Button("Rcvd Audio") {}
-          Button("Xmit Audio") {}
-        }
-        ToolbarItemGroup(placement: .principal) {
-          Image(systemName: "speaker.wave.2.circle")
-            .font(.system(size: 24, weight: .regular))
-          Slider(value: .constant(50), in: 0...100, step: 1)
-            .frame(width: 100)
-          Image(systemName: "speaker.wave.2.circle")
-            .font(.system(size: 24, weight: .regular))
-          Slider(value: .constant(75), in: 0...100, step: 1)
-            .frame(width: 100)
-          Spacer()
-          Button("Log View") { WindowChoice.LogViewer.open() }
-          Image(systemName: "sidebar.right")
-            .font(.system(size: 24, weight: .regular))
-            .onTapGesture(perform: {
-              rightSideView.toggle()
-            })
-        }
+    .toolbar {
+      ToolbarItemGroup(placement: .navigation) {
+        Image(systemName: "sidebar.left")
+          .font(.system(size: 24, weight: .regular))
+          .onTapGesture(perform: {
+            leftSideView.toggle()
+          })
       }
+      ToolbarItemGroup(placement: .principal) {
+        Button("Connect") {}
+          .keyboardShortcut(.defaultAction)
+        
+        Button("Pan") {}
+        Button("Tnf") {}
+        Button("Marker") {}
+        Button("Rcvd Audio") {}
+        Button("Xmit Audio") {}
+      }
+      ToolbarItemGroup(placement: .principal) {
+        Image(systemName: "speaker.wave.2.circle")
+          .font(.system(size: 24, weight: .regular))
+        Slider(value: .constant(50), in: 0...100, step: 1)
+          .frame(width: 100)
+        Image(systemName: "speaker.wave.2.circle")
+          .font(.system(size: 24, weight: .regular))
+        Slider(value: .constant(75), in: 0...100, step: 1)
+          .frame(width: 100)
+        Spacer()
+        Button("Log View") { WindowChoice.LogViewer.open() }
+        Image(systemName: "sidebar.right")
+          .font(.system(size: 24, weight: .regular))
+          .onTapGesture(perform: {
+            rightSideView.toggle()
+          })
+      }
+    }
   }
 }
 
