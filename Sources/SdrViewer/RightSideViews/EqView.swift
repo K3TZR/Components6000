@@ -65,7 +65,7 @@ struct EqView: View {
 struct EqView_Previews: PreviewProvider {
   static var previews: some View {
     EqView()
-      .frame(width: 260, height: 270)
       .padding(.trailing, 10)
+      .frame(width: 260, height: 270)
   }
 }

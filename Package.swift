@@ -25,6 +25,7 @@ let package = Package(
     .library(name: "LoginView", targets: ["LoginView"]),
     .library(name: "ProgressView", targets: ["ProgressView"]),
     .library(name: "SdrViewer", targets: ["SdrViewer"]),
+    .library(name: "LevelIndicator", targets: ["LevelIndicator"]),
   ],
   dependencies: [
     .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", from: "7.6.5"),
@@ -34,9 +35,15 @@ let package = Package(
   ],
   targets: [
     .target(
+      name: "LevelIndicator",
+      dependencies: [
+      ]
+    ),
+    .target(
       name: "SdrViewer",
       dependencies: [
         "Shared",
+        "LevelIndicator",
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
