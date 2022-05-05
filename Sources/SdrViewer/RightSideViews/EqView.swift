@@ -58,7 +58,7 @@ struct EqView: View {
       Divider().background(.blue)
     }
     .padding(.trailing, 10)
-    .frame(height: 270)
+    .frame(height: 280)
   }
 }
 
@@ -66,6 +66,6 @@ struct EqView_Previews: PreviewProvider {
   static var previews: some View {
     EqView()
       .padding(.trailing, 10)
-      .frame(width: 260, height: 270)
+      .frame(width: 260, height: 280)
   }
 }

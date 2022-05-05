@@ -17,7 +17,7 @@ struct RightSideView: View {
   @State var showPhne = false
   @State var showEq = false
   
-  @State var isCwMode = true
+  @State var isCwMode = false
   
   let width: CGFloat = 275
   let height: CGFloat = 240

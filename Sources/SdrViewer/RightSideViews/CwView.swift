@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-//import LevelIndicator
+import LevelIndicator
 
 struct CwView: View {
 
@@ -17,14 +17,16 @@ struct CwView: View {
   @State var pan: CGFloat = 0.0
   @State var pitch = "1,000"
 
-  @State var level: CGFloat = 0.5
+  @State var level: CGFloat = 0.95
   
   var body: some View {
 
     VStack(alignment: .leading, spacing: 0)  {
-      
-//      LevelIndicatorView(level: $level)
-      
+      VStack(spacing: 0) {
+      Text("ALC level")
+        LevelIndicatorView(level: level)
+        .padding(.bottom, 10)
+      }
       HStack(spacing: 15) {
         Text("Delay").frame(width: 60, alignment: .leading)
         Text("\(String(format: "%.0f", delay))")
@@ -51,9 +53,11 @@ struct CwView: View {
         Text("Pitch")
         TextField("", text: $pitch)
       }
+      Spacer()
+      Divider().background(.blue)
     }
     .padding(.horizontal, 10)
-    .frame(height: 180)
+    .frame(height: 200)
   }
 }
 
@@ -61,6 +65,6 @@ struct CwView_Previews: PreviewProvider {
     static var previews: some View {
       CwView()
         .padding(.horizontal, 10)
-        .frame(width: 260, height: 180)
+        .frame(width: 260, height: 200)
     }
 }
