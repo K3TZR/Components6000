@@ -20,5 +20,7 @@ struct TxView: View {
 struct TxView_Previews: PreviewProvider {
     static var previews: some View {
       TxView()
+        .padding(.horizontal, 10)
+        .frame(width: 260, height: 180)
     }
 }

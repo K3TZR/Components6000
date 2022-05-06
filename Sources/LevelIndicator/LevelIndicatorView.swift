@@ -13,16 +13,19 @@ import SwiftUI
 
 public struct Tick {
   public var value: CGFloat  // 0...1
-  public var label: String
+  public var label: String?
+  public var hideLine: Bool
 
   public init
   (
     value: CGFloat,
-    label: String
+    label: String? = nil,
+    hideLine: Bool = false
   )
   {
     self.value = value
     self.label = label
+    self.hideLine = hideLine
   }
 }
 
@@ -85,50 +88,73 @@ public struct IndicatorStyle {
   }
 }
 
-let rfPowerStyle = IndicatorStyle(
-  width: 160,
-  height: 10,
+public let rfPowerStyle = IndicatorStyle(
+  width: 220,
+  height: 30,
   isFlipped: false,
   max: 1.2,
   warningLevel: 1.0,
-  criticalLevel: 1.0,
+  criticalLevel: 1.1,
+  legendFont: .custom("Monaco", fixedSize: 12),
   ticks:
     [
       Tick(value:0.0, label: "0"),
-      Tick(value:0.1, label: ""),
-      Tick(value:0.2, label: ""),
-      Tick(value:0.3, label: ""),
+      Tick(value:0.1),
+      Tick(value:0.2),
+      Tick(value:0.3),
       Tick(value:0.4, label: "40"),
-      Tick(value:0.50, label: "RF Power"),
-      Tick(value:0.6, label: ""),
-      Tick(value:0.7, label: ""),
+      Tick(value:0.50, label: "RF Pwr"),
+      Tick(value:0.6),
+      Tick(value:0.7),
       Tick(value:0.8, label: "80"),
-      Tick(value:0.9, label: ""),
+      Tick(value:0.9),
       Tick(value:1.0, label: "100"),
-      Tick(value:1.1, label: ""),
+      Tick(value:1.1),
       Tick(value:1.2, label: "120"),
     ]
 )
 
-let swrStyle = IndicatorStyle(
-  width: 160,
-  height: 10,
+public let swrStyle = IndicatorStyle(
+  width: 220,
+  height: 30,
   isFlipped: false,
   min: 1.0,
   max: 3.0,
-  warningLevel: 2.5,
+  warningLevel: 2.0,
   criticalLevel: 2.5,
+  legendFont: .custom("Monaco", fixedSize: 12),
   ticks:
     [
       Tick(value:1.0, label: "1"),
-      Tick(value:1.25, label: ""),
+      Tick(value:1.25),
       Tick(value:1.5, label: "1.5"),
-      Tick(value:1.75, label: ""),
+      Tick(value:1.75),
       Tick(value:2.0, label: "SWR"),
-      Tick(value:2.25, label: ""),
+      Tick(value:2.25),
       Tick(value:2.5, label: "2.5"),
-      Tick(value:2.75, label: ""),
+      Tick(value:2.75),
       Tick(value:3.0, label: "3"),
+    ]
+)
+
+public let alcStyle = IndicatorStyle(
+  width: 220,
+  height: 30,
+  isFlipped: false,
+  min: 0.0,
+  max: 1.0,
+  warningLevel: 0.25,
+  criticalLevel: 0.5,
+  legendFont: .custom("Monaco", fixedSize: 12),
+  ticks:
+    [
+      Tick(value:0.0, label: "0"),
+      Tick(value:0.20),
+      Tick(value:0.4),
+      Tick(value:0.5, label: "ALC", hideLine: true),
+      Tick(value:0.6),
+      Tick(value:0.8),
+      Tick(value:1.0, label: "100"),
     ]
 )
 
@@ -153,42 +179,36 @@ public struct LevelIndicatorView: View {
   
   public var body: some View {
     
-    VStack(alignment: .leading, spacing: 1) {
+    VStack(alignment: .leading, spacing: 0) {
       LegendView(style: style)
-      ZStack(alignment: .leading) {
+      ZStack(alignment: .bottomLeading) {
         BarView(level: level, style: style)
         OutlineView(style: style)
         TickView(style: style)
       }
       .rotationEffect(.degrees(style.isFlipped ? 180 : 0))
     }
+    .frame(width: style.width, height: style.height, alignment: .leading)
+    .padding(.horizontal, 10)
   }
 }
 
 struct LegendView: View {
   var style: IndicatorStyle
   
-//  func offset(_ position: CGFloat, _ style: IndicatorStyle) -> CGFloat {
-//    if style.isFlipped {
-//      return ((1.0 - position) * style.width) - 13.0/2.0
-//    } else {
-//      guard position != 0 else { return 0 }
-//      return (position * style.width) - 13.0/2.0
-//    }
-//  }
+  // FIXME: FLIPPED
   
   var body: some View {
         
     ZStack(alignment: .leading) {
       ForEach(style.ticks, id:\.value) { tick in
         let tickLocation = (tick.value - style.min) * ((style.width) / (style.max - style.min))
-        Text(tick.label).font(style.legendFont)
+        Text(tick.label ?? "").font(style.legendFont)
           .frame(alignment: .leading)
-          .offset(x: style.isFlipped ? style.max - tickLocation : tickLocation - (13.0/2.0))
+          .offset(x: style.isFlipped ? style.max - tickLocation : tickLocation)
       }
+      .foregroundColor(style.legendColor)
     }
-    .frame(width: style.width, height: style.height, alignment: .leading)
-    .padding(.horizontal, 10)
   }
 }
 
@@ -197,22 +217,21 @@ struct BarView: View {
   var style: IndicatorStyle
   
   var body: some View {
-    let segment0 = level > style.warningLevel ? style.warningLevel : level - style.min
-    let segment1 = level > style.warningLevel ? min(level - style.warningLevel, style.criticalLevel - style.warningLevel) : 0
-    let segment2 = level > style.criticalLevel ? level - style.criticalLevel : 0
-    
+    let valueRange = style.max - style.min
+
     HStack(spacing: 0) {
       Rectangle()
-        .frame(width: (segment0 * ((style.width) / (style.max - style.min))), height:style.height)
-        .foregroundColor(style.normalColor)
+        .fill(style.normalColor)
+        .frame(width: (style.width) * (style.warningLevel - style.min) / valueRange, alignment: .leading)
       Rectangle()
-        .frame(width: (segment1 * ((style.width) / (style.max - style.min))), height: style.height)
-        .foregroundColor(style.warningColor)
+        .fill(style.warningColor)
+        .frame(width: (style.width) * (style.criticalLevel - style.warningLevel) / valueRange, alignment: .leading)
       Rectangle()
-        .frame(width: min(segment2 * ((style.width) / (style.max - style.min)), style.width * style.criticalLevel), height:style.height)
-        .foregroundColor(style.criticalColor)
+        .fill(style.criticalColor)
+        .frame(width: (style.width) * (style.max - style.criticalLevel) / valueRange, alignment: .leading)
     }
-    .padding(.horizontal, 10)
+    .frame(width: (style.width) * (level - style.min) / valueRange, alignment: .leading)
+    .clipped()
   }
 }
 
@@ -223,14 +242,14 @@ struct TickView: View {
     
     Path { path in
       for tick in style.ticks {
-        let tickLocation = (tick.value - style.min) * ((style.width) / (style.max - style.min))
-        path.move(to: CGPoint(x: tickLocation , y: 0))
-        path.addLine(to: CGPoint(x: tickLocation, y: style.height))
+        if tick.hideLine == false {
+          let tickLocation = (tick.value - style.min) * ((style.width) / (style.max - style.min))
+          path.move(to: CGPoint(x: tickLocation , y: 0))
+          path.addLine(to: CGPoint(x: tickLocation, y: style.height))
+        }
       }
     }
     .stroke(style.tickColor)
-    .frame(width: style.width, height: style.height)
-    .padding(.horizontal, 10)
   }
 }
 
@@ -240,10 +259,8 @@ struct OutlineView: View {
   var body: some View {
     
     Rectangle()
-      .frame(width: style.width, height: style.height)
       .foregroundColor(style.backgroundColor)
       .border(style.borderColor)
-      .padding(.horizontal, 10)
   }
 }
 
@@ -252,33 +269,82 @@ struct OutlineView: View {
 
 struct LevelIndicatorView_Previews: PreviewProvider {
   static var previews: some View {
+    LevelIndicatorView(level: 0.5, style: rfPowerStyle)
+      .previewDisplayName("Rf Power @ 0.5")
+    LevelIndicatorView(level: 1.0, style: rfPowerStyle)
+      .previewDisplayName("Rf Power @ 1.0")
     LevelIndicatorView(level: 1.1, style: rfPowerStyle)
-    LevelIndicatorView(level: 2.0, style: swrStyle)
+      .previewDisplayName("Rf Power @ 1.1")
+    LevelIndicatorView(level: 1.2, style: rfPowerStyle)
+      .previewDisplayName("Rf Power @ 1.2")
+
+    Group {
+      LevelIndicatorView(level: 1.5, style: swrStyle)
+        .previewDisplayName("SWR @ 1.5")
+      LevelIndicatorView(level: 2.0, style: swrStyle)
+        .previewDisplayName("SWR @ 2.0")
+      LevelIndicatorView(level: 2.5, style: swrStyle)
+        .previewDisplayName("SWR @ 2.5")
+      LevelIndicatorView(level: 3.0, style: swrStyle)
+        .previewDisplayName("SWR @ 3.0")
+    }
+
+    LevelIndicatorView(level: 0.25, style: alcStyle)
+      .previewDisplayName("ALC @ 0.25")
+    LevelIndicatorView(level: 0.50, style: alcStyle)
+      .previewDisplayName("ALC @ 0.50")
+    LevelIndicatorView(level: 1.0, style: alcStyle)
+      .previewDisplayName("ALC @ 1.0")
   }
 }
 
 struct LegendView_Previews: PreviewProvider {
   static var previews: some View {
     LegendView(style: rfPowerStyle)
+      .previewDisplayName("Rf Power - Legend")
     LegendView(style: swrStyle)
+      .previewDisplayName("SWR - Legend")
+    LegendView(style: alcStyle)
+      .previewDisplayName("ALC - Legend")
   }
 }
 
 struct BarView_Previews: PreviewProvider {
   static var previews: some View {
+    BarView(level: 0.5, style: rfPowerStyle)
+      .previewDisplayName("Rf Power @ 0.5 - Bar")
+    BarView(level: 1.0, style: rfPowerStyle)
+      .previewDisplayName("Rf Power @ 1.0 - Bar")
     BarView(level: 1.1, style: rfPowerStyle)
-    BarView(level: 2.0, style: swrStyle)
+      .previewDisplayName("Rf Power @ 1.1 - Bar")
+    BarView(level: 1.2, style: rfPowerStyle)
+      .previewDisplayName("Rf Power @ 1.2 - Bar")
+
+    BarView(level: 2.6, style: swrStyle)
+      .previewDisplayName("SWR - Bar")
+    BarView(level: 0.6, style: alcStyle)
+      .previewDisplayName("ALC - Bar")
   }
 }
 
 struct TickView_Previews: PreviewProvider {
   static var previews: some View {
     TickView(style: rfPowerStyle)
-    TickView(style: swrStyle)  }
+      .previewDisplayName("Rf Power - Ticks")
+    TickView(style: swrStyle)
+      .previewDisplayName("SWR - Ticks")
+    TickView(style: alcStyle)
+      .previewDisplayName("ALC - Ticks")
+  }
 }
 
 struct OutlineView_Previews: PreviewProvider {
   static var previews: some View {
     OutlineView(style: rfPowerStyle)
-    OutlineView(style: swrStyle)  }
+      .previewDisplayName("Rf Power - Outline")
+    OutlineView(style: swrStyle)
+      .previewDisplayName("SWR - Outline")
+    OutlineView(style: alcStyle)
+      .previewDisplayName("ALC - Outline")
+  }
 }

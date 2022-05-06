@@ -23,8 +23,7 @@ struct CwView: View {
 
     VStack(alignment: .leading, spacing: 0)  {
       VStack(spacing: 0) {
-      Text("ALC level")
-        LevelIndicatorView(level: level)
+        LevelIndicatorView(level: level, style: alcStyle)
         .padding(.bottom, 10)
       }
       HStack(spacing: 15) {
