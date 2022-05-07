@@ -205,9 +205,9 @@ public struct LevelIndicatorView: View {
     VStack(alignment: .leading, spacing: 0) {
       LegendView(style: style, negateLevel: negateLevel).frame(height: style.height/2.0)
       ZStack(alignment: .bottomLeading) {
-        BarView(level: level, style: style, negateLevel: negateLevel)
+        BarView(level: level, style: style)
         OutlineView(style: style)
-        TickView(style: style, negateLevel: negateLevel)
+        TickView(style: style)
       }
       .frame(height: style.height/2.0)
       .clipped()
@@ -247,7 +247,6 @@ struct LegendView: View {
 struct BarView: View {
   var level: CGFloat
   var style: IndicatorStyle
-  var negateLevel: Bool
   
   var body: some View {
     let normalPerCent = style.isFlipped ? style.right - style.warningLevel : style.warningLevel - style.left
@@ -274,7 +273,6 @@ struct BarView: View {
 
 struct TickView: View {
   var style: IndicatorStyle
-  var negateLevel: Bool
 
   var body: some View {
     
@@ -332,8 +330,8 @@ struct LevelIndicatorView_Previews: PreviewProvider {
 //        .previewDisplayName("SWR @ 2.0")
 //      LevelIndicatorView(level: 2.5, style: swrStyle)
 //        .previewDisplayName("SWR @ 2.5")
-//      LevelIndicatorView(level: 3.0, style: swrStyle)
-//        .previewDisplayName("SWR @ 3.0")
+      LevelIndicatorView(level: 3.0, style: swrStyle)
+        .previewDisplayName("SWR @ 3.0")
 //    }
 
 //    Group {
@@ -341,56 +339,56 @@ struct LevelIndicatorView_Previews: PreviewProvider {
 //        .previewDisplayName("ALC @ 0.25")
 //      LevelIndicatorView(level: 0.50, style: alcStyle)
 //        .previewDisplayName("ALC @ 0.50")
-//      LevelIndicatorView(level: 1.0, style: alcStyle)
-//        .previewDisplayName("ALC @ 1.0")
+      LevelIndicatorView(level: 1.0, style: alcStyle)
+        .previewDisplayName("ALC @ 1.0")
 //    }
 
-    Group {
-      LevelIndicatorView(level: 5.0, style: micLevelStyle)
-        .previewDisplayName("MicLevel @ 5.0")
-      LevelIndicatorView(level: 0.0, style: micLevelStyle)
-        .previewDisplayName("MicLevel @ 0.0")
-      LevelIndicatorView(level: -10.0, style: micLevelStyle)
-        .previewDisplayName("MicLevel @ -10.0")
-      LevelIndicatorView(level: -20.0, style: micLevelStyle)
-        .previewDisplayName("MicLevel @ -20.0")
-      LevelIndicatorView(level: -30.0, style: micLevelStyle)
-        .previewDisplayName("MicLevel @ -30.0")
+//    Group {
+//      LevelIndicatorView(level: 5.0, style: micLevelStyle)
+//        .previewDisplayName("MicLevel @ 5.0")
+//      LevelIndicatorView(level: 0.0, style: micLevelStyle)
+//        .previewDisplayName("MicLevel @ 0.0")
+//      LevelIndicatorView(level: -10.0, style: micLevelStyle)
+//        .previewDisplayName("MicLevel @ -10.0")
+//      LevelIndicatorView(level: -20.0, style: micLevelStyle)
+//        .previewDisplayName("MicLevel @ -20.0")
+//      LevelIndicatorView(level: -30.0, style: micLevelStyle)
+//        .previewDisplayName("MicLevel @ -30.0")
       LevelIndicatorView(level: -40.0, style: micLevelStyle)
         .previewDisplayName("MicLevel @ -40.0")
-    }
+//    }
 
-    Group {
-      LevelIndicatorView(level: 0.0, style: compressionStyle)
-        .previewDisplayName("Compression @ 0.0")
-      LevelIndicatorView(level: -5.0, style: compressionStyle)
-        .previewDisplayName("Compression @ -5.0")
-      LevelIndicatorView(level: -10.0, style: compressionStyle)
-        .previewDisplayName("Compression @ -10.0")
-      LevelIndicatorView(level: -15.0, style: compressionStyle)
-        .previewDisplayName("Compression @ -15.0")
-      LevelIndicatorView(level: -20.0, style: compressionStyle)
-        .previewDisplayName("Compression @ -20.0")
+//    Group {
+//      LevelIndicatorView(level: 0.0, style: compressionStyle)
+//        .previewDisplayName("Compression @ 0.0")
+//      LevelIndicatorView(level: -5.0, style: compressionStyle)
+//        .previewDisplayName("Compression @ -5.0")
+//      LevelIndicatorView(level: -10.0, style: compressionStyle)
+//        .previewDisplayName("Compression @ -10.0")
+//      LevelIndicatorView(level: -15.0, style: compressionStyle)
+//        .previewDisplayName("Compression @ -15.0")
+//      LevelIndicatorView(level: -20.0, style: compressionStyle)
+//        .previewDisplayName("Compression @ -20.0")
       LevelIndicatorView(level: -25.0, style: compressionStyle)
         .previewDisplayName("Compression @ -25.0")
-    }
+//    }
   }
 }
 
 struct LegendView_Previews: PreviewProvider {
   static var previews: some View {
-//    LegendView(style: rfPowerStyle, negateLevel: false)
-//      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("LegendView: Rf Power")
-//    LegendView(style: swrStyle, negateLevel: false)
-//      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("LegendView: SWR")
-//    LegendView(style: alcStyle, negateLevel: false)
-//      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("LegendView: ALC")
+    LegendView(style: rfPowerStyle, negateLevel: false)
+      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
+      .padding(.horizontal, 10)
+      .previewDisplayName("LegendView: Rf Power")
+    LegendView(style: swrStyle, negateLevel: false)
+      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
+      .padding(.horizontal, 10)
+      .previewDisplayName("LegendView: SWR")
+    LegendView(style: alcStyle, negateLevel: false)
+      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
+      .padding(.horizontal, 10)
+      .previewDisplayName("LegendView: ALC")
     LegendView(style: micLevelStyle, negateLevel: false)
       .frame(width: micLevelStyle.width, height: micLevelStyle.height, alignment: .leading)
       .padding(.horizontal, 10)
@@ -416,27 +414,27 @@ struct BarView_Previews: PreviewProvider {
 //      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
 //      .padding(.horizontal, 10)
 //      .previewDisplayName("BarView: Rf Power @ 1.1")
-//    BarView(level: 1.2, style: rfPowerStyle, negateLevel: false)
-//      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("BarView: Rf Power @ 1.2")
+    BarView(level: 1.2, style: rfPowerStyle)
+      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
+      .padding(.horizontal, 10)
+      .previewDisplayName("BarView: Rf Power @ 1.2")
 
-//    BarView(level: 2.6, style: swrStyle, negateLevel: false)
-//      .frame(width: swrStyle.width, height: swrStyle.height, alignment: .leading)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("BarView: SWR @ 2.6")
+    BarView(level: 2.6, style: swrStyle)
+      .frame(width: swrStyle.width, height: swrStyle.height, alignment: .leading)
+      .padding(.horizontal, 10)
+      .previewDisplayName("BarView: SWR @ 2.6")
 
-//    BarView(level: 0.6, style: alcStyle, negateLevel: false)
-//      .frame(width: alcStyle.width, height: alcStyle.height, alignment: .leading)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("BarView: ALC @ 0.6")
+    BarView(level: 0.6, style: alcStyle)
+      .frame(width: alcStyle.width, height: alcStyle.height, alignment: .leading)
+      .padding(.horizontal, 10)
+      .previewDisplayName("BarView: ALC @ 0.6")
 
-    BarView(level: 20.0, style: micLevelStyle, negateLevel: false)
+    BarView(level: 20.0, style: micLevelStyle)
       .frame(width: micLevelStyle.width, height: micLevelStyle.height, alignment: .leading)
       .padding(.horizontal, 10)
       .previewDisplayName("BarView: Mic @ 20.0")
 
-    BarView(level: 20.0, style: compressionStyle, negateLevel: false)
+    BarView(level: 20.0, style: compressionStyle)
       .frame(width: compressionStyle.width, height: compressionStyle.height, alignment: .leading)
       .padding(.horizontal, 10)
       .previewDisplayName("BarView: Proc @ 20.0")
@@ -445,27 +443,27 @@ struct BarView_Previews: PreviewProvider {
 
 struct TickView_Previews: PreviewProvider {
   static var previews: some View {
-//    TickView(style: rfPowerStyle, negateLevel: false)
-//      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("TickView: Rf Power")
-//
-//    TickView(style: swrStyle, negateLevel: false)
-//      .frame(width: swrStyle.width, height: swrStyle.height)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("TickView: SWR")
-//
-//    TickView(style: alcStyle, negateLevel: false)
-//      .frame(width: alcStyle.width, height: alcStyle.height)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("TickView: ALC")
+    TickView(style: rfPowerStyle)
+      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height)
+      .padding(.horizontal, 10)
+      .previewDisplayName("TickView: Rf Power")
 
-    TickView(style: micLevelStyle, negateLevel: true)
+    TickView(style: swrStyle)
+      .frame(width: swrStyle.width, height: swrStyle.height)
+      .padding(.horizontal, 10)
+      .previewDisplayName("TickView: SWR")
+
+    TickView(style: alcStyle)
+      .frame(width: alcStyle.width, height: alcStyle.height)
+      .padding(.horizontal, 10)
+      .previewDisplayName("TickView: ALC")
+
+    TickView(style: micLevelStyle)
       .frame(width: micLevelStyle.width, height: micLevelStyle.height)
       .padding(.horizontal, 10)
       .previewDisplayName("TickView: Mic")
 
-    TickView(style: compressionStyle, negateLevel: true)
+    TickView(style: compressionStyle)
       .frame(width: compressionStyle.width, height: compressionStyle.height)
       .padding(.horizontal, 10)
       .previewDisplayName("TickView: Proc")
@@ -474,20 +472,20 @@ struct TickView_Previews: PreviewProvider {
 
 struct OutlineView_Previews: PreviewProvider {
   static var previews: some View {
-//    OutlineView(style: rfPowerStyle)
-//      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("OutlineView: Rf Power")
-//
-//    OutlineView(style: swrStyle)
-//      .frame(width: swrStyle.width, height: swrStyle.height)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("OutlineView: SWR")
-//
-//    OutlineView(style: alcStyle)
-//      .frame(width: alcStyle.width, height: alcStyle.height)
-//      .padding(.horizontal, 10)
-//      .previewDisplayName("OutlineView: ALC")
+    OutlineView(style: rfPowerStyle)
+      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height)
+      .padding(.horizontal, 10)
+      .previewDisplayName("OutlineView: Rf Power")
+
+    OutlineView(style: swrStyle)
+      .frame(width: swrStyle.width, height: swrStyle.height)
+      .padding(.horizontal, 10)
+      .previewDisplayName("OutlineView: SWR")
+
+    OutlineView(style: alcStyle)
+      .frame(width: alcStyle.width, height: alcStyle.height)
+      .padding(.horizontal, 10)
+      .previewDisplayName("OutlineView: ALC")
 
     OutlineView(style: micLevelStyle)
       .frame(width: micLevelStyle.width, height: micLevelStyle.height)
