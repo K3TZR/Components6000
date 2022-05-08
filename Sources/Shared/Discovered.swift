@@ -9,7 +9,7 @@ import Foundation
 import Combine
 import IdentifiedCollections
 
-public final class Discovered: Equatable, ObservableObject {
+  public final class Discovered: Equatable, ObservableObject {
   public static func == (lhs: Discovered, rhs: Discovered) -> Bool {
     lhs === rhs
   }
