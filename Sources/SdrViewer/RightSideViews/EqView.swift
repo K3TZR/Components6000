@@ -18,6 +18,10 @@ struct EqView: View {
   @State var hz4000: CGFloat = -0.9
   @State var hz8000: CGFloat = -1.0
   
+  @State var on = true
+  @State var rx = true
+  @State var tx = false
+  
   var body: some View {
     VStack(alignment: .leading) {
       HStack(spacing: 8) {
@@ -36,9 +40,9 @@ struct EqView: View {
         VStack(spacing: 10) {
           Text("+10 Db")
           Spacer()
-          Button(action: {}) { Text("On")}
-          Button(action: {}) { Text("Rx") }
-          Button(action: {}) { Text("Tx") }
+          Toggle("On", isOn: $on).toggleStyle(.button)
+          Toggle("Rx", isOn: $rx).toggleStyle(.button)
+          Toggle("Tx", isOn: $tx).toggleStyle(.button)
           Spacer()
           Text("-10 Db")
         }.frame(width: 50, height: 240)

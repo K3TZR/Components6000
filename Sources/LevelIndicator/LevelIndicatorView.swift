@@ -145,11 +145,11 @@ public let alcStyle = IndicatorStyle(
 )
 
 public let micLevelStyle = IndicatorStyle(
-  isFlipped: true,
+  isFlipped: false,
   left: -40.0,
   right: 5.0,
   warningLevel: -10.0,
-  criticalLevel: -20.0,
+  criticalLevel: 0.0,
   ticks:
     [
       Tick(value:5.0),
@@ -280,7 +280,7 @@ struct TickView: View {
     var tickLocation: CGFloat = 0
     
     Path { path in
-      for tick in style.ticks {
+      for tick in style.ticks where tick.value <= style.warningLevel {
         if tick.hideLine == false {
           if style.isFlipped {
             tickLocation = ( style.right - tick.value) * ((style.width) / valueRange)
@@ -292,7 +292,37 @@ struct TickView: View {
         }
       }
     }
-    .stroke(style.tickColor)
+    .stroke(style.normalColor)
+
+    Path { path in
+      for tick in style.ticks where tick.value > style.warningLevel && tick.value < style.criticalLevel {
+        if tick.hideLine == false {
+          if style.isFlipped {
+            tickLocation = ( style.right - tick.value) * ((style.width) / valueRange)
+          } else {
+            tickLocation = (tick.value - style.left) * ((style.width) / valueRange)
+          }
+          path.move(to: CGPoint(x: tickLocation , y: style.height))
+          path.addLine(to: CGPoint(x: tickLocation, y: 0))
+        }
+      }
+    }
+    .stroke(style.warningColor)
+
+    Path { path in
+      for tick in style.ticks where tick.value >= style.criticalLevel {
+        if tick.hideLine == false {
+          if style.isFlipped {
+            tickLocation = ( style.right - tick.value) * ((style.width) / valueRange)
+          } else {
+            tickLocation = (tick.value - style.left) * ((style.width) / valueRange)
+          }
+          path.move(to: CGPoint(x: tickLocation , y: style.height))
+          path.addLine(to: CGPoint(x: tickLocation, y: 0))
+        }
+      }
+    }
+    .stroke(style.criticalColor)
   }
 }
 
@@ -301,10 +331,32 @@ struct OutlineView: View {
   
   var body: some View {
     
-    Rectangle()
-      .foregroundColor(style.backgroundColor)
-      .border(style.borderColor)
+    let normalPerCent = style.isFlipped ? style.right - style.warningLevel : style.warningLevel - style.left
+    let warningPerCent = style.isFlipped ? style.warningLevel - style.criticalLevel : style.criticalLevel - style.warningLevel
+    let criticalPerCent = style.isFlipped ? style.criticalLevel - style.left : style.right - style.criticalLevel
+    let valueRange = style.right - style.left
+
+    HStack(spacing: 0) {
+      Rectangle()
+        .foregroundColor(style.backgroundColor)
+        .border(style.normalColor)
+        .frame(width: (style.width) * (normalPerCent) / valueRange, alignment: .leading)
+      Rectangle()
+        .foregroundColor(style.backgroundColor)
+        .border(style.warningColor)
+        .frame(width: (style.width) * (warningPerCent) / valueRange, alignment: .leading)
+      Rectangle()
+        .foregroundColor(style.backgroundColor)
+        .border(style.criticalColor)
+        .frame(width: (style.width) * (criticalPerCent) / valueRange, alignment: .leading)
+    }
   }
+
+
+//    Rectangle()
+//      .foregroundColor(style.backgroundColor)
+//      .border(style.borderColor)
+//  }
 }
 
 // ----------------------------------------------------------------------------
@@ -312,16 +364,16 @@ struct OutlineView: View {
 
 struct LevelIndicatorView_Previews: PreviewProvider {
   static var previews: some View {
-//    Group {
-//      LevelIndicatorView(level: 0.5, style: rfPowerStyle)
-//        .previewDisplayName("Rf Power @ 0.5")
-//      LevelIndicatorView(level: 1.0, style: rfPowerStyle)
-//        .previewDisplayName("Rf Power @ 1.0")
-//      LevelIndicatorView(level: 1.1, style: rfPowerStyle)
-//        .previewDisplayName("Rf Power @ 1.1")
+    Group {
+      LevelIndicatorView(level: 0.5, style: rfPowerStyle)
+        .previewDisplayName("Rf Power @ 0.5")
+      LevelIndicatorView(level: 1.0, style: rfPowerStyle)
+        .previewDisplayName("Rf Power @ 1.0")
+      LevelIndicatorView(level: 1.1, style: rfPowerStyle)
+        .previewDisplayName("Rf Power @ 1.1")
       LevelIndicatorView(level: 1.2, style: rfPowerStyle)
         .previewDisplayName("Rf Power @ 1.2")
-//    }
+    }
 
 //    Group {
 //      LevelIndicatorView(level: 1.5, style: swrStyle)
@@ -343,20 +395,20 @@ struct LevelIndicatorView_Previews: PreviewProvider {
         .previewDisplayName("ALC @ 1.0")
 //    }
 
-//    Group {
-//      LevelIndicatorView(level: 5.0, style: micLevelStyle)
-//        .previewDisplayName("MicLevel @ 5.0")
-//      LevelIndicatorView(level: 0.0, style: micLevelStyle)
-//        .previewDisplayName("MicLevel @ 0.0")
-//      LevelIndicatorView(level: -10.0, style: micLevelStyle)
-//        .previewDisplayName("MicLevel @ -10.0")
-//      LevelIndicatorView(level: -20.0, style: micLevelStyle)
-//        .previewDisplayName("MicLevel @ -20.0")
-//      LevelIndicatorView(level: -30.0, style: micLevelStyle)
-//        .previewDisplayName("MicLevel @ -30.0")
+    Group {
+      LevelIndicatorView(level: 5.0, style: micLevelStyle)
+        .previewDisplayName("MicLevel @ 5.0")
+      LevelIndicatorView(level: 0.0, style: micLevelStyle)
+        .previewDisplayName("MicLevel @ 0.0")
+      LevelIndicatorView(level: -10.0, style: micLevelStyle)
+        .previewDisplayName("MicLevel @ -10.0")
+      LevelIndicatorView(level: -20.0, style: micLevelStyle)
+        .previewDisplayName("MicLevel @ -20.0")
+      LevelIndicatorView(level: -30.0, style: micLevelStyle)
+        .previewDisplayName("MicLevel @ -30.0")
       LevelIndicatorView(level: -40.0, style: micLevelStyle)
         .previewDisplayName("MicLevel @ -40.0")
-//    }
+    }
 
 //    Group {
 //      LevelIndicatorView(level: 0.0, style: compressionStyle)

@@ -19,6 +19,11 @@ struct CwView: View {
 
   @State var level: CGFloat = 0.95
   
+  @State var breakin = false
+  @State var iambic = true
+  @State var sidetone = true
+
+  
   var body: some View {
 
     VStack(alignment: .leading, spacing: 0)  {
@@ -37,7 +42,7 @@ struct CwView: View {
         Slider(value: $speed, in: -1...1).frame(width: 120)
       }
       HStack(spacing: 25) {
-        Button(action: {}) { Text("Sidetone").frame(width: 55) }
+        Toggle("Sidetone", isOn: $sidetone).toggleStyle(.button)
         Slider(value: $sideTone, in: -1...1).frame(width: 120)
       }
       HStack(spacing: 5) {
@@ -46,12 +51,13 @@ struct CwView: View {
         Slider(value: $pan, in: -1...1).frame(width: 120)
         Text("R").frame(width: 10)
       }
-      HStack(spacing: 5) {
-        Button(action: {}) { Text("Breakin").frame(width: 50) }
-        Button(action: {}) { Text("Iambic").frame(width: 50) }
+      HStack(spacing: 10) {
+        Toggle("Breakin", isOn: $breakin).toggleStyle(.button)
+        Toggle("Iambic", isOn: $iambic).toggleStyle(.button)
         Text("Pitch")
         TextField("", text: $pitch)
       }
+      
       Spacer()
       Divider().background(.blue)
     }

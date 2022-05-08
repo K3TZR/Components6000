@@ -16,16 +16,18 @@ struct PhneView: View {
   @State var txFilterLow = "100"
   @State var txFilterHigh = "2,500"
 
-  
+  @State var vox = false
+  @State var dexp = true
+
   var body: some View {
     VStack(alignment: .leading) {
 
       HStack(spacing: 0)  {
         VStack(alignment: .center, spacing: 10) {
           Text("AM Carrier")
-          Button(action: {}) { Text("VOX")}
+          Toggle("VOX", isOn: $vox).toggleStyle(.button).frame(width: 70)
           Text("Vox Delay")
-          Button(action: {}) { Text("DEXP") }
+          Toggle("DEXP", isOn: $dexp).toggleStyle(.button).frame(width: 70)
         }.frame(width: 75)
         
         VStack(spacing: -5) {
@@ -51,7 +53,7 @@ struct PhneView: View {
       Divider().background(.blue)
     }
     .padding(.horizontal, 10)
-    .frame(height: 180)
+    .frame(height: 160)
   }
 }
 
@@ -59,6 +61,6 @@ struct PhneView_Previews: PreviewProvider {
     static var previews: some View {
       PhneView()
         .padding(.horizontal, 10)
-        .frame(width: 260, height: 180)
+        .frame(width: 260, height: 160)
     }
 }
