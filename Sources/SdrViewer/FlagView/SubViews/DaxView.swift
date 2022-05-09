@@ -9,8 +9,8 @@ import SwiftUI
 
 struct DaxView: View {
   
-  @State var selectedChannel = "none"
-  @State var channel = [
+  @State private var selectedChannel = "none"
+  @State private var channel = [
     "none",
     "1",
     "2",
@@ -30,7 +30,6 @@ struct DaxView: View {
         }
       }.frame(width: 200)
     }
-    .padding(.horizontal)
     .frame(height: 80)
   }
 }
@@ -38,6 +37,7 @@ struct DaxView: View {
 struct DaxView_Previews: PreviewProvider {
   static var previews: some View {
     DaxView()
+      .padding(.horizontal)
       .frame(width: 275, height: 80)
   }
 }

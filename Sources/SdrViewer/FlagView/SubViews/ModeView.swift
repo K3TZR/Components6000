@@ -9,8 +9,8 @@ import SwiftUI
 
 struct ModeView: View {
   
-  @State var selectedMode = "USB"
-  @State var mode = [
+  @State private var selectedMode = "USB"
+  @State private var mode = [
     "LSB",
     "USB",
     "CW",

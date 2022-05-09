@@ -9,17 +9,17 @@ import SwiftUI
 
 struct AudView: View {
   
-  @State var audioGain: CGFloat = 0.40
-  @State var audioPan: CGFloat = 0.50
-  @State var agcThreshold: CGFloat = 0.75
+  @State private var audioGain: CGFloat = 0.40
+  @State private var audioPan: CGFloat = 0.50
+  @State private var agcThreshold: CGFloat = 0.75
 
-  @State var volume = 50.0
-  @State var pan = 50.0
-  @State var agcLevel = 50.0
-  @State var selection = "off"
-  @State var mute = false
+  @State private var volume = 50.0
+  @State private var pan = 50.0
+  @State private var agcLevel = 50.0
+  @State private var selection = "off"
+  @State private var mute = false
   
-  @State var choices = [
+  @State private var choices = [
     "off",
     "slow",
     "med",
@@ -56,7 +56,6 @@ struct AudView: View {
         Text(String(format: "%2.0f",agcThreshold)).frame(width: 30)
       }.font(.system(size: 12))
     }
-    .padding(.horizontal)
     .frame(height: 80)
   }
 }
@@ -64,6 +63,7 @@ struct AudView: View {
 struct AudView_Previews: PreviewProvider {
     static var previews: some View {
       AudView()
+        .padding(.horizontal)
         .frame(width: 275, height: 80)
     }
 }

@@ -11,6 +11,11 @@ import SwiftUI
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums
 
+public enum LegendPosition {
+  case top
+  case bottom
+  case none
+}
 public struct Tick {
   public var value: CGFloat  // 0...1
   public var label: String?
@@ -32,6 +37,7 @@ public struct Tick {
 public struct IndicatorStyle {
   var width: CGFloat
   var height: CGFloat
+  var barHeight: CGFloat
   var isFlipped: Bool
   var left: CGFloat
   var right: CGFloat
@@ -45,12 +51,16 @@ public struct IndicatorStyle {
   var tickColor: Color
   var legendFont: NSFont
   var legendColor: Color
+  var legendPosition: LegendPosition
+  var drawOutline: Bool
+  var drawTicks: Bool
   var ticks: [Tick]
   
   public init
   (
     width: CGFloat = 220,
     height: CGFloat = 30,
+    barHeight: CGFloat = 15,
     isFlipped: Bool = false,
     left: CGFloat = 0.0,
     right: CGFloat = 1.0,
@@ -64,11 +74,15 @@ public struct IndicatorStyle {
     tickColor: Color = .blue,
     legendFont: NSFont = NSFont(name: "Monaco", size: 12)!,
     legendColor: Color = .orange,
+    legendPosition: LegendPosition = .top,
+    drawOutline: Bool = true,
+    drawTicks: Bool = true,
     ticks: [Tick] = []
   )
   {
     self.width = width
     self.height = height
+    self.barHeight = barHeight
     self.isFlipped = isFlipped
     self.left = left
     self.right = right
@@ -82,9 +96,10 @@ public struct IndicatorStyle {
     self.tickColor = tickColor
     self.legendFont = legendFont
     self.legendColor = legendColor
+    self.legendPosition = legendPosition
+    self.drawOutline = drawOutline
+    self.drawTicks = drawTicks
     self.ticks = ticks
-    
-    
   }
 }
 
@@ -183,6 +198,28 @@ public let compressionStyle = IndicatorStyle(
     ]
 )
 
+public let sMeterStyle = IndicatorStyle(
+  height: 20,
+  barHeight: 5,
+  left: 0,
+  right: 11,
+  warningLevel: 9.0,
+  criticalLevel: 10.0,
+  legendPosition: .bottom,
+  drawOutline: false,
+  drawTicks: false,
+  ticks:
+    [
+      Tick(value:1.0, label: "1"),
+      Tick(value:3.0, label: "3"),
+      Tick(value:5.0, label: "5"),
+      Tick(value:7.0, label: "7"),
+      Tick(value:9.0, label: "9"),
+      Tick(value:10.0, label: "+20"),
+      Tick(value:11.0, label: "+40"),
+    ]
+)
+
 // ----------------------------------------------------------------------------
 // MARK: - Views
 
@@ -203,15 +240,20 @@ public struct LevelIndicatorView: View {
   public var body: some View {
     
     VStack(alignment: .leading, spacing: 0) {
-      LegendView(style: style, negateLevel: negateLevel).frame(height: style.height/2.0)
+      if style.legendPosition == .top {
+        LegendView(style: style, negateLevel: negateLevel).frame(height: style.height/2.0)
+      }
       ZStack(alignment: .bottomLeading) {
         BarView(level: level, style: style)
-        OutlineView(style: style)
-        TickView(style: style)
+        if style.drawOutline { OutlineView(style: style) }
+        if style.drawTicks { TickView(style: style) }
       }
-      .frame(height: style.height/2.0)
+      .frame(height: style.barHeight)
       .clipped()
       .rotationEffect(.degrees(style.isFlipped ? 180 : 0))
+      if style.legendPosition == .bottom {
+        LegendView(style: style, negateLevel: negateLevel).frame(height: style.height/2.0).padding(.top, 5)
+      }
     }
     .frame(width: style.width, height: style.height, alignment: .leading)
     .padding(.horizontal, 10)
@@ -364,16 +406,34 @@ struct OutlineView: View {
 
 struct LevelIndicatorView_Previews: PreviewProvider {
   static var previews: some View {
+    
     Group {
-      LevelIndicatorView(level: 0.5, style: rfPowerStyle)
-        .previewDisplayName("Rf Power @ 0.5")
-      LevelIndicatorView(level: 1.0, style: rfPowerStyle)
-        .previewDisplayName("Rf Power @ 1.0")
-      LevelIndicatorView(level: 1.1, style: rfPowerStyle)
-        .previewDisplayName("Rf Power @ 1.1")
-      LevelIndicatorView(level: 1.2, style: rfPowerStyle)
-        .previewDisplayName("Rf Power @ 1.2")
+      LevelIndicatorView(level: 1.0, style: sMeterStyle)
+        .previewDisplayName("sMeter @ 1.0")
+      LevelIndicatorView(level: 3.0, style: sMeterStyle)
+        .previewDisplayName("sMeter @ 3.0")
+      LevelIndicatorView(level: 5.0, style: sMeterStyle)
+        .previewDisplayName("sMeter @ 5.0")
+      LevelIndicatorView(level: 7.0, style: sMeterStyle)
+        .previewDisplayName("sMeter @ 7.0")
+      LevelIndicatorView(level: 9.0, style: sMeterStyle)
+        .previewDisplayName("sMeter @ 9.0")
+      LevelIndicatorView(level: 10.0, style: sMeterStyle)
+        .previewDisplayName("sMeter @ 10.0")
+      LevelIndicatorView(level: 11.0, style: sMeterStyle)
+        .previewDisplayName("sMeter @ 11.0")
     }
+
+//    Group {
+//      LevelIndicatorView(level: 0.5, style: rfPowerStyle)
+//        .previewDisplayName("Rf Power @ 0.5")
+//      LevelIndicatorView(level: 1.0, style: rfPowerStyle)
+//        .previewDisplayName("Rf Power @ 1.0")
+//      LevelIndicatorView(level: 1.1, style: rfPowerStyle)
+//        .previewDisplayName("Rf Power @ 1.1")
+//      LevelIndicatorView(level: 1.2, style: rfPowerStyle)
+//        .previewDisplayName("Rf Power @ 1.2")
+//    }
 
 //    Group {
 //      LevelIndicatorView(level: 1.5, style: swrStyle)

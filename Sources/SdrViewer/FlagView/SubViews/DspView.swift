@@ -9,19 +9,24 @@ import SwiftUI
 
 struct DspView: View {
   
-  @State var level1 = 50.0
-  @State var level2 = 50.0
-  @State var level3 = 50.0
-  @State var level4 = 50.0
+  @State private var level1 = 50.0
+  @State private var level2 = 50.0
+  @State private var level3 = 50.0
+  @State private var level4 = 50.0
   
+  @State private var wnb = false
+  @State private var nb = true
+  @State private var nr = false
+  @State private var anf = true
+
   var body: some View {
     HStack(spacing: 20) {
       VStack(spacing: 5) {
-        Button(action: {}) {Text("WNB").frame(width: 35)}
-        Button(action: {}) {Text("NB").frame(width: 35)}
-        Button(action: {}) {Text("NR").frame(width: 35)}
-        Button(action: {}) {Text("ANF").frame(width: 35)}
-      }
+        Toggle("WNB", isOn: $wnb)
+        Toggle("NB", isOn: $nb)
+        Toggle("NR", isOn: $nr)
+        Toggle("ANF", isOn: $anf)
+      }.toggleStyle(.button)
       
       VStack(spacing: -5) {
         Slider(value: $level1, in: 0...100)
@@ -37,7 +42,6 @@ struct DspView: View {
         Text(String(format: "%2.0f",level4)).frame(width: 30)
       }
     }
-    .padding(.horizontal)
     .frame(height: 100)
   }
 }
@@ -45,6 +49,7 @@ struct DspView: View {
 struct DspView_Previews: PreviewProvider {
     static var previews: some View {
       DspView()
+        .padding(.horizontal)
         .frame(width: 275, height: 100)
     }
 }

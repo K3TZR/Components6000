@@ -9,12 +9,12 @@ import SwiftUI
 
 struct XritView: View {
   
-  @State var ritOffset = 0
-  @State var xitOffset = 0
-  @State var ritOffsetString = "0"
-  @State var xitOffsetString = "0"
-  @State var tuningStep = 0
-  @State var tuningStepString = "0"
+  @State private var ritOffset = 0
+  @State private var xitOffset = 0
+  @State private var ritOffsetString = "0"
+  @State private var xitOffsetString = "0"
+  @State private var tuningStep = 0
+  @State private var tuningStepString = "0"
   
   let buttonWidth: CGFloat = 25
   //    let smallButtonWidth: CGFloat = 10

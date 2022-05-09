@@ -8,6 +8,8 @@
 
 import SwiftUI
 
+import LevelIndicator
+
 // ----------------------------------------------------------------------------
 // MARK: - Main view
 
@@ -18,7 +20,7 @@ struct FlagView: View {
   var body: some View {    
     VStack(alignment: .leading) {
       FlagTopView( )
-      FlagBottomView(selectedTab: $selectedTab)
+      FlagButtonView(selectedTab: $selectedTab)
       Divider().background(.blue)
     }
     .frame(width: 260)
@@ -35,36 +37,69 @@ struct FlagTopView: View {
   @State var txAntennas = ["Ant1", "Ant2", ]
   @State var selectedTxAntenna = "Ant1"
   @State var frequency = 14_200_000
+  @State var filterWidth = "2.7k"
+  @State var sliceLetter = "A"
   
+  @State var nb = false
+  @State var nr = true
+  @State var anf = false
+  @State var qsk = true
+  
+  @State var sMeterValue: CGFloat = 10.0
+
   var body: some View {
-    VStack {
-      HStack {
-        Button(action: {}) {Text("X").frame(width: 8)}
+    VStack(alignment: .leading, spacing: 2) {
+      HStack(spacing: 3) {
+        Image(systemName: "x.circle").frame(width: 25, height: 25)
         Picker("", selection: $selectedRxAntenna) {
           ForEach(rxAntennas, id: \.self) {
-            Text($0)
+            Text($0).font(.system(size: 8))
           }
-        }.frame(width: 75)
+        }
+        .labelsHidden()
+        .pickerStyle(.menu)
+        
         Picker("", selection: $selectedTxAntenna) {
           ForEach(txAntennas, id: \.self) {
-            Text($0)
+            Text($0).font(.system(size: 8))
           }
-        }.frame(width: 75)
+        }
+        .labelsHidden()
         
+        Text(filterWidth)
+        Text("SPLIT").font(.title2)
+        Text("TX").font(.title2)
+        Text(sliceLetter).font(.title2)
       }
-      TextField(
-        "Frequency",
-        value: $frequency,
-        formatter: NumberFormatter()
-      )
-      .multilineTextAlignment(.trailing)
-      .frame(width: 100)
+      .padding(.top, 10)
+      
+      HStack(spacing: 3) {
+        Image(systemName: "lock").frame(width: 25, height: 25)
+
+        Group {
+          Toggle("NB", isOn: $nb)
+          Toggle("NR", isOn: $nr)
+          Toggle("ANF", isOn: $anf)
+          Toggle("QSK", isOn: $qsk)
+        }
+        .font(.system(size: 8))
+        .toggleStyle(.button)
+
+        TextField(
+          "Frequency",
+          value: $frequency,
+          formatter: NumberFormatter()
+        )
+        .font(.title2)
+        .multilineTextAlignment(.trailing)
+      }
+      LevelIndicatorView(level: sMeterValue, style: sMeterStyle)
     }
-    .frame(height: 100)
+    .frame(height: 90)
   }
 }
 
-struct FlagBottomView: View {
+struct FlagButtonView: View {
   @Binding var selectedTab: Int
   
   var body: some View {
@@ -94,14 +129,35 @@ struct FlagBottomView: View {
 struct FlagView_Previews: PreviewProvider {
   static var previews: some View {
     FlagView(selectedTab: 0)
-      .frame(width: 260, height: 220)
-    FlagView(selectedTab: 1)
-      .frame(width: 260, height: 230)
-    FlagView(selectedTab: 2)
-      .frame(width: 260, height: 220)
-    FlagView(selectedTab: 3)
-      .frame(width: 260, height: 220)
-    FlagView(selectedTab: 4)
-      .frame(width: 260, height: 220)
+      .padding(.horizontal, 10)
+      .frame(width: 275, height: 200)
+  }
+}
+
+struct FlagTopView_Previews: PreviewProvider {
+  static var previews: some View {
+    FlagTopView()
+      .padding(.horizontal, 10)
+      .frame(width: 275, height: 90)
+  }
+}
+
+struct FlagButtonView_Previews: PreviewProvider {
+  static var previews: some View {
+    FlagButtonView(selectedTab: .constant(0))
+      .padding(.horizontal, 10)
+      .frame(width: 275, height: 110)
+    FlagButtonView(selectedTab: .constant(1))
+      .padding(.horizontal, 10)
+      .frame(width: 275, height: 130)
+    FlagButtonView(selectedTab: .constant(2))
+      .padding(.horizontal, 10)
+      .frame(width: 275, height: 110)
+    FlagButtonView(selectedTab: .constant(3))
+      .padding(.horizontal, 10)
+      .frame(width: 275, height: 110)
+    FlagButtonView(selectedTab: .constant(4))
+      .padding(.horizontal, 10)
+      .frame(width: 275, height: 110)
   }
 }
