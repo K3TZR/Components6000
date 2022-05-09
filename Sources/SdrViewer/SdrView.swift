@@ -80,10 +80,11 @@ public struct SdrView: View {
 }
 
 
-enum WindowChoice: String, CaseIterable {
+public enum WindowChoice: String, CaseIterable {
   case LogViewer = "LogViewer"
-  
-  func open() {
+  case ProfileViewer = "ProfileViewer"
+
+  public func open() {
     if let url = URL(string: "Sdr6000://\(self.rawValue)") {
       NSWorkspace.shared.open(url)
     }
