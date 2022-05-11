@@ -12,7 +12,7 @@ public struct SdrView: View {
   @AppStorage(wrappedValue: false, "leftSideView") var leftSideView: Bool
   @AppStorage(wrappedValue: false, "rightSideView") var rightSideView: Bool
   @State var leftWidth: CGFloat = 75
-  @State var rightWidth: CGFloat = 260
+  @State var rightWidth: CGFloat = 275
   @State var totalWidthMin: CGFloat = 500
   
   public init() {}
@@ -38,8 +38,7 @@ public struct SdrView: View {
       BottomButtonsView()
     }
     .frame(minWidth: totalWidthMin, maxWidth: .infinity)
-    
-    
+        
     .toolbar {
       ToolbarItemGroup(placement: .navigation) {
         Image(systemName: "sidebar.left")
@@ -79,20 +78,24 @@ public struct SdrView: View {
   }
 }
 
+public struct SdrView_Previews: PreviewProvider {
+  public static var previews: some View {
+    SdrView()
+  }
+}
 
 public enum WindowChoice: String, CaseIterable {
-  case LogViewer = "LogViewer"
-  case ProfileViewer = "ProfileViewer"
+  case LogViewer
+  case ProfileView
+  case TxView
+  case Ph1View
+  case Ph2View
+  case CwView
+  case EqView
 
   public func open() {
     if let url = URL(string: "Sdr6000://\(self.rawValue)") {
       NSWorkspace.shared.open(url)
     }
-  }
-}
-
-public struct SdrView_Previews: PreviewProvider {
-  public static var previews: some View {
-    SdrView()
   }
 }

@@ -12,9 +12,9 @@ struct RightSideView: View {
   
   @State var showRx = false
   @State var showTx = false
-  @State var showPcw = false
-  @State var showPhone = false
-  @State var showPhne = false
+  @State var showPh1 = false
+  @State var showPh2 = false
+  @State var showCw = false
   @State var showEq = false
   
   @State var isCwMode = true
@@ -29,8 +29,9 @@ struct RightSideView: View {
         Group {
           Toggle("Rx", isOn: $showRx)
           Toggle("Tx", isOn: $showTx)
-          Toggle("P/CW", isOn: $showPcw)
-          Toggle("Phne", isOn: $showPhne)
+          Toggle("Ph1", isOn: $showPh1)
+          Toggle("Ph2", isOn: $showPh2)
+          Toggle("Cw", isOn: $showCw)
           Toggle("Eq", isOn: $showEq)
         }
         .toggleStyle(.button)
@@ -39,14 +40,9 @@ struct RightSideView: View {
       ScrollView([.vertical]) {
         if showRx { FlagView() }
         if showTx { TxView() }
-        if showPcw  {
-          if isCwMode {
-            CwView()
-          } else {
-            PhoneView()
-          }
-        }
-        if showPhne { PhneView() }
+        if showPh1 { Ph1View() }
+        if showPh2 { Ph2View() }
+        if showCw { CwView() }
         if showEq { EqView() }
       }
     }
@@ -61,58 +57,3 @@ struct SideView_Previews: PreviewProvider {
       .frame(width: 260)
   }
 }
-
-//struct SideRxView: View {
-//  let width: CGFloat
-//  let height: CGFloat
-//
-//  var body: some View {
-//    Text("Side Rx View")
-//      .frame(minWidth: width, maxWidth: width, minHeight: height, maxHeight: height)
-//    Divider()
-//  }
-//}
-//
-//struct SideTxView: View {
-//  let width: CGFloat
-//  let height: CGFloat
-//
-//  var body: some View {
-//    Text("Side Tx View")
-//      .frame(minWidth: width, maxWidth: width, minHeight: height, maxHeight: height)
-//    Divider()
-//  }
-//}
-//
-//struct SidePcwView: View {
-//  let width: CGFloat
-//  let height: CGFloat
-//
-//  var body: some View {
-//    Text("Side Pcw View")
-//      .frame(minWidth: width, maxWidth: width, minHeight: height, maxHeight: height)
-//    Divider()
-//  }
-//}
-//
-//struct SidePhneView: View {
-//  let width: CGFloat
-//  let height: CGFloat
-//
-//  var body: some View {
-//    Text("Side Phne View")
-//      .frame(minWidth: width, maxWidth: width, minHeight: height, maxHeight: height)
-//    Divider()
-//  }
-//}
-//
-//struct SideEqView: View {
-//  let width: CGFloat
-//  let height: CGFloat
-//
-//  var body: some View {
-//    Text("Side Eq View")
-//      .frame(minWidth: width, maxWidth: width, minHeight: height, maxHeight: height)
-//    Divider()
-//  }
-//}

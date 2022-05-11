@@ -9,13 +9,24 @@ import Foundation
 import SwiftUI
 
 // ----------------------------------------------------------------------------
-// MARK: - Structs and Enums
+// MARK: - Public Structs & Enums
+
+public enum IndicatorType {
+  case rfPower
+  case swr
+  case alc
+  case sMeter
+  case micLevel
+  case compression
+  case other(IndicatorStyle)
+}
 
 public enum LegendPosition {
   case top
   case bottom
   case none
 }
+
 public struct Tick {
   public var value: CGFloat  // 0...1
   public var label: String?
@@ -103,7 +114,10 @@ public struct IndicatorStyle {
   }
 }
 
-public let rfPowerStyle = IndicatorStyle(
+// ----------------------------------------------------------------------------
+// MARK: - Private Structs & Enums
+
+private let rfPowerStyle = IndicatorStyle(
   right: 1.2,
   warningLevel: 1.0,
   criticalLevel: 1.1,
@@ -125,7 +139,7 @@ public let rfPowerStyle = IndicatorStyle(
     ]
 )
 
-public let swrStyle = IndicatorStyle(
+private let swrStyle = IndicatorStyle(
   left: 1.0,
   right: 3.0,
   warningLevel: 2.0,
@@ -144,7 +158,7 @@ public let swrStyle = IndicatorStyle(
     ]
 )
 
-public let alcStyle = IndicatorStyle(
+private let alcStyle = IndicatorStyle(
   warningLevel: 0.25,
   criticalLevel: 0.5,
   ticks:
@@ -159,7 +173,7 @@ public let alcStyle = IndicatorStyle(
     ]
 )
 
-public let micLevelStyle = IndicatorStyle(
+private let micLevelStyle = IndicatorStyle(
   isFlipped: false,
   left: -40.0,
   right: 5.0,
@@ -180,7 +194,7 @@ public let micLevelStyle = IndicatorStyle(
     ]
 )
 
-public let compressionStyle = IndicatorStyle(
+private let compressionStyle = IndicatorStyle(
   isFlipped: true,
   left: -25.0,
   right: 0.0,
@@ -198,7 +212,7 @@ public let compressionStyle = IndicatorStyle(
     ]
 )
 
-public let sMeterStyle = IndicatorStyle(
+private let sMeterStyle = IndicatorStyle(
   height: 20,
   barHeight: 5,
   left: 0,
@@ -225,23 +239,33 @@ public let sMeterStyle = IndicatorStyle(
 
 public struct LevelIndicatorView: View {
   var level: CGFloat
+  var type: IndicatorType
   var style: IndicatorStyle
-  var negateLevel: Bool = false
   
   public init(
     level: CGFloat,
-    style: IndicatorStyle
+    type: IndicatorType
   )
   {
     self.level = level
-    self.style = style
+    self.type = type
+    
+    switch type {
+    case .rfPower:           style = rfPowerStyle
+    case .swr:               style = swrStyle
+    case .alc:               style = alcStyle
+    case .sMeter:            style = sMeterStyle
+    case .micLevel:          style = micLevelStyle
+    case .compression:       style = compressionStyle
+    case .other(let style):  self.style = style
+    }
   }
   
   public var body: some View {
     
     VStack(alignment: .leading, spacing: 0) {
       if style.legendPosition == .top {
-        LegendView(style: style, negateLevel: negateLevel).frame(height: style.height/2.0)
+        LegendView(style: style).frame(height: style.height/2.0)
       }
       ZStack(alignment: .bottomLeading) {
         BarView(level: level, style: style)
@@ -252,7 +276,7 @@ public struct LevelIndicatorView: View {
       .clipped()
       .rotationEffect(.degrees(style.isFlipped ? 180 : 0))
       if style.legendPosition == .bottom {
-        LegendView(style: style, negateLevel: negateLevel).frame(height: style.height/2.0).padding(.top, 5)
+        LegendView(style: style).frame(height: style.height/2.0).padding(.top, 5)
       }
     }
     .frame(width: style.width, height: style.height, alignment: .leading)
@@ -262,7 +286,6 @@ public struct LevelIndicatorView: View {
 
 struct LegendView: View {
   var style: IndicatorStyle
-  var negateLevel: Bool
   
   func width(_ label: String?) -> CGFloat {
     guard label != nil else { return 0 }
@@ -408,80 +431,80 @@ struct LevelIndicatorView_Previews: PreviewProvider {
   static var previews: some View {
     
     Group {
-      LevelIndicatorView(level: 1.0, style: sMeterStyle)
+      LevelIndicatorView(level: 1.0, type: .sMeter)
         .previewDisplayName("sMeter @ 1.0")
-      LevelIndicatorView(level: 3.0, style: sMeterStyle)
+      LevelIndicatorView(level: 3.0, type: .sMeter)
         .previewDisplayName("sMeter @ 3.0")
-      LevelIndicatorView(level: 5.0, style: sMeterStyle)
+      LevelIndicatorView(level: 5.0, type: .sMeter)
         .previewDisplayName("sMeter @ 5.0")
-      LevelIndicatorView(level: 7.0, style: sMeterStyle)
+      LevelIndicatorView(level: 7.0, type: .sMeter)
         .previewDisplayName("sMeter @ 7.0")
-      LevelIndicatorView(level: 9.0, style: sMeterStyle)
+      LevelIndicatorView(level: 9.0, type: .sMeter)
         .previewDisplayName("sMeter @ 9.0")
-      LevelIndicatorView(level: 10.0, style: sMeterStyle)
+      LevelIndicatorView(level: 10.0, type: .sMeter)
         .previewDisplayName("sMeter @ 10.0")
-      LevelIndicatorView(level: 11.0, style: sMeterStyle)
+      LevelIndicatorView(level: 11.0, type: .sMeter)
         .previewDisplayName("sMeter @ 11.0")
     }
 
 //    Group {
-//      LevelIndicatorView(level: 0.5, style: rfPowerStyle)
+//      LevelIndicatorView(level: 0.5, type: .rfPower)
 //        .previewDisplayName("Rf Power @ 0.5")
-//      LevelIndicatorView(level: 1.0, style: rfPowerStyle)
+//      LevelIndicatorView(level: 1.0, type: .rfPower)
 //        .previewDisplayName("Rf Power @ 1.0")
-//      LevelIndicatorView(level: 1.1, style: rfPowerStyle)
+//      LevelIndicatorView(level: 1.1, type: .rfPower)
 //        .previewDisplayName("Rf Power @ 1.1")
-//      LevelIndicatorView(level: 1.2, style: rfPowerStyle)
+//      LevelIndicatorView(level: 1.2, type: .rfPower)
 //        .previewDisplayName("Rf Power @ 1.2")
 //    }
 
 //    Group {
-//      LevelIndicatorView(level: 1.5, style: swrStyle)
+//      LevelIndicatorView(level: 1.5, type: .swr)
 //        .previewDisplayName("SWR @ 1.5")
-//      LevelIndicatorView(level: 2.0, style: swrStyle)
+//      LevelIndicatorView(level: 2.0, type: .swr)
 //        .previewDisplayName("SWR @ 2.0")
-//      LevelIndicatorView(level: 2.5, style: swrStyle)
+//      LevelIndicatorView(level: 2.5, type: .swr)
 //        .previewDisplayName("SWR @ 2.5")
-      LevelIndicatorView(level: 3.0, style: swrStyle)
+    LevelIndicatorView(level: 3.0, type: .swr)
         .previewDisplayName("SWR @ 3.0")
 //    }
 
 //    Group {
-//      LevelIndicatorView(level: 0.25, style: alcStyle)
+//      LevelIndicatorView(level: 0.25, type: .alc)
 //        .previewDisplayName("ALC @ 0.25")
-//      LevelIndicatorView(level: 0.50, style: alcStyle)
+//      LevelIndicatorView(level: 0.50, type: .alc)
 //        .previewDisplayName("ALC @ 0.50")
-      LevelIndicatorView(level: 1.0, style: alcStyle)
+    LevelIndicatorView(level: 1.0, type: .alc)
         .previewDisplayName("ALC @ 1.0")
 //    }
 
     Group {
-      LevelIndicatorView(level: 5.0, style: micLevelStyle)
+      LevelIndicatorView(level: 5.0, type: .micLevel)
         .previewDisplayName("MicLevel @ 5.0")
-      LevelIndicatorView(level: 0.0, style: micLevelStyle)
+      LevelIndicatorView(level: 0.0, type: .micLevel)
         .previewDisplayName("MicLevel @ 0.0")
-      LevelIndicatorView(level: -10.0, style: micLevelStyle)
+      LevelIndicatorView(level: -10.0, type: .micLevel)
         .previewDisplayName("MicLevel @ -10.0")
-      LevelIndicatorView(level: -20.0, style: micLevelStyle)
+      LevelIndicatorView(level: -20.0, type: .micLevel)
         .previewDisplayName("MicLevel @ -20.0")
-      LevelIndicatorView(level: -30.0, style: micLevelStyle)
+      LevelIndicatorView(level: -30.0, type: .micLevel)
         .previewDisplayName("MicLevel @ -30.0")
-      LevelIndicatorView(level: -40.0, style: micLevelStyle)
+      LevelIndicatorView(level: -40.0, type: .micLevel)
         .previewDisplayName("MicLevel @ -40.0")
     }
 
 //    Group {
-//      LevelIndicatorView(level: 0.0, style: compressionStyle)
+//      LevelIndicatorView(level: 0.0, type: .compression)
 //        .previewDisplayName("Compression @ 0.0")
-//      LevelIndicatorView(level: -5.0, style: compressionStyle)
+//      LevelIndicatorView(level: -5.0, type: .compression)
 //        .previewDisplayName("Compression @ -5.0")
-//      LevelIndicatorView(level: -10.0, style: compressionStyle)
+//      LevelIndicatorView(level: -10.0, type: .compression)
 //        .previewDisplayName("Compression @ -10.0")
-//      LevelIndicatorView(level: -15.0, style: compressionStyle)
+//      LevelIndicatorView(level: -15.0, type: .compression)
 //        .previewDisplayName("Compression @ -15.0")
-//      LevelIndicatorView(level: -20.0, style: compressionStyle)
+//      LevelIndicatorView(level: -20.0, type: .compression)
 //        .previewDisplayName("Compression @ -20.0")
-      LevelIndicatorView(level: -25.0, style: compressionStyle)
+    LevelIndicatorView(level: -25.0, type: .compression)
         .previewDisplayName("Compression @ -25.0")
 //    }
   }
@@ -489,23 +512,23 @@ struct LevelIndicatorView_Previews: PreviewProvider {
 
 struct LegendView_Previews: PreviewProvider {
   static var previews: some View {
-    LegendView(style: rfPowerStyle, negateLevel: false)
+    LegendView(style: rfPowerStyle)
       .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
       .padding(.horizontal, 10)
       .previewDisplayName("LegendView: Rf Power")
-    LegendView(style: swrStyle, negateLevel: false)
-      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
+    LegendView(style: swrStyle)
+      .frame(width: swrStyle.width, height: swrStyle.height, alignment: .leading)
       .padding(.horizontal, 10)
       .previewDisplayName("LegendView: SWR")
-    LegendView(style: alcStyle, negateLevel: false)
-      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
+    LegendView(style: alcStyle)
+      .frame(width: alcStyle.width, height: alcStyle.height, alignment: .leading)
       .padding(.horizontal, 10)
       .previewDisplayName("LegendView: ALC")
-    LegendView(style: micLevelStyle, negateLevel: false)
+    LegendView(style: micLevelStyle)
       .frame(width: micLevelStyle.width, height: micLevelStyle.height, alignment: .leading)
       .padding(.horizontal, 10)
       .previewDisplayName("LegendView: Mic")
-    LegendView(style: compressionStyle, negateLevel: false)
+    LegendView(style: compressionStyle)
       .frame(width: compressionStyle.width, height: compressionStyle.height, alignment: .leading)
       .padding(.horizontal, 10)
       .previewDisplayName("LegendView: Proc")
@@ -514,15 +537,15 @@ struct LegendView_Previews: PreviewProvider {
 
 struct BarView_Previews: PreviewProvider {
   static var previews: some View {
-//    BarView(level: 0.5, style: rfPowerStyle, negateLevel: false)
+//    BarView(level: 0.5, style: rfPowerStyle)
 //      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
 //      .padding(.horizontal, 10)
 //      .previewDisplayName("BarView: Rf Power @ 0.5")
-//    BarView(level: 1.0, style: rfPowerStyle, negateLevel: false)
+//    BarView(level: 1.0, style: rfPowerStyle)
 //      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
 //      .padding(.horizontal, 10)
 //      .previewDisplayName("BarView: Rf Power @ 1.0")
-//    BarView(level: 1.1, style: rfPowerStyle, negateLevel: false)
+//    BarView(level: 1.1, style: rfPowerStyle)
 //      .frame(width: rfPowerStyle.width, height: rfPowerStyle.height, alignment: .leading)
 //      .padding(.horizontal, 10)
 //      .previewDisplayName("BarView: Rf Power @ 1.1")

@@ -10,6 +10,15 @@ import SwiftUI
 
 import LevelIndicator
 
+enum FlagState {
+  case aud
+  case dsp
+  case mode
+  case xrit
+  case dax
+  case none
+}
+
 // ----------------------------------------------------------------------------
 // MARK: - Main view
 
@@ -20,10 +29,11 @@ struct FlagView: View {
   var body: some View {    
     VStack(alignment: .leading) {
       FlagTopView( )
-      FlagButtonView(selectedTab: $selectedTab)
+//      FlagButtonView(selectedTab: $selectedTab)
       Divider().background(.blue)
     }
-    .frame(width: 260)
+    .frame(width: 275)
+    .padding(.horizontal, 10)
   }
 }
 
@@ -93,71 +103,95 @@ struct FlagTopView: View {
         .font(.title2)
         .multilineTextAlignment(.trailing)
       }
-      LevelIndicatorView(level: sMeterValue, style: sMeterStyle)
+      LevelIndicatorView(level: sMeterValue, type: .sMeter)
+      FlagButtonsView()
+      Spacer()
     }
-    .frame(height: 90)
+//    .frame(height: 220)
   }
 }
 
-struct FlagButtonView: View {
-  @Binding var selectedTab: Int
+struct FlagButtonsView: View {
   
-  var body: some View {
-    TabView(selection: $selectedTab) {
-      AudView()
-        .tabItem {Text("AUD")}
-        .tag(0)
-      DspView()
-        .tabItem {Text("DSP")}
-        .tag(1)
-      ModeView()
-        .tabItem {Text("MODE")}
-        .tag(2)
-      XritView()
-        .tabItem {Text("XRIT")}
-        .tag(3)
-      DaxView()
-        .tabItem {Text("DAX")}
-        .tag(4)
+  func update(_ currentState: FlagState, _ button: FlagState) -> FlagState {
+    if currentState == .none {
+      return button
+    } else if currentState == button {
+      return .none
+    } else {
+      return button
     }
+  }
+  
+  @State private var flagState: FlagState = .none
+  @State private var adjustedHeight: CGFloat = 0
+
+  var body: some View {
+    VStack(alignment: .leading) {
+      HStack {
+        Button(action: { flagState = update(flagState, .aud) }) { Text("AUD") }.background(Color(flagState == .aud ? .controlAccentColor : .controlBackgroundColor))
+        Button(action: { flagState = update(flagState, .dsp) }) { Text("DSP") }.background(Color(flagState == .dsp ? .controlAccentColor : .controlBackgroundColor))
+        Button(action: { flagState = update(flagState, .mode) }) { Text("MODE") }.background(Color(flagState == .mode ? .controlAccentColor : .controlBackgroundColor))
+        Button(action: { flagState = update(flagState, .xrit) }) { Text("XRIT") }.background(Color(flagState == .xrit ? .controlAccentColor : .controlBackgroundColor))
+        Button(action: { flagState = update(flagState, .dax) }) { Text("DAX") }.background(Color(flagState == .dax ? .controlAccentColor : .controlBackgroundColor))
+      }
+ 
+     switch flagState {
+      case .aud:    AudView()
+      case .dsp:    DspView()
+      case .mode:   ModeView()
+      case .xrit:   XritView()
+      case .dax:    DaxView()
+      case .none:   EmptyView()
+      }
+    }
+//    .frame(height: adjustedHeight)
   }
 }
 
 // ----------------------------------------------------------------------------
 // MARK: - Preview(s)
 
-struct FlagView_Previews: PreviewProvider {
+struct FlagButtonsView_Previews: PreviewProvider {
   static var previews: some View {
-    FlagView(selectedTab: 0)
+    FlagButtonsView()
+      .frame(width: 275, height: 30)
       .padding(.horizontal, 10)
-      .frame(width: 275, height: 200)
   }
 }
 
 struct FlagTopView_Previews: PreviewProvider {
   static var previews: some View {
     FlagTopView()
+      .frame(width: 275, height: 120)
       .padding(.horizontal, 10)
-      .frame(width: 275, height: 90)
   }
 }
 
-struct FlagButtonView_Previews: PreviewProvider {
+struct FlagView_Previews: PreviewProvider {
   static var previews: some View {
-    FlagButtonView(selectedTab: .constant(0))
+    FlagView(selectedTab: 0)
+      .frame(width: 275, height: 220)
       .padding(.horizontal, 10)
-      .frame(width: 275, height: 110)
-    FlagButtonView(selectedTab: .constant(1))
-      .padding(.horizontal, 10)
-      .frame(width: 275, height: 130)
-    FlagButtonView(selectedTab: .constant(2))
-      .padding(.horizontal, 10)
-      .frame(width: 275, height: 110)
-    FlagButtonView(selectedTab: .constant(3))
-      .padding(.horizontal, 10)
-      .frame(width: 275, height: 110)
-    FlagButtonView(selectedTab: .constant(4))
-      .padding(.horizontal, 10)
-      .frame(width: 275, height: 110)
   }
 }
+
+//struct FlagButtonView_Previews: PreviewProvider {
+//  static var previews: some View {
+//    FlagButtonsView()
+//      .padding(.horizontal, 10)
+//      .frame(width: 275, height: 110)
+//    FlagButtonsView(selectedTab: .constant(1))
+//      .padding(.horizontal, 10)
+//      .frame(width: 275, height: 130)
+//    FlagButtonsView(selectedTab: .constant(2))
+//      .padding(.horizontal, 10)
+//      .frame(width: 275, height: 110)
+//    FlagButtonsView(selectedTab: .constant(3))
+//      .padding(.horizontal, 10)
+//      .frame(width: 275, height: 110)
+//    FlagButtonsView(selectedTab: .constant(4))
+//      .padding(.horizontal, 10)
+//      .frame(width: 275, height: 110)
+//  }
+//}

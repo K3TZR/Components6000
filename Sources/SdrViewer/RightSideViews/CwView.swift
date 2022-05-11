@@ -9,7 +9,9 @@ import SwiftUI
 
 import LevelIndicator
 
-struct CwView: View {
+public struct CwView: View {
+  
+  public init() {}
 
   @State var delay: CGFloat = 0.8
   @State var speed: CGFloat = 0.7
@@ -24,11 +26,11 @@ struct CwView: View {
   @State var sidetone = true
 
   
-  var body: some View {
+  public var body: some View {
 
     VStack(alignment: .leading, spacing: 0)  {
       VStack(spacing: 0) {
-        LevelIndicatorView(level: level, style: alcStyle)
+        LevelIndicatorView(level: level, type: .alc)
         .padding(.bottom, 10)
       }
       HStack(spacing: 15) {
@@ -61,15 +63,14 @@ struct CwView: View {
       Spacer()
       Divider().background(.blue)
     }
-    .padding(.horizontal, 10)
     .frame(height: 200)
+    .padding(.horizontal, 10)
   }
 }
 
 struct CwView_Previews: PreviewProvider {
     static var previews: some View {
       CwView()
-        .padding(.horizontal, 10)
-        .frame(width: 260, height: 200)
+        .frame(width: 260)
     }
 }

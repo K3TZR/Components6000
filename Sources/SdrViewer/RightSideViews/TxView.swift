@@ -8,8 +8,9 @@
 import SwiftUI
 import LevelIndicator
 
-
-struct TxView: View {
+public struct TxView: View {
+  
+  public init() {}
 
   @State var delay: CGFloat = 0.8
   @State var rfPower: CGFloat = 1.1
@@ -27,10 +28,10 @@ struct TxView: View {
   
   @State var level: CGFloat = 0.95
 
-  var body: some View {
+  public var body: some View {
     VStack(alignment: .leading, spacing: 10)  {
-      LevelIndicatorView(level: rfPower, style: rfPowerStyle)
-      LevelIndicatorView(level: swr, style: swrStyle)
+      LevelIndicatorView(level: rfPower, type: .rfPower)
+      LevelIndicatorView(level: swr, type: .swr)
       
       HStack {
         Text("RF Power").frame(width: 80, alignment: .leading)
@@ -71,15 +72,14 @@ struct TxView: View {
       
       Divider().background(.blue)
     }
-    .padding(.horizontal, 10)
     .frame(height: 230)
+    .padding(.horizontal, 10)
   }
 }
 
 struct TxView_Previews: PreviewProvider {
   static var previews: some View {
     TxView()
-      .padding(.horizontal, 10)
-      .frame(width: 260, height: 230)
+      .frame(width: 260)
   }
 }

@@ -1,5 +1,5 @@
 //
-//  PhView.swift
+//  Ph2View.swift
 //  
 //
 //  Created by Douglas Adams on 4/28/22.
@@ -7,7 +7,9 @@
 
 import SwiftUI
 
-struct PhneView: View {
+public struct Ph2View: View {
+
+  public init() {}
 
   @State var amCarrier: CGFloat = 1.0
   @State var voxLevel: CGFloat = 0.7
@@ -19,7 +21,7 @@ struct PhneView: View {
   @State var vox = false
   @State var dexp = true
 
-  var body: some View {
+  public var body: some View {
     VStack(alignment: .leading) {
 
       HStack(spacing: 0)  {
@@ -52,15 +54,14 @@ struct PhneView: View {
       }
       Divider().background(.blue)
     }
-    .padding(.horizontal, 10)
     .frame(height: 160)
+    .padding(.horizontal, 10)
   }
 }
 
-struct PhneView_Previews: PreviewProvider {
+struct Ph2View_Previews: PreviewProvider {
     static var previews: some View {
-      PhneView()
-        .padding(.horizontal, 10)
-        .frame(width: 260, height: 160)
+      Ph2View()
+        .frame(width: 260)
     }
 }

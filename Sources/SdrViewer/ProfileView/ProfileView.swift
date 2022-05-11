@@ -89,7 +89,7 @@ struct MicrophoneView: View {
 struct ProfileView_Previews: PreviewProvider {
   static var previews: some View {
     ProfileView()
-      .padding()
       .frame(width: 275, height: 350)
+      .padding()
   }
 }

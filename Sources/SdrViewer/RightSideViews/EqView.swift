@@ -7,8 +7,10 @@
 
 import SwiftUI
 
-struct EqView: View {
+public struct EqView: View {
   
+  public init() {}
+
   @State var hz63: CGFloat = 1.0
   @State var hz125: CGFloat = 0.7
   @State var hz250: CGFloat = 0.3
@@ -22,7 +24,7 @@ struct EqView: View {
   @State var rx = true
   @State var tx = false
   
-  var body: some View {
+  public var body: some View {
     VStack(alignment: .leading) {
       HStack(spacing: 8) {
         Text("63")
@@ -61,15 +63,14 @@ struct EqView: View {
       }
       Divider().background(.blue)
     }
-    .padding(.trailing, 10)
     .frame(height: 280)
+    .padding(.trailing, 10)
   }
 }
 
 struct EqView_Previews: PreviewProvider {
   static var previews: some View {
     EqView()
-      .padding(.trailing, 10)
-      .frame(width: 260, height: 280)
+      .frame(width: 260)
   }
 }

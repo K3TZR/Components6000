@@ -1,5 +1,5 @@
 //
-//  PhoneView.swift
+//  Ph1View.swift
 //  
 //
 //  Created by Douglas Adams on 4/29/22.
@@ -9,8 +9,10 @@ import SwiftUI
 
 import LevelIndicator
 
-struct PhoneView: View {
+public struct Ph1View: View {
   
+  public init() {}
+
   @State var micValue: CGFloat = -20.0
   @State var compressionValue: CGFloat = -15.0
   @State var selectedMicProfile = "Profile 1"
@@ -26,11 +28,11 @@ struct PhoneView: View {
   @State var proc = false
   @State var mon = false
 
-  var body: some View {
+  public var body: some View {
     VStack {
       VStack(alignment: .leading, spacing: 5)  {
-        LevelIndicatorView(level: micValue, style: micLevelStyle)
-        LevelIndicatorView(level: compressionValue, style: compressionStyle)
+        LevelIndicatorView(level: micValue, type: .micLevel)
+        LevelIndicatorView(level: compressionValue, type: .compression)
         //      Spacer()
       }
       
@@ -80,16 +82,15 @@ struct PhoneView: View {
       }
       Divider().background(.blue)
     }
+    .frame(height: 210)
     .padding(.horizontal, 10)
-    .frame(height: 220)
   }
 }
 
 
-struct PhoneView_Previews: PreviewProvider {
+struct Ph1View_Previews: PreviewProvider {
   static var previews: some View {
-    PhoneView()
-      .padding(.horizontal, 10)
-      .frame(width: 260, height: 220)
+    Ph1View()
+      .frame(width: 260)
   }
 }
