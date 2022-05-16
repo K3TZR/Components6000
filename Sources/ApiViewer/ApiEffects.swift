@@ -97,19 +97,19 @@ private func messageColor(_ text: String) -> Color {
   return Color(.textColor)
 }
 
-func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
+//func subscribeToLogAlerts() -> Effect<ApiAction, Never> {
 //  #if DEBUG
   // subscribe to the publisher of LogEntries with Warning or Error levels
-  LogProxy.sharedInstance.alertPublisher
-    .receive(on: DispatchQueue.main)
-    // convert to an ApiAction
-    .map { logEntry in .logAlertReceived(logEntry) }
-    .eraseToEffect()
-    .cancellable(id: LogAlertSubscriptionId())
+//  LogProxy.sharedInstance.alertPublisher
+//    .receive(on: DispatchQueue.main)
+//    // convert to an ApiAction
+//    .map { logEntry in .logAlertReceived(logEntry) }
+//    .eraseToEffect()
+//    .cancellable(id: LogAlertSubscriptionId())
 //  #else
 //    .empty
 //  #endif
-}
+//}
 
 func subscribeToMeters() -> Effect<ApiAction, Never> {
   // subscribe to the publisher of received TcpMessages

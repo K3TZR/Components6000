@@ -27,11 +27,13 @@ public final class XCGWrapper: Equatable {
   private var _defaultFolder: String!
   private var _defaultLogUrl: URL!
   private var _log: XCGLogger!
-  private var _logCancellable: AnyCancellable?
+//  private var _logCancellable: AnyCancellable?
 //  private var _logQ = DispatchQueue(label: "XCGWrapper.logQ", attributes: [.concurrent])
 
   private let kMaxLogFiles: UInt8  = 10
   private let kMaxTime: TimeInterval = 60 * 60 // 1 Hour
+  
+  private var _cancellable: AnyCancellable?
 
   public static func == (lhs: XCGWrapper, rhs: XCGWrapper) -> Bool {
     lhs === rhs
@@ -40,7 +42,9 @@ public final class XCGWrapper: Equatable {
   // ----------------------------------------------------------------------------
   // MARK: - Singleton
   
-  public init(_ logPublisher: PassthroughSubject<LogEntry, Never>, logLevel: LogLevel = .debug) {
+//  public init(_ logPublisher: PassthroughSubject<LogEntry, Never>, logLevel: LogLevel = .debug) {
+  public init(logLevel: LogLevel = .debug) {
+
     var xcgLogLevel: XCGLogger.Level
     switch logLevel {
     case .debug:
@@ -114,7 +118,9 @@ public final class XCGWrapper: Equatable {
       
       _defaultLogUrl = URL(fileURLWithPath: _defaultFolder + "/" + defaultLogName)
 
-      _logCancellable = logPublisher
+      _cancellable = NotificationCenter.default
+        .publisher(for: logEntryNotification, object: nil)
+        .map { note in note.object as! LogEntry}
         .sink { [self] entry in
           // Log Handler to support XCGLogger
           switch entry.level {
@@ -125,6 +131,18 @@ public final class XCGWrapper: Equatable {
           case .error:    log.error(entry.msg, functionName: entry.function, fileName: entry.file, lineNumber: entry.line)
           }
         }
+
+//      _logCancellable = logPublisher
+//        .sink { [self] entry in
+//          // Log Handler to support XCGLogger
+//          switch entry.level {
+//
+//          case .debug:    log.debug(entry.msg, functionName: entry.function, fileName: entry.file, lineNumber: entry.line)
+//          case .info:     log.info(entry.msg, functionName: entry.function, fileName: entry.file, lineNumber: entry.line)
+//          case .warning:  log.warning(entry.msg, functionName: entry.function, fileName: entry.file, lineNumber: entry.line)
+//          case .error:    log.error(entry.msg, functionName: entry.function, fileName: entry.file, lineNumber: entry.line)
+//          }
+//        }
     } else {
       fatalError("Logging failure:, unable to find / create Log folder")
     }

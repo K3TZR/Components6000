@@ -49,7 +49,11 @@ final public class LanListener: NSObject, ObservableObject {
     get { Discovered.sharedInstance.packets }
     set { Discovered.sharedInstance.packets = newValue}}
 
-  let _log = LogProxy.sharedInstance.log
+//  let _log = LogProxy.sharedInstance.log
+  
+  let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
 
   // ----------------------------------------------------------------------------
   // MARK: - Initialization

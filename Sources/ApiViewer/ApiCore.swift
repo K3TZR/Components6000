@@ -219,7 +219,7 @@ public enum ApiAction: Equatable {
   case checkConnectionStatus(PickerSelection)
   case clientChangeReceived(ClientUpdate)
   case finishInitialization
-  case logAlertReceived(LogEntry)
+//  case logAlertReceived(LogEntry)
   case meterReceived(Meter)
   case openSelection(PickerSelection)
   case packetChangeReceived(PacketUpdate)
@@ -229,16 +229,16 @@ public enum ApiAction: Equatable {
 
 public struct ApiEnvironment {
   public init(
-    queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main },
-    logger: @escaping Logger = { _ = XCGWrapper($0, logLevel: $1) }
+    queue: @escaping () -> AnySchedulerOf<DispatchQueue> = { .main }
+//    logger: @escaping Logger = { _ = XCGWrapper($0, logLevel: $1) }
   )
   {
     self.queue = queue
-    self.logger = logger
+//    self.logger = logger
   }
   
   var queue: () -> AnySchedulerOf<DispatchQueue>
-  var logger: Logger
+//  var logger: Logger
 }
 
 // ----------------------------------------------------------------------------
@@ -279,7 +279,8 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         // instantiate the collection
         state.packetCollection = Discovered.sharedInstance
         // instantiate the Logger,
-        _ = environment.logger(LogProxy.sharedInstance.logPublisher, .debug)
+        _ = XCGWrapper(logLevel: .debug)
+//        _ = environment.logger(LogProxy.sharedInstance.logPublisher, .debug)
         // start subscriptions
         return .merge(
           subscribeToPackets(),
@@ -382,8 +383,6 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
         // NOT connected, check for a default
         // is there a default?
         state.defaultSelection = hasDefault(state)
-        
-        print("-----> Default found: \(String(describing: state.defaultSelection?.packet.nickname))")
         
         if state.useDefault, let selection = state.defaultSelection {
           // YES, is it Wan?
@@ -523,21 +522,21 @@ public let apiReducer = Reducer<ApiState, ApiAction, ApiEnvironment>.combine(
                      ReceivedSubscriptionId(),
                      MeterSubscriptionId())
       
-    case .logAlertReceived(let logEntry):
-      // a Warning or Error has been logged.
-      // exit any sheet states
-      state.pickerState = nil
-      state.loginState = nil
-      // alert the user
-      state.alert = .init(title: TextState(
-                              """
-                              \(logEntry.level == .warning ? "A Warning" : "An Error") was logged:
-                              
-                              \(logEntry.msg)
-                              """
-                              )
-      )
-      return .none
+//    case .logAlertReceived(let logEntry):
+//      // a Warning or Error has been logged.
+//      // exit any sheet states
+//      state.pickerState = nil
+//      state.loginState = nil
+//      // alert the user
+//      state.alert = .init(title: TextState(
+//                              """
+//                              \(logEntry.level == .warning ? "A Warning" : "An Error") was logged:
+//
+//                              \(logEntry.msg)
+//                              """
+//                              )
+//      )
+//      return .none
       
     case .tcpMessage(let message):
       // a TCP messages (either sent or received) has been captured

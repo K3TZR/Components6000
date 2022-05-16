@@ -57,7 +57,11 @@ final public class Udp: NSObject {
   // MARK: - Internal properties
   
   var _isRegistered = false
-  let _log = LogProxy.sharedInstance.log
+  //  let _log = LogProxy.sharedInstance.log
+    
+  let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
   let _processQ = DispatchQueue(label: "Stream.processQ", qos: .userInteractive)
   var _socket: GCDAsyncUdpSocket!
   

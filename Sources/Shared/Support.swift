@@ -60,8 +60,48 @@ public typealias RfGainValue = String
 public typealias SequenceNumber = UInt
 public typealias ValuesArray = [String]
 
+public typealias Log = (_ msg: String, _ level: LogLevel, _ function: StaticString, _ file: StaticString, _ line: Int) -> Void
+
+// ----------------------------------------------------------------------------
+// MARK: - Notifications
+
+public let logEntryNotification = NSNotification.Name(rawValue: "LogEntry")
+
 // ----------------------------------------------------------------------------
 // MARK: - Structs & Enums
+
+public enum LogLevel: String, CaseIterable {
+    case debug
+    case info
+    case warning
+    case error
+}
+
+public struct LogEntry: Equatable {
+  public static func == (lhs: LogEntry, rhs: LogEntry) -> Bool {
+    guard lhs.msg == rhs.msg else { return false }
+    guard lhs.level == rhs.level else { return false }
+    guard lhs.level == rhs.level else { return false }
+    guard lhs.function.description == rhs.function.description else { return false }
+    guard lhs.file.description == rhs.file.description else { return false }
+    guard lhs.line == rhs.line else { return false }
+    return true
+  }
+  
+  public var msg: String
+  public var level: LogLevel
+  public var function: StaticString
+  public var file: StaticString
+  public var line: Int
+  
+  public init(_ msg: String, _ level: LogLevel, _ function: StaticString, _ file: StaticString, _ line: Int ) {
+    self.msg = msg
+    self.level = level
+    self.function = function
+    self.file = file
+    self.line = line
+  }
+}
 
 public enum ConnectionType: String, Equatable {
   case gui = "Radio"

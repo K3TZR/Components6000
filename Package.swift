@@ -34,11 +34,15 @@ let package = Package(
     .package(url: "https://github.com/DaveWoodCom/XCGLogger.git", from: "7.0.1"),
   ],
   targets: [
+    // --------------- Modules ---------------
+    // LevelIndicator
     .target(
       name: "LevelIndicator",
       dependencies: [
       ]
     ),
+    
+    // SdrViewer
     .target(
       name: "SdrViewer",
       dependencies: [
@@ -47,6 +51,8 @@ let package = Package(
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
+    
+    // ProgressView
     .target(
       name: "ProgressView",
       dependencies: [
@@ -54,6 +60,8 @@ let package = Package(
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
+    
+    // LoginView
     .target(
       name: "LoginView",
       dependencies: [
@@ -61,6 +69,8 @@ let package = Package(
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
+    
+    // RemoteViewer
     .target(
       name: "RemoteViewer",
       dependencies: [
@@ -71,6 +81,8 @@ let package = Package(
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
+    
+    // ClientView
     .target(
       name: "ClientView",
       dependencies: [
@@ -78,6 +90,8 @@ let package = Package(
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
+    
+    // Radio
     .target(
       name: "Radio",
       dependencies: [
@@ -88,12 +102,16 @@ let package = Package(
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
+    
+    // Shared
     .target(
       name: "Shared",
       dependencies: [
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
+    
+    // WanDiscovery
     .target(
       name: "WanDiscovery",
       dependencies: [
@@ -105,10 +123,14 @@ let package = Package(
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),
+    
+    // SecureStorage
     .target(
       name: "SecureStorage",
       dependencies: []
     ),
+    
+    // LevelIndicator
     .target(
       name: "ApiViewer",
       dependencies: [
@@ -125,6 +147,8 @@ let package = Package(
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
+    
+    // LogViewer
     .target(
       name: "LogViewer",
       dependencies: [
@@ -132,6 +156,8 @@ let package = Package(
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
+    
+    // LanDiscovery
     .target(
       name: "LanDiscovery",
       dependencies: [
@@ -141,6 +167,8 @@ let package = Package(
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),
+    
+    // PickerView
     .target(
       name: "PickerView",
       dependencies: [
@@ -151,6 +179,8 @@ let package = Package(
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
+    
+    // XCGWrapper
     .target(
       name: "XCGWrapper",
       dependencies: [
@@ -159,6 +189,8 @@ let package = Package(
         .product(name: "ObjcExceptionBridging", package: "XCGLogger"),
       ]
     ),
+    
+    // TcpCommands
     .target(
       name: "TcpCommands",
       dependencies: [
@@ -166,6 +198,8 @@ let package = Package(
         .product(name: "CocoaAsyncSocket", package: "CocoaAsyncSocket"),
       ]
     ),
+    
+    // UdpStreams
     .target(
       name: "UdpStreams",
       dependencies: [
@@ -189,6 +223,9 @@ let package = Package(
 //      name: "ApiViewerTests",
 //      dependencies: ["ApiViewer"]
 //    ),
+    
+    // --------------- Modules ---------------
+    // SecureStorageTests
     .testTarget(
       name: "SecureStorageTests",
       dependencies: ["SecureStorage"]
@@ -197,6 +234,8 @@ let package = Package(
 //      name: "TcpCommandsTests",
 //      dependencies: ["TcpCommands", "LanDiscovery"]
 //    ),
+    
+    // LoggingTests
     .testTarget(
       name: "LoggingTests",
       dependencies: [

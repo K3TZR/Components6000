@@ -60,8 +60,12 @@ public final class WanListener: NSObject, ObservableObject {
   private var _timeout = 0.0                // seconds
   private var _user: String?
   
-  let _log = LogProxy.sharedInstance.log
-  
+  //  let _log = LogProxy.sharedInstance.log
+    
+  let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
+
   private let kSmartlinkHost = "smartlink.flexradio.com"
   private let kSmartlinkPort: UInt16 = 443
   private let kPlatform = "macOS"
