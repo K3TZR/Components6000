@@ -55,8 +55,12 @@ public struct Atu {
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
-  private let _log = LogProxy.sharedInstance.log
-  
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
+
   // ----------------------------------------------------------------------------
   // MARK: - Public Command methods
   

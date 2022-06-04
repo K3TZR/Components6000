@@ -58,7 +58,11 @@ public struct RemoteTxAudioStream: Identifiable {
   // MARK: - Private properties
   
   private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
   private var _objects = Objects.sharedInstance
   private var _suppress = false
   private var _txSequenceNumber = 0
@@ -147,8 +151,8 @@ extension RemoteTxAudioStream {
           // YES, remove it
           Objects.sharedInstance.remoteTxAudioStreams[id: id] = nil
           
-          LogProxy.sharedInstance.log("RemoteTxAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line)
-          //                        NC.post(.remoteTxAudioStreamHasBeenRemoved, object: id as Any?)
+//          LogProxy.sharedInstance.log("RemoteTxAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line)
+          NotificationCenter.default.post(name: logEntryNotification, object: LogEntry("RemoteTxAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line))
         }
       }
     }

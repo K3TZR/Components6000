@@ -56,7 +56,11 @@ public struct BandSetting: Identifiable {
   // MARK: - Private properties
 
   private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
 
   // ------------------------------------------------------------------------------
   // MARK: - Initialization
@@ -96,12 +100,11 @@ extension BandSetting {
         // does it exist?
         if Objects.sharedInstance.bandSettings[id: id] != nil {
           // YES, remove it, notify observers
-//          NC.post(.bandSettingWillBeRemoved, object: radio.bandSettings[id] as Any?)
 
           Objects.sharedInstance.bandSettings[id: id] = nil
 
-          LogProxy.sharedInstance.log("BandSetting removed: id = \(id)", .debug, #function, #file, #line)
-//          NC.post(.bandSettingHasBeenRemoved, object: id as Any?)
+//          LogProxy.sharedInstance.log("BandSetting removed: id = \(id)", .debug, #function, #file, #line)
+          NotificationCenter.default.post(name: logEntryNotification, object: LogEntry("BandSetting removed: id = \(id)", .debug, #function, #file, #line))
         }
       }
     }

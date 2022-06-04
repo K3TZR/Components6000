@@ -86,8 +86,12 @@ public struct UsbCable: Identifiable {
   // MARK: - Private properties
   
   private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
-  
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
+
   // ------------------------------------------------------------------------------
   // MARK: - Initialization
   
@@ -147,7 +151,8 @@ extension UsbCable {
           
         } else {
           // NO, log the error and ignore it
-          LogProxy.sharedInstance.log("USBCable invalid Type: \(properties[1].value)", .warning, #function, #file, #line)
+//          LogProxy.sharedInstance.log("USBCable invalid Type: \(properties[1].value)", .warning, #function, #file, #line)
+          NotificationCenter.default.post(name: logEntryNotification, object: LogEntry("USBCable invalid Type: \(properties[1].value)", .warning, #function, #file, #line))
           return
         }
       }
@@ -162,8 +167,8 @@ extension UsbCable {
         
         Objects.sharedInstance.usbCables[id: id] = nil
         
-        LogProxy.sharedInstance.log("USBCable removed: id = \(id)", .debug, #function, #file, #line)
-//        NC.post(.usbCableHasBeenRemoved, object: id as Any?)
+//        LogProxy.sharedInstance.log("USBCable removed: id = \(id)", .debug, #function, #file, #line)
+        NotificationCenter.default.post(name: logEntryNotification, object: LogEntry("USBCable removed: id = \(id)", .debug, #function, #file, #line))
       }
     }
   }

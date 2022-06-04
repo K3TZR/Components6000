@@ -124,8 +124,12 @@ public struct Transmit {
   // MARK: - Private properties
   
   private var _initialized                  = false
-  private let _log                          = LogProxy.sharedInstance.log
-  
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
+
   // ----------------------------------------------------------------------------
   // MARK: - Private methods
   

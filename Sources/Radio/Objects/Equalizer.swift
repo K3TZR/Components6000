@@ -66,7 +66,11 @@ public struct Equalizer: Identifiable {
   // MARK: - Private properties
 
   private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
   private let _objects = Objects.sharedInstance
   private var _suppress = false
 
@@ -101,7 +105,9 @@ extension Equalizer {
     case EqType.txsc.rawValue:  equalizer = Objects.sharedInstance.equalizers[id: Equalizer.EqType.txsc.rawValue]
     case EqType.rxsc.rawValue:  equalizer = Objects.sharedInstance.equalizers[id: Equalizer.EqType.rxsc.rawValue]
     case EqType.rx.rawValue, EqType.tx.rawValue:  break // obslete types, ignore
-    default: LogProxy.sharedInstance.log("Radio: Unknown Equalizer type: \(type)", .warning, #function, #file, #line)
+    default:
+//      LogProxy.sharedInstance.log("Radio: Unknown Equalizer type: \(type)", .warning, #function, #file, #line)
+      NotificationCenter.default.post(name: logEntryNotification, object: LogEntry("Radio: Unknown Equalizer type: \(type)", .warning, #function, #file, #line))
     }
     // if an equalizer was found
 //    if let equalizer = equalizer {

@@ -97,7 +97,11 @@ public struct Waterfall: Identifiable {
   private var _frames = [WaterfallFrame]()
   @Atomic(0, q) private var index: Int
   private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
   private let _numberOfFrames = 10
   
   // ----------------------------------------------------------------------------

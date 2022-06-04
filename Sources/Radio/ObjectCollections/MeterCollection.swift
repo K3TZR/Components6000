@@ -63,8 +63,12 @@ public actor MeterCollection {
   // ----------------------------------------------------------------------------
   // MARK: - Private properties
   
-  private let _log = LogProxy.sharedInstance.log
-  
+//  private let _log = LogProxy.sharedInstance.log
+
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
+
   // ----------------------------------------------------------------------------
   // MARK: - Public methods
   
@@ -180,7 +184,8 @@ public actor MeterCollection {
     if metersAreStreaming == false {
       metersAreStreaming = true
       // log the start of the stream
-      LogProxy.sharedInstance.log("Meter stream \(vita.streamId.hex): started", .info, #function, #file, #line)
+//      LogProxy.sharedInstance.log("Meter stream \(vita.streamId.hex): started", .info, #function, #file, #line)
+      NotificationCenter.default.post(name: logEntryNotification, object: LogEntry("Meter stream \(vita.streamId.hex): started", .info, #function, #file, #line))
     }
     
     // NOTE:  there is a bug in the Radio (as of v2.2.8) that sends

@@ -12,7 +12,6 @@ import Combine
 import SecureStorage
 import LoginView
 import ProgressView
-import Shared
 
 // ----------------------------------------------------------------------------
 // MARK: - Structs and Enums

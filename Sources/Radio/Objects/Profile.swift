@@ -51,8 +51,12 @@ public struct Profile: Identifiable {
   // MARK: - Private properties
   
   private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
-  
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
+
   // ------------------------------------------------------------------------------
   // MARK: - Initialization
   
@@ -102,7 +106,8 @@ extension Profile {
     // check for unknown Keys
     guard let _ = ProfileGroups(rawValue: id) else {
       // log it and ignore the Key
-      LogProxy.sharedInstance.log("Unknown Profile group: \(id)", .warning, #function, #file, #line)
+//      LogProxy.sharedInstance.log("Unknown Profile group: \(id)", .warning, #function, #file, #line)
+      NotificationCenter.default.post(name: logEntryNotification, object: LogEntry("Unknown Profile group: \(id)", .warning, #function, #file, #line))
       return
     }
     // remove the Id from the KeyValues

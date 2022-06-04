@@ -57,8 +57,12 @@ public struct Xvtr: Identifiable {
   // MARK: - Private properties
   
   private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
-  
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
+
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
@@ -117,8 +121,8 @@ extension Xvtr {
           
           Objects.sharedInstance.xvtrs[id: id] = nil
           
-          LogProxy.sharedInstance.log("Xvtr, removed: id = \(id)", .debug, #function, #file, #line)
-//          NC.post(.xvtrHasBeenRemoved, object: id as Any?)
+//          LogProxy.sharedInstance.log("Xvtr, removed: id = \(id)", .debug, #function, #file, #line)
+          NotificationCenter.default.post(name: logEntryNotification, object: LogEntry("Xvtr, removed: id = \(id)", .debug, #function, #file, #line))
         }
       }
     }

@@ -233,8 +233,12 @@ public struct Slice: Identifiable {
   
 //  private var _diversityIsAllowed: Bool { _api.activeRadio?.radioModel == "FLEX-6700" || _api.activeRadio?.radioModel == "FLEX-6700R" }
   private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
-  
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
+
   // ----------------------------------------------------------------------------
   // MARK: - Initialization
   
@@ -432,8 +436,8 @@ extension Slice {
           
           Objects.sharedInstance.slices[id: id] = nil
           
-          LogProxy.sharedInstance.log("Slice: removed, id = \(id)", .debug, #function, #file, #line)
-//          NC.post(.sliceHasBeenRemoved, object: id as Any?)
+//          LogProxy.sharedInstance.log("Slice: removed, id = \(id)", .debug, #function, #file, #line)
+          NotificationCenter.default.post(name: logEntryNotification, object: LogEntry("Slice: removed, id = \(id)", .debug, #function, #file, #line))
         }
       }
     }

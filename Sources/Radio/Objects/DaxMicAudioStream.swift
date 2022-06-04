@@ -67,7 +67,11 @@ public struct DaxMicAudioStream: Identifiable {
   // MARK: - Private properties
   
   private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
   private var _rxPacketCount = 0
   private var _rxLostPacketCount = 0
   private var _rxSequenceNumber = -1
@@ -119,8 +123,8 @@ extension DaxMicAudioStream {
           // YES, remove it
           Objects.sharedInstance.daxMicAudioStreams[id: id] = nil
           
-          LogProxy.sharedInstance.log("DaxMicAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line)
-          //                        NC.post(.daxMicAudioStreamHasBeenRemoved, object: id as Any?)
+//          LogProxy.sharedInstance.log("DaxMicAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line)
+          NotificationCenter.default.post(name: logEntryNotification, object: LogEntry("DaxMicAudioStream removed: id = \(id.hex)", .debug, #function, #file, #line))
         }
       }
     }

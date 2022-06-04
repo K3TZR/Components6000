@@ -191,7 +191,10 @@ public final class Radio: Equatable {
   let _connectionType: ConnectionType
   var _disconnectHandle: Handle?
   let _domain: String
-  let _log = LogProxy.sharedInstance.log
+//  let _log = LogProxy.sharedInstance.log
+  let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
   var _lowBandwidthConnect = false
   var _lowBandwidthDax = false
   public var objects = Objects.sharedInstance

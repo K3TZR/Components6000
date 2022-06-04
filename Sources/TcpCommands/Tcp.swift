@@ -67,7 +67,11 @@ final public class Tcp: NSObject {
   // ----------------------------------------------------------------------------
   // MARK: - Internal properties
   
-  let _log = LogProxy.sharedInstance.log
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
   var _packetSource: PacketSource?
   let _receiveQ = DispatchQueue(label: "TcpCommand.receiveQ")
   let _sendQ = DispatchQueue(label: "TcpCommand.sendQ")

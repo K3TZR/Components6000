@@ -153,7 +153,11 @@ public struct Panadapter: Identifiable {
   @Atomic(0, q) private var index: Int
   //  private var _index = 0
   private var _initialized = false
-  private let _log = LogProxy.sharedInstance.log
+  //  let _log = LogProxy.sharedInstance.log
+    
+  private let _log: Log = { msg,level,function,file,line in
+    NotificationCenter.default.post(name: logEntryNotification, object: LogEntry(msg, level, function, file, line))
+  }
   private let _numberOfFrames = 16
   private var _frames = [PanadapterFrame]()
   private var _suppress = false
